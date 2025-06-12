@@ -290,7 +290,7 @@ const projects = [
         color: "blue-text-gradient",
       },
       {
-        name: "Three fiber",
+        name: "Tailwind CSS",
         color: "green-text-gradient",
       },
     ],
