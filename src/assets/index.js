@@ -31,7 +31,8 @@ import alorica from "./company/alorica.png";
 import inventario from "./inventario.png";
 import simpleweb from "./simpleweb.png";
 import java from "./java.png";
-import crudnode from "./crudnode.png";
+import crudnode from "./crudnode.png"; 
+import tresdmodel from "./tresdmodel.png";
 
 import dani from "./photos/dani.png";
 import gabriela from "./photos/gabriela.png";
@@ -68,6 +69,7 @@ export {
   simpleweb,
   java,
   crudnode,
+  tresdmodel,
   dani,
   gabriela,
   ricardo,

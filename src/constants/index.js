@@ -25,6 +25,7 @@ import {
   java,
   crudnode,
   threejs, 
+  tresdmodel,
   dani, 
   gabriela, 
   ricardo
@@ -265,7 +266,36 @@ const projects = [
       },
     ],
     image: crudnode,
-    source_code_link: "https://github.com/lighsiegfried/JavaTree",
+    source_code_link: "https://github.com/lighsiegfried/crud_nodejs",
+  },
+    {
+    name: "Modelado 3D Web",
+    description:
+      "Una app que utiliza las librerias y frameworks especializadas en mostrar modelados, en este caso es una app para modelar una bolsa de cafe e insertar una imagen en el modelo para lograr una pre-visualizacion del producto, Next.js , Three.js drei fibe",
+    tags: [
+      {
+        name: "Next.js",
+        color: "pink-text-gradient",
+      },
+      {
+        name: "Three.js",
+        color: "green-text-gradient",
+      },
+      {
+        name: "Three drei",
+        color: "pink-text-gradient",
+      },
+      {
+        name: "Three fiber",
+        color: "blue-text-gradient",
+      },
+      {
+        name: "Three fiber",
+        color: "green-text-gradient",
+      },
+    ],
+    image: tresdmodel,
+    source_code_link: "https://github.com/lighsiegfried/modelos3d",
   },
 ];
 
