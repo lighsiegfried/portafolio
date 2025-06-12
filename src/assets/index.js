@@ -25,11 +25,13 @@ import threejs from "./tech/threejs.svg";
 import meta from "./company/meta.png";
 import indiana from "./company/indiana.png";
 import Polyproductos from "./company/Polyproductos.png";
+import Envaseal from "./company/Envaseal.png";
 import alorica from "./company/alorica.png";
 
 import inventario from "./inventario.png";
 import simpleweb from "./simpleweb.png";
 import java from "./java.png";
+import crudnode from "./crudnode.png";
 
 import dani from "./photos/dani.png";
 import gabriela from "./photos/gabriela.png";
@@ -60,10 +62,12 @@ export {
   meta,
   indiana,
   Polyproductos,
+  Envaseal,
   alorica,
   inventario,
   simpleweb,
   java,
+  crudnode,
   dani,
   gabriela,
   ricardo,

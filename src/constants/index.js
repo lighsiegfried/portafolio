@@ -17,11 +17,13 @@ import {
   docker,
   meta,
   Polyproductos,
+  Envaseal,
   alorica,
   indiana,
   inventario,
   simpleweb,
   java,
+  crudnode,
   threejs, 
   dani, 
   gabriela, 
@@ -31,15 +33,15 @@ import {
 export const navLinks = [
   {
     id: "about",
-    title: "About",
+    title: "Sobre Mi",
   },
   {
     id: "work",
-    title: "Work",
+    title: "Experiencia",
   },
   {
     id: "contact",
-    title: "Contact",
+    title: "Contacto",
   },
 ];
 
@@ -57,7 +59,7 @@ const services = [
     icon: backend,
   },
   {
-    title: "Content Creator",
+    title: "Especialista en ERP",
     icon: creator,
   },
 ];
@@ -119,47 +121,47 @@ const technologies = [
 
 const experiences = [
   {
-    title: "Ayudante de operador",
-    company_name: "Polyproductos S.A",
-    icon: Polyproductos,
-    iconBg: "#9BA4B5",
-    date: "Nov 2014 - Mayo 2016",
-    points: [
-      "Implementacion de corte final a tela para Relajacion de la misma por los procesos de costura",
-      "Ordenar e inventariar la cantidad trabajada por los operarios",
-    ],
-  },
-  {
-    title: "Bilingual Agent Customer Service",
-    company_name: "Alorica",
-    icon: alorica,
+    title: "Encargado de IT / Desarrollador de software",
+    company_name: "Envaseal S.A",
+    icon: Envaseal,
     iconBg: "#FFFFFF",
-    date: "Mayo 2018 - Marzo 2019",
+    date: "Enero 2024 - Actualmente",
     points: [
-      "Implementing solutions to customers.",
-      "Participating in reviews to improve services en the company",
-      "Dar soporte remoto a clientes con problemas de pagos/servicios/compras/garantias",
-      "de igual forma con embargos y promociones",
+      "Administrar servidores Linux (Red Hat) y contenedores Docker en modulación.",
+      "Soporte técnico, mantenimiento a impresoras y reparación de hardware de computadoras",
+      "Mantenimiento de servidores y realización de copias de seguridad de bases de datos de producción",
+      "Conceptualización, diagramación de bases de datos y estructuración de la infraestructura del software",
+      "Evaluar factibilidad de implementación de nuevos módulos optimizando tiempos de producción",
+      "Implementar nuevos y migrar antiguos módulos a ERP mejorando carga y usabilidad",
+      "Creación de tablas, normalización y mejora de la infraestructura actual de la base de datos",
+      "Optimización y tuning de consultas SQL para reducir tiempos de carga en módulos críticos",
+      "Desarrollo full-stack en ERP bajo arquitectura MVC (PHP, Java, JS, jQuery)",
+      "Uso de Git y GitHub para control de versiones y trabajo colaborativo",
+      "Configuración y evaluación de nuevos puertos de red según requerimientos técnicos",
+      "Automatización de pruebas y control de calidad de software",
+      "Gestión de tareas bajo metodologías ágiles (SCRUM/UML) usando Trello y Jira",
     ],
   },
   {
-    title: "Data Entry",
+    title: "Analista de datos / Data Entry",
     company_name: "Hoosier Manufacturing",
     icon: indiana,
     iconBg: "#A6D0DD",
-    date: "Febrero 2021 - Actualmente laborando",
+    date: "Febrero 2021 - Diciembre 2023",
     points: [
-      "Digitar la entrada y salida de producto a bodega y plantas externas.",
-      "Direccion y coordinacion acorde a programacion de W.O para entrar en accion ante problemas de faltante de tela.",
-      "Creacion de dashboards y formulas anidadas en excel",
+      "Soporte técnico",
+      "Conceptualizar bases de datos SQL y POWER BI",
+      "Uso de Git y GitHub para control de versiones y trabajo colaborativo",
+      "Gestión de tareas bajo metodologías ágiles (SCRUM/UML) usando Trello",
     ],
   },
+
 ];
 
 const testimonials = [
   {
     testimonial:
-      "I thought it was impossible to make a website as beautiful as our product, but Wilson proved me wrong.",
+      "Pensé que era imposible crear un sitio web tan hermoso como este producto, pero Wilson demostró que estabamos equivocados.",
     name: "Sara L.",
     designation: "CFO",
     company: "Acme Co",
@@ -167,7 +169,7 @@ const testimonials = [
   },
   {
     testimonial:
-      "I've never met a web developer who truly cares about their clients' success like Wilson does.",
+      "Nunca he conocido a un desarrollador web que realmente se preocupe por el éxito de sus clientes como lo hace Wilson.",
     name: "Daniel N.",
     designation: "Hoosier",
     company: "Data Entry",
@@ -175,7 +177,7 @@ const testimonials = [
   },
   {
     testimonial:
-      "After Wilson optimized our website, our traffic increased by 50%. This is something really good",
+      "Después de que Wilson optimizó nuestro sitio web, nuestro tráfico aumentó en un 50%. esto es algo realmente bueno",
     name: "Ricardo G.",
     designation: "Digital Solutions",
     company: "456 Enterprises",
@@ -186,9 +188,9 @@ const testimonials = [
 
 const projects = [
   {
-    name: "Inventario",
+    name: "Inventario (legacy)",
     description:
-      "Web-based platform that allows users to search, information and manage data from various providers, Pagina Web en JavaEE con Primeface montada con Glassfish para manejar inventarios de proveedores.",
+      "Pagina Web en JavaEE con Primeface montada con Glassfish para manejar inventarios de proveedores.",
     tags: [
       {
         name: "PrimeFace",
@@ -207,9 +209,9 @@ const projects = [
     source_code_link: "https://github.com/lighsiegfried/JavaWebProyectUnivesity",
   },
   {
-    name: "HTML + CSS + JavaScript",
+    name: "HTML + CSS + JavaScript (simple)",
     description:
-      "I created a simple web site with HTML + CSS and JavaScript also we can see some animations, Una pagina con tematicas simples de HTML + CSS y JavaScript nativo ademas podremos ver algunas animaciones",
+      "Una pagina con tematicas simples de HTML + CSS y JavaScript nativo ademas podremos ver algunas animaciones",
     tags: [
       {
         name: "HTML",
@@ -228,9 +230,9 @@ const projects = [
     source_code_link: "https://github.com/lighsiegfried/html-css",
   },
   {
-    name: "Java Base App",
+    name: "Java Base App (legacy)",
     description:
-      "A comprehensive App to use excel and view data on this one, Una app java base para visualizar Data de un excel y poder modificarlo ademas de ver el codigo de alumno mediante un arbol",
+      "Una app java base para visualizar Data de un excel y poder modificarlo ademas de ver el codigo de alumno mediante un arbol",
     tags: [
       {
         name: "JavaBase",
@@ -238,6 +240,31 @@ const projects = [
       },
     ],
     image: java,
+    source_code_link: "https://github.com/lighsiegfried/JavaTree",
+  },
+  {
+    name: "CRUD en Node.JS",
+    description:
+      "Una app crud que se utilizo PHP, jquery, boostrap y Node.js para crear API y consumirla, consulta,crea, elimina y actualiza",
+    tags: [
+      {
+        name: "PHP",
+        color: "pink-text-gradient",
+      },
+      {
+        name: "JQUERY",
+        color: "green-text-gradient",
+      },
+      {
+        name: "Boostrap",
+        color: "pink-text-gradient",
+      },
+      {
+        name: "Node.js",
+        color: "blue-text-gradient",
+      },
+    ],
+    image: crudnode,
     source_code_link: "https://github.com/lighsiegfried/JavaTree",
   },
 ];

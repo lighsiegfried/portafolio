@@ -71,8 +71,8 @@ const Works = () => {
   return (
     <>
       <motion.div variants={textVariant()}>
-        <p className={`${styles.sectionSubText} `}>My work</p>
-        <h2 className={`${styles.sectionHeadText}`}>Projects.</h2>
+        <p className={`${styles.sectionSubText} `}>Algunas referencias de mis</p>
+        <h2 className={`${styles.sectionHeadText}`}>Projectos</h2>
       </motion.div>
 
       <div className='w-full flex'>
@@ -80,16 +80,15 @@ const Works = () => {
           variants={fadeIn("", "", 0.1, 1)}
           className='mt-3 text-secondary text-[17px] max-w-3xl leading-[30px]'
         >
-          Following projects showcases my skills and experience. 
-          Each project is briefly described with
-          links to code repositories and live demos in it. It reflects my
-          ability, work with different technologies,       
-          and manage projects effectively.<p>♫</p>
+          <motion.p>
+            Algunos de mis proyectos son en sistema ERP mejoraron el rendimiento en mas del 50% en tiempo ademas de la mejor administración
+            de recurso Humano para labores de reportes de Información, 
+            Asi mismo agregare mis Proyectos / Productos de software personales, como referencia.
+          </motion.p>
           Lista de mis proyectos, mostrando mis diferentes habilidades y destrezas,
-        cada ejemplo tiene LINK hacia GitHub , ¨en el icono de github¨
-        en el cual podran ver el codigo fuente si gustan, 
-        donde desarrolle mis diferentes proyectos con diferentes tecnologias.
-        Cada proyecto tiene un mini video introductorio de como funcionan.
+          cada ejemplo tiene LINK hacia GitHub , ¨en el icono de github¨
+          en el cual podran ver el codigo fuente, 
+          desarrolle mis proyectos con diferentes tecnologias.
         </motion.p>
 
       </div>

@@ -39,30 +39,31 @@ const About = () => {
   return (
     <>
       <motion.div variants={textVariant()}>
-        <p className={styles.sectionSubText}>Introduction</p>
-        <h2 className={styles.sectionHeadText}>Overview </h2>
+        <p className={styles.sectionSubText}>Infomación</p>
+        <h2 className={styles.sectionHeadText}>Sobre mi: </h2>
       </motion.div>
 
       <motion.p
         variants={fadeIn("", "", 0.1, 1)}
         className='mt-4 text-secondary text-[17px] max-w-3xl leading-[30px]'
-      >
-        I'm a skilled software developer in Java and
-        JavaScript, and expertise in frameworks like React, Node.js, and
-        Three.js. I'm a quick learner and collaborate closely with clients to
-        create efficient, scalable, and user-friendly solutions.
-        Let's work together to bring your ideas to life!
+      >Estudiante de último año de Ingeniería en Tecnologías de la Información con experiencia en administración de servidores y
+        contenedores Docker bajo entornos modulares. Amplio conocimiento en marcos de trabajo como SCRUM y UML, así como
+        en soporte técnico integral (hardware, impresoras y mantenimiento de computadoras). 
       </motion.p> 
       <motion.p
         variants={fadeIn("", "", 0.1, 1)}
         className='mt-4 text-secondary text-[17px] max-w-3xl leading-[30px]'
-      >Soy un habilidoso desarrollador junior de software en Java y JavaScript, 
-      asi tambien poseo habilidad con frameworks como React, Node.js y Three.js,
-      aprendo rapidamente y me adapto a entornos variados de trabajo.</motion.p>
+      >Especialista en mantenimiento de
+        servidores, respaldo de bases de datos en ambientes productivos y en la conceptualización y diagramación de
+        infraestructuras de software. Habilidad para evaluar la viabilidad e impacto de nuevos módulos dentro de un ERP,
+        implementando mejoras que optimizan tiempos de carga y usabilidad. Experto en diseño y normalización de bases de
+        datos, optimización de consultas SQL y automatización de pruebas, garantizando calidad y eficiencia en el desarrollo de
+        software.
+      </motion.p>
       <motion.p
         variants={fadeIn("", "", 0.1, 1)}
         className='mt-4 text-secondary text-[24px] max-w-3xl leading-[30px]'
-      >Vamos! trabajemos juntos para darle vida a las ideas! :)</motion.p>
+      ></motion.p>
 
       <div className='mt-20 flex flex-wrap gap-10'>
         {services.map((service, index) => (
