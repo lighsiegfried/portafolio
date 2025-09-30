@@ -1,0 +1,2 @@
+subir en aws
+aws s3 sync G:\html\ s3://(mi bucket)
