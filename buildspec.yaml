@@ -19,3 +19,8 @@ phases:
       - ls -lah dist || true
       - echo "Desplegando en S3..."
       - aws s3 sync dist/ s3://wilsonvasquezcv/ --delete
+  artifacts:
+    files:
+    - '**/*'
+  base-directory: dist
+
