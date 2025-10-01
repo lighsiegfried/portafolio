@@ -5,16 +5,17 @@ phases:
     runtime-versions:
       nodejs: 16.18.0
     commands:
-      - echo Instalando dependencias...
+      - echo "Instalando dependencias..."
       - npm install
   build:
     commands:
-      - echo Compilando proyecto...
+      - echo "Compilando proyecto..."
       - npm run build
   post_build:
     commands:
-      - echo Desplegando en S3...
+      - echo "Contenido del workspace:"
+      - ls -lah
+      - echo "Contenido de dist:"
+      - ls -lah dist || true
+      - echo "Desplegando en S3..."
       - aws s3 sync dist/ s3://wilsonvasquezcv/ --delete
-artifacts:
-  files:
-    - '**/*'
