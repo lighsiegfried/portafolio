@@ -14,7 +14,7 @@ phases:
   post_build:
     commands:
       - echo Desplegando en S3...
-      - aws s3 sync dist/ s3://wilsonvasquezcv --delete
+      - aws s3 sync dist/ s3://wilsonvasquezcv/ --delete
 artifacts:
   files:
     - '**/*'
