@@ -1,0 +1,20 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 16
+    commands:
+      - echo Instalando dependencias...
+      - npm install
+  build:
+    commands:
+      - echo Compilando proyecto...
+      - npm run build
+  post_build:
+    commands:
+      - echo Desplegando en S3...
+      - aws s3 sync dist/ s3://awspruebas3pt --delete
+artifacts:
+  files:
+    - '**/*'
