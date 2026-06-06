@@ -1,0 +1,92 @@
+- generic [ref=e3]:
+  - generic [ref=e4]:
+    - generic:
+      - img
+      - img
+  - generic [ref=e5]:
+    - navigation [ref=e6]:
+      - generic [ref=e7]
+    - generic [ref=e21]:
+      - generic [ref=e26]
+      - link [ref=e34] [cursor=pointer]:
+        - /url: "#about"
+  - generic [ref=e37]:
+    - generic [ref=e39]:
+      - generic
+    - generic [ref=e40]:
+      - paragraph [ref=e41]: Información
+      - heading "Sobre mí" [level=2] [ref=e42]
+    - paragraph [ref=e43]: Soy estudiante de último año de Ingeniería en Sistemas y Ciencias de la Computación, con experiencia desarrollando y modernizando sistemas empresariales, módulos ERP/CRM y soluciones internas para operación. He trabajado en entornos donde el software debe ser estable, documentado y útil para áreas como compras, inventario, reportería, infraestructura y soporte operativo.
+    - paragraph [ref=e44]: Mi enfoque combina desarrollo full-stack, optimización SQL, administración de servidores Linux, contenedores Docker, automatización con IA y despliegues en AWS. Me interesa construir soluciones claras, mantenibles y bien documentadas, especialmente cuando conectan software, infraestructura y procesos de negocio.
+    - generic [ref=e45]:
+      - generic [ref=e48]
+      - generic [ref=e53]
+      - generic [ref=e58]
+      - generic [ref=e63]
+  - generic [ref=e66]:
+    - generic [ref=e68]:
+      - generic
+    - generic [ref=e69]:
+      - paragraph [ref=e70]: Áreas de experiencia
+      - heading "Experiencia técnica validada" [level=2] [ref=e71]
+    - paragraph [ref=e72]: "Estas áreas resumen el tipo de problemas técnicos en los que he trabajado: modernización de sistemas, infraestructura cloud, automatización, continuidad operativa y desarrollo de soluciones empresariales."
+    - generic [ref=e73]:
+      - generic [ref=e76]
+      - generic [ref=e90]
+      - generic [ref=e103]
+  - generic [ref=e113]:
+    - generic [ref=e115]:
+      - generic
+    - generic [ref=e116]:
+      - paragraph [ref=e117]: Logros y responsabilidades
+      - heading "Experiencia" [level=2] [ref=e118]
+  - generic [ref=e125]:
+    - generic [ref=e127]:
+      - generic
+    - generic [ref=e128]:
+      - paragraph [ref=e129]: Stack tecnológico
+      - heading "Tecnologías" [level=2] [ref=e130]
+    - paragraph [ref=e131]: Tecnologías con las que he trabajado en producción, proyectos personales y laboratorio técnico.
+    - generic [ref=e165]:
+      - generic [ref=e166]
+      - generic [ref=e198]
+      - generic [ref=e233]
+      - generic [ref=e264]
+      - generic [ref=e293]
+  - generic [ref=e324]:
+    - generic [ref=e326]:
+      - generic
+    - generic [ref=e327]:
+      - paragraph [ref=e328]: Evidencia técnica
+      - heading "Casos de estudio y proyectos" [level=2] [ref=e329]
+    - paragraph [ref=e331]: "Estos proyectos muestran diferentes etapas de mi experiencia: desde sistemas empresariales y arquitectura cloud hasta proyectos iniciales que forman parte de mi base técnica."
+    - generic [ref=e332]:
+      - heading "Proyectos profesionales / arquitectura" [level=3] [ref=e333]
+      - generic [ref=e334]
+    - generic [ref=e379]:
+      - heading "Proyectos iniciales / académicos" [level=3] [ref=e380]
+      - generic [ref=e381]
+  - generic [ref=e453]:
+    - generic [ref=e455]:
+      - generic
+    - generic [ref=e456]:
+      - generic [ref=e457]
+      - generic [ref=e462]
+  - generic [ref=e483]:
+    - generic [ref=e485]:
+      - generic
+    - generic [ref=e486]:
+      - paragraph [ref=e487]: Cloud architecture
+      - heading "Arquitectura AWS" [level=2] [ref=e488]
+    - paragraph [ref=e489]: Este portafolio no solo funciona como presentación profesional; también evoluciona como laboratorio cloud para demostrar despliegue, seguridad, automatización e infraestructura como código.
+    - generic [ref=e490]:
+      - generic [ref=e492]
+      - generic [ref=e516]
+      - generic [ref=e553]
+  - generic [ref=e573]:
+    - generic [ref=e575]:
+      - generic
+    - generic [ref=e577]:
+      - paragraph [ref=e578]: Ponte en contacto
+      - heading "Contacto" [level=3] [ref=e579]
+      - generic [ref=e580]

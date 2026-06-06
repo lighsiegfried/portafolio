@@ -8,9 +8,18 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
+apps/*/node_modules/
 dist
+apps/frontend/dist/
 dist-ssr
 *.local
+.env
+.env.local
+.env.*.local
+.terraform/
+infra/terraform/.terraform/
+*.tfstate
+*.tfstate.backup
 
 # Editor directories and files
 .vscode/*
@@ -23,7 +32,11 @@ dist-ssr
 *.sln
 *.sw?
 
-.env
-
 # vscode
 .vscode
+
+.opencode
+docs
+AGENTS.md
+ARCHITECTURE.md
+PROJECT_CONTEXT.md

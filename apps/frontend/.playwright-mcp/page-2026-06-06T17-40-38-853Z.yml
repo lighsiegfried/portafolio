@@ -1,0 +1,533 @@
+- generic [ref=e3]:
+  - generic [ref=e4]:
+    - generic:
+      - img
+      - img
+  - generic [ref=e5]:
+    - navigation [ref=e6]:
+      - generic [ref=e7]:
+        - link "logo Wilson | Software Engineer" [ref=e8] [cursor=pointer]:
+          - /url: /
+          - img "logo" [ref=e9]
+          - paragraph [ref=e10]:
+            - text: Wilson
+            - generic [ref=e11]: "| Software Engineer"
+        - list [ref=e12]:
+          - listitem [ref=e13] [cursor=pointer]:
+            - link "Sobre mí" [ref=e14]:
+              - /url: "#about"
+          - listitem [ref=e15] [cursor=pointer]:
+            - link "Experiencia" [ref=e16]:
+              - /url: "#work"
+          - listitem [ref=e17] [cursor=pointer]:
+            - link "Arquitectura" [ref=e18]:
+              - /url: "#architecture"
+          - listitem [ref=e19] [cursor=pointer]:
+            - link "Contacto" [ref=e20]:
+              - /url: "#contact"
+    - generic [ref=e21]:
+      - generic [ref=e26]:
+        - heading "Hola, soy Wilson Vásquez" [level=1] [ref=e27]
+        - paragraph [ref=e28]:
+          - text: Software Engineer enfocado en
+          - text: sistemas empresariales, cloud e IA
+        - paragraph [ref=e29]:
+          - text: Construyo soluciones full-stack, automatizaciones y
+          - text: arquitecturas cloud pensadas para operación real.
+      - paragraph [ref=e35]: 17.91%
+      - link [ref=e37] [cursor=pointer]:
+        - /url: "#about"
+  - generic [ref=e40]:
+    - generic [ref=e42]:
+      - generic:
+        - img
+        - img
+    - generic [ref=e43]:
+      - paragraph [ref=e44]: Información
+      - heading "Sobre mí" [level=2] [ref=e45]
+    - paragraph [ref=e46]: Soy estudiante de último año de Ingeniería en Sistemas y Ciencias de la Computación, con experiencia desarrollando y modernizando sistemas empresariales, módulos ERP/CRM y soluciones internas para operación. He trabajado en entornos donde el software debe ser estable, documentado y útil para áreas como compras, inventario, reportería, infraestructura y soporte operativo.
+    - paragraph [ref=e47]: Mi enfoque combina desarrollo full-stack, optimización SQL, administración de servidores Linux, contenedores Docker, automatización con IA y despliegues en AWS. Me interesa construir soluciones claras, mantenibles y bien documentadas, especialmente cuando conectan software, infraestructura y procesos de negocio.
+    - generic [ref=e48]:
+      - generic [ref=e51]:
+        - img "web-development" [ref=e52]
+        - heading "Full-Stack Developer" [level=3] [ref=e53]
+      - generic [ref=e56]:
+        - img "web-development" [ref=e57]
+        - heading "Cloud & DevOps" [level=3] [ref=e58]
+      - generic [ref=e61]:
+        - img "web-development" [ref=e62]
+        - heading "ERP / CRM Systems" [level=3] [ref=e63]
+      - generic [ref=e66]:
+        - img "web-development" [ref=e67]
+        - heading "AI & Automation" [level=3] [ref=e68]
+  - generic [ref=e69]:
+    - generic [ref=e71]:
+      - generic:
+        - img
+        - img
+    - generic [ref=e72]:
+      - paragraph [ref=e73]: Áreas de experiencia
+      - heading "Experiencia técnica validada" [level=2] [ref=e74]
+    - paragraph [ref=e75]: "Estas áreas resumen el tipo de problemas técnicos en los que he trabajado: modernización de sistemas, infraestructura cloud, automatización, continuidad operativa y desarrollo de soluciones empresariales."
+    - generic [ref=e76]:
+      - generic [ref=e79]:
+        - heading "Cloud & DevOps" [level=3] [ref=e80]
+        - paragraph [ref=e81]: Despliegue y administración de soluciones en AWS, contenedores Docker, CI/CD con GitHub Actions, gestión IAM, CloudFront, ECS/ECR, EC2 y prácticas de mínimo privilegio.
+        - generic [ref=e82]:
+          - generic [ref=e83]: AWS
+          - generic [ref=e84]: Docker
+          - generic [ref=e85]: GitHub Actions
+          - generic [ref=e86]: IAM
+          - generic [ref=e87]: CloudFront
+          - generic [ref=e88]: ECS
+          - generic [ref=e89]: ECR
+          - generic [ref=e90]: EC2
+      - generic [ref=e93]:
+        - heading "Sistemas empresariales" [level=3] [ref=e94]
+        - paragraph [ref=e95]: Diseño y desarrollo de módulos ERP/CRM orientados a compras, requisiciones, inventario, reportería, aprobaciones y operación administrativa.
+        - generic [ref=e96]:
+          - generic [ref=e97]: ERP
+          - generic [ref=e98]: CRM
+          - generic [ref=e99]: SQL
+          - generic [ref=e100]: APIs REST
+          - generic [ref=e101]: Requisiciones
+          - generic [ref=e102]: Inventario
+          - generic [ref=e103]: Reportes
+      - generic [ref=e106]:
+        - heading "Infraestructura & continuidad" [level=3] [ref=e107]
+        - paragraph [ref=e108]: Administración de servidores Linux, respaldo de información, documentación técnica, bases de conocimiento, estrategias BCP/DRP y soporte a operación crítica.
+        - generic [ref=e109]:
+          - generic [ref=e110]: Linux
+          - generic [ref=e111]: BCP/DRP
+          - generic [ref=e112]: Backups 3-2-1
+          - generic [ref=e113]: NAS
+          - generic [ref=e114]: Documentación
+          - generic [ref=e115]: Power BI
+  - generic [ref=e116]:
+    - generic [ref=e118]:
+      - generic:
+        - img
+        - img
+    - generic [ref=e119]:
+      - paragraph [ref=e120]: Logros y responsabilidades
+      - heading "Experiencia" [level=2] [ref=e121]
+  - generic [ref=e128]:
+    - generic [ref=e130]:
+      - generic:
+        - img
+        - img
+    - generic [ref=e131]:
+      - paragraph [ref=e132]: Stack tecnológico
+      - heading "Tecnologías" [level=2] [ref=e133]
+    - paragraph [ref=e134]: Tecnologías con las que he trabajado en producción, proyectos personales y laboratorio técnico.
+    - generic [ref=e135]:
+      - paragraph [ref=e154]: 17.91%
+      - paragraph [ref=e161]: 17.91%
+      - paragraph [ref=e168]: 17.91%
+      - paragraph [ref=e175]: 17.91%
+      - paragraph [ref=e182]: 17.91%
+    - generic [ref=e183]:
+      - generic [ref=e184]:
+        - generic [ref=e185]:
+          - img [ref=e187]
+          - heading "Frontend" [level=3] [ref=e189]
+        - generic [ref=e190]:
+          - generic [ref=e191]:
+            - img [ref=e192]
+            - generic [ref=e194]: React
+          - generic [ref=e195]:
+            - img [ref=e196]
+            - generic [ref=e199]: Vite
+          - generic [ref=e200]:
+            - img [ref=e201]
+            - generic [ref=e203]: JavaScript
+          - generic [ref=e204]:
+            - img [ref=e205]
+            - generic [ref=e207]: TypeScript
+          - generic [ref=e208]:
+            - img [ref=e209]
+            - generic [ref=e211]: Tailwind
+          - generic [ref=e212]:
+            - img [ref=e213]
+            - generic [ref=e215]: Three.js
+      - generic [ref=e216]:
+        - generic [ref=e217]:
+          - img [ref=e219]
+          - heading "Backend & APIs" [level=3] [ref=e222]
+        - generic [ref=e223]:
+          - generic [ref=e224]:
+            - img [ref=e225]
+            - generic [ref=e227]: Node.js
+          - generic [ref=e228]:
+            - img [ref=e229]
+            - generic [ref=e231]: Laravel
+          - generic [ref=e232]:
+            - img [ref=e233]
+            - generic [ref=e235]: PHP
+          - generic [ref=e236]:
+            - img [ref=e237]
+            - generic [ref=e239]: Java
+          - generic [ref=e240]:
+            - img [ref=e241]
+            - generic [ref=e244]: REST APIs
+          - generic [ref=e245]:
+            - img [ref=e246]
+            - generic [ref=e250]: SQL
+      - generic [ref=e251]:
+        - generic [ref=e252]:
+          - img [ref=e254]
+          - heading "Cloud & DevOps" [level=3] [ref=e256]
+        - generic [ref=e257]:
+          - generic [ref=e258]:
+            - img [ref=e259]
+            - generic [ref=e261]: AWS
+          - generic [ref=e262]:
+            - img [ref=e263]
+            - generic [ref=e265]: Docker
+          - generic [ref=e266]:
+            - img [ref=e267]
+            - generic [ref=e269]: GitHub Actions
+          - generic [ref=e270]:
+            - img [ref=e271]
+            - generic [ref=e273]: Linux
+          - generic [ref=e274]:
+            - img [ref=e275]
+            - generic [ref=e277]: IAM
+          - generic [ref=e278]:
+            - img [ref=e279]
+            - generic [ref=e281]: CloudFront
+      - generic [ref=e282]:
+        - generic [ref=e283]:
+          - img [ref=e285]
+          - heading "Data & BI" [level=3] [ref=e286]
+        - generic [ref=e287]:
+          - generic [ref=e288]:
+            - img [ref=e289]
+            - generic [ref=e293]: SQL
+          - generic [ref=e294]:
+            - img [ref=e295]
+            - generic [ref=e296]: Power BI
+          - generic [ref=e297]:
+            - img [ref=e298]
+            - generic [ref=e302]: ETL
+          - generic [ref=e303]:
+            - img [ref=e304]
+            - generic [ref=e307]: Stored Procedures
+          - generic [ref=e308]:
+            - img [ref=e309]
+            - generic [ref=e310]: Reporting
+      - generic [ref=e311]:
+        - generic [ref=e312]:
+          - img [ref=e314]
+          - heading "AI & Automation" [level=3] [ref=e316]
+        - generic [ref=e317]:
+          - generic [ref=e318]:
+            - img [ref=e319]
+            - generic [ref=e326]: LLMs
+          - generic [ref=e327]:
+            - img [ref=e328]
+            - generic [ref=e330]: Agentes internos
+          - generic [ref=e331]:
+            - img [ref=e332]
+            - generic [ref=e335]: Automatización documental
+          - generic [ref=e336]:
+            - img [ref=e337]
+            - generic [ref=e341]: Flujos asistidos
+  - generic [ref=e342]:
+    - generic [ref=e344]:
+      - generic:
+        - img
+        - img
+    - generic [ref=e345]:
+      - paragraph [ref=e346]: Evidencia técnica
+      - heading "Casos de estudio y proyectos" [level=2] [ref=e347]
+    - paragraph [ref=e349]: "Estos proyectos muestran diferentes etapas de mi experiencia: desde sistemas empresariales y arquitectura cloud hasta proyectos iniciales que forman parte de mi base técnica."
+    - generic [ref=e350]:
+      - heading "Proyectos profesionales / arquitectura" [level=3] [ref=e351]
+      - generic [ref=e352]:
+        - generic [ref=e354]:
+          - img "project_image" [ref=e356]
+          - generic [ref=e357]:
+            - heading "Portafolio AWS Serverless" [level=3] [ref=e358]
+            - paragraph [ref=e359]: Portafolio profesional desplegado en AWS con frontend estático en S3 privado, distribución por CloudFront, Origin Access Control y protección a nivel de aplicación mediante WAF. El proyecto evoluciona hacia una arquitectura cloud-native con backend serverless e infraestructura como código.
+          - generic [ref=e360]:
+            - paragraph [ref=e361]: "#React"
+            - paragraph [ref=e362]: "#Vite"
+            - paragraph [ref=e363]: "#AWS S3"
+            - paragraph [ref=e364]: "#CloudFront"
+            - paragraph [ref=e365]: "#OAC"
+            - paragraph [ref=e366]: "#WAF"
+            - paragraph [ref=e367]: "#CI/CD"
+        - generic [ref=e369]:
+          - img "project_image" [ref=e371]
+          - generic [ref=e372]:
+            - heading "Mini ERP Cloud-Native para PyME" [level=3] [ref=e373]
+            - paragraph [ref=e374]: Caso de estudio en desarrollo para demostrar un sistema empresarial pequeño, limpio y documentado con login por roles, requisiciones, aprobaciones, inventario, dashboard, API REST, reportes, CI/CD e infraestructura en AWS.
+          - generic [ref=e375]:
+            - paragraph [ref=e376]: "#React"
+            - paragraph [ref=e377]: "#Node.js"
+            - paragraph [ref=e378]: "#AWS Lambda"
+            - paragraph [ref=e379]: "#API Gateway"
+            - paragraph [ref=e380]: "#DynamoDB"
+            - paragraph [ref=e381]: "#Terraform"
+            - paragraph [ref=e382]: "#GitHub Actions"
+        - generic [ref=e384]:
+          - img "project_image" [ref=e386]
+          - generic [ref=e387]:
+            - heading "ERP / Requisiciones / Compras" [level=3] [ref=e388]
+            - paragraph [ref=e389]: Experiencia aplicada en modernización y mejora de módulos ERP orientados a compras, requisiciones, flujos de aprobación, reportería y optimización de consultas SQL.
+          - generic [ref=e390]:
+            - paragraph [ref=e391]: "#PHP"
+            - paragraph [ref=e392]: "#JavaScript"
+            - paragraph [ref=e393]: "#SQL"
+            - paragraph [ref=e394]: "#MVC"
+            - paragraph [ref=e395]: "#Power BI"
+            - paragraph [ref=e396]: "#Linux"
+    - generic [ref=e397]:
+      - heading "Proyectos iniciales / académicos" [level=3] [ref=e398]
+      - generic [ref=e399]:
+        - generic [ref=e401]:
+          - generic [ref=e402]:
+            - img "project_image" [ref=e403]
+            - img "source code" [ref=e406] [cursor=pointer]
+          - generic [ref=e407]:
+            - heading "Inventario (Java EE)" [level=3] [ref=e408]
+            - paragraph [ref=e409]: Sistema web para gestión de inventarios de proveedores desarrollado con Java EE, PrimeFaces y MySQL sobre servidor GlassFish.
+          - generic [ref=e410]:
+            - paragraph [ref=e411]: "#PrimeFaces"
+            - paragraph [ref=e412]: "#MySQL"
+            - paragraph [ref=e413]: "#Java EE"
+        - generic [ref=e415]:
+          - generic [ref=e416]:
+            - img "project_image" [ref=e417]
+            - img "source code" [ref=e420] [cursor=pointer]
+          - generic [ref=e421]:
+            - heading "HTML + CSS + JavaScript" [level=3] [ref=e422]
+            - paragraph [ref=e423]: Página web con HTML, CSS y JavaScript nativo. Incluye maquetación y animaciones básicas.
+          - generic [ref=e424]:
+            - paragraph [ref=e425]: "#HTML"
+            - paragraph [ref=e426]: "#CSS"
+            - paragraph [ref=e427]: "#JavaScript"
+        - generic [ref=e429]:
+          - generic [ref=e430]:
+            - img "project_image" [ref=e431]
+            - img "source code" [ref=e434] [cursor=pointer]
+          - generic [ref=e435]:
+            - heading "Java Base App" [level=3] [ref=e436]
+            - paragraph [ref=e437]: Aplicación Java de escritorio para visualización y modificación de datos desde archivos Excel con estructura de árbol.
+          - paragraph [ref=e439]: "#Java"
+        - generic [ref=e441]:
+          - generic [ref=e442]:
+            - img "project_image" [ref=e443]
+            - img "source code" [ref=e446] [cursor=pointer]
+          - generic [ref=e447]:
+            - heading "CRUD en Node.js" [level=3] [ref=e448]
+            - paragraph [ref=e449]: API REST construida con Node.js, PHP y jQuery para operaciones CRUD con integración frontend-backend.
+          - generic [ref=e450]:
+            - paragraph [ref=e451]: "#PHP"
+            - paragraph [ref=e452]: "#jQuery"
+            - paragraph [ref=e453]: "#Bootstrap"
+            - paragraph [ref=e454]: "#Node.js"
+        - generic [ref=e456]:
+          - generic [ref=e457]:
+            - img "project_image" [ref=e458]
+            - img "source code" [ref=e461] [cursor=pointer]
+          - generic [ref=e462]:
+            - heading "Modelado 3D Web" [level=3] [ref=e463]
+            - paragraph [ref=e464]: Aplicación web para modelado y previsualización de productos 3D utilizando Next.js, Three.js, React Three Fiber y Drei.
+          - generic [ref=e465]:
+            - paragraph [ref=e466]: "#Next.js"
+            - paragraph [ref=e467]: "#Three.js"
+            - paragraph [ref=e468]: "#React Three Fiber"
+            - paragraph [ref=e469]: "#Drei"
+            - paragraph [ref=e470]: "#Tailwind CSS"
+  - generic [ref=e471]:
+    - generic [ref=e473]:
+      - generic:
+        - img
+        - img
+    - generic [ref=e474]:
+      - generic [ref=e475]:
+        - generic [ref=e476]:
+          - paragraph [ref=e477]: Criterio técnico
+          - heading "Decisiones técnicas" [level=2] [ref=e478]
+        - paragraph [ref=e479]: Más que mostrar solo tecnologías, este portafolio documenta decisiones de arquitectura, despliegue y mantenimiento tomadas para construir soluciones más estables, seguras y fáciles de evolucionar.
+      - generic [ref=e480]:
+        - generic [ref=e481]:
+          - paragraph [ref=e482]: </>
+          - generic [ref=e483]:
+            - paragraph [ref=e484]: Frontend desacoplado y distribuido por CDN
+            - paragraph [ref=e485]: El portafolio utiliza una SPA en React/Vite con assets estáticos distribuidos mediante CloudFront, separando la capa visual de futuras APIs o servicios backend.
+        - generic [ref=e486]:
+          - paragraph [ref=e487]: </>
+          - generic [ref=e488]:
+            - paragraph [ref=e489]: Arquitectura preparada para serverless
+            - paragraph [ref=e490]: La evolución del proyecto contempla API Gateway, Lambda y DynamoDB para agregar funciones de Mini ERP/CRM Lite sin administrar servidores directamente.
+        - generic [ref=e491]:
+          - paragraph [ref=e492]: </>
+          - generic [ref=e493]:
+            - paragraph [ref=e494]: IaC y CI/CD como evidencia técnica
+            - paragraph [ref=e495]: La infraestructura será documentada y versionada con Terraform, mientras que los despliegues se automatizarán con GitHub Actions y OIDC para evitar credenciales estáticas.
+        - generic [ref=e496]:
+          - paragraph [ref=e497]: </>
+          - generic [ref=e498]:
+            - paragraph [ref=e499]: Documentación como parte del producto
+            - paragraph [ref=e500]: El proyecto incluirá README técnico, diagramas, decisiones de arquitectura y guías de despliegue para que el código pueda ser entendido y auditado fácilmente.
+  - generic [ref=e501]:
+    - generic [ref=e503]:
+      - generic:
+        - img
+        - img
+    - generic [ref=e504]:
+      - paragraph [ref=e505]: Cloud architecture
+      - heading "Arquitectura AWS" [level=2] [ref=e506]
+    - paragraph [ref=e507]: Este portafolio no solo funciona como presentación profesional; también evoluciona como laboratorio cloud para demostrar despliegue, seguridad, automatización e infraestructura como código.
+    - generic [ref=e508]:
+      - generic [ref=e510]:
+        - heading "Arquitectura actual" [level=3] [ref=e511]
+        - paragraph [ref=e512]: Frontend React/Vite desplegado como sitio estático, distribuido mediante Amazon CloudFront desde un origen S3 privado con Origin Access Control. La capa de seguridad puede complementarse con AWS WAF para protección a nivel de aplicación.
+        - generic [ref=e513]:
+          - generic:
+            - generic:
+              - img
+            - generic: Usuario
+          - img [ref=e515]
+          - generic:
+            - generic:
+              - img
+            - generic: CloudFront
+          - img [ref=e518]
+          - generic:
+            - generic:
+              - img
+            - generic: S3 privado + OAC
+          - img [ref=e521]
+          - generic:
+            - generic:
+              - img
+            - generic: WAF
+          - img [ref=e524]
+          - generic:
+            - generic:
+              - img
+            - generic: React/Vite SPA
+        - generic [ref=e526]:
+          - generic [ref=e527]: S3
+          - generic [ref=e528]: CloudFront
+          - generic [ref=e529]: OAC
+          - generic [ref=e530]: WAF
+          - generic [ref=e531]: React
+          - generic [ref=e532]: Vite
+      - generic [ref=e534]:
+        - heading "Evolución serverless" [level=3] [ref=e535]
+        - paragraph [ref=e536]: La siguiente fase agregará una API serverless para un Mini ERP/CRM Lite, usando API Gateway, Lambda, DynamoDB, CloudWatch, IAM y despliegue automatizado con GitHub Actions OIDC.
+        - generic [ref=e537]:
+          - generic:
+            - generic:
+              - img
+            - generic: Usuario
+          - img [ref=e539]
+          - generic:
+            - generic:
+              - img
+            - generic: CloudFront
+          - img [ref=e542]
+          - generic:
+            - generic:
+              - img
+            - generic: S3
+          - img [ref=e545]
+          - generic:
+            - generic:
+              - img
+            - generic: API Gateway
+          - img [ref=e548]
+          - generic:
+            - generic:
+              - img
+            - generic: Lambda
+          - img [ref=e551]
+          - generic:
+            - generic:
+              - img
+            - generic: DynamoDB
+          - img [ref=e554]
+          - generic:
+            - generic:
+              - img
+            - generic: CloudWatch
+          - img [ref=e557]
+          - generic:
+            - generic:
+              - img
+            - generic: GitHub Actions
+          - img [ref=e560]
+          - generic:
+            - generic:
+              - img
+            - generic: Terraform
+        - generic [ref=e562]:
+          - generic [ref=e563]: API Gateway
+          - generic [ref=e564]: Lambda
+          - generic [ref=e565]: DynamoDB
+          - generic [ref=e566]: IAM
+          - generic [ref=e567]: CloudWatch
+          - generic [ref=e568]: Terraform
+          - generic [ref=e569]: GitHub Actions
+      - generic [ref=e571]:
+        - heading "Objetivo técnico" [level=3] [ref=e572]
+        - paragraph [ref=e573]: Demostrar una solución pequeña, documentada y mantenible que valide conocimientos de frontend, backend, cloud, seguridad, CI/CD, infraestructura como código y arquitectura empresarial.
+        - generic [ref=e574]:
+          - generic:
+            - generic:
+              - img
+            - generic: Frontend
+          - img [ref=e576]
+          - generic:
+            - generic:
+              - img
+            - generic: Backend
+          - img [ref=e579]
+          - generic:
+            - generic:
+              - img
+            - generic: Cloud
+          - img [ref=e582]
+          - generic:
+            - generic:
+              - img
+            - generic: Seguridad
+          - img [ref=e585]
+          - generic:
+            - generic:
+              - img
+            - generic: CI/CD
+          - img [ref=e588]
+          - generic:
+            - generic:
+              - img
+            - generic: IaC
+  - generic [ref=e591]:
+    - generic [ref=e593]:
+      - generic:
+        - img
+        - img
+    - generic [ref=e594]:
+      - generic [ref=e595]:
+        - paragraph [ref=e596]: Ponte en contacto
+        - heading "Contacto" [level=3] [ref=e597]
+        - generic [ref=e598]:
+          - generic [ref=e599]:
+            - generic [ref=e600]: Tu nombre
+            - textbox "Tu nombre" [ref=e601]:
+              - /placeholder: ¿Cuál es tu nombre?
+          - generic [ref=e602]:
+            - generic [ref=e603]: Tu e-mail
+            - textbox "Tu e-mail" [ref=e604]:
+              - /placeholder: ¿Cuál es tu correo electrónico?
+          - generic [ref=e605]:
+            - generic [ref=e606]: Tu mensaje
+            - textbox "Tu mensaje" [ref=e607]:
+              - /placeholder: ¿En qué puedo ayudarte?
+          - button "Enviar" [ref=e608] [cursor=pointer]
+      - paragraph [ref=e615]: 17.91%

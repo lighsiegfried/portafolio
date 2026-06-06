@@ -1,0 +1,21 @@
+{
+  "name": "mini-erp-backend",
+  "version": "1.0.0",
+  "description": "Mini ERP / CRM Lite — Backend serverless para portafolio profesional",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "node --watch src/local-server.js",
+    "start": "node src/local-server.js",
+    "test": "node --test tests/smoke.test.js",
+    "seed": "node scripts/seed-demo.js"
+  },
+  "keywords": ["erp", "crm", "serverless", "aws", "lambda"],
+  "license": "MIT",
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.700.0",
+    "@aws-sdk/lib-dynamodb": "^3.700.0",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "json2csv": "^6.0.0-alpha.2"
+  }
+}

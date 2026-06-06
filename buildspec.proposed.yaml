@@ -1,0 +1,26 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 24.16.0
+    commands:
+      - echo "Instalando dependencias del frontend..."
+      - cd apps/frontend
+      - npm install
+  build:
+    commands:
+      - echo "Compilando frontend..."
+      - npm run build
+  post_build:
+    commands:
+      - echo "Contenido del workspace:"
+      - ls -lah
+      - echo "Contenido de dist:"
+      - ls -lah apps/frontend/dist || true
+      - echo "Desplegando en S3..."
+      - aws s3 sync apps/frontend/dist/ s3://wilsonvasquezcv/ --delete
+artifacts:
+  files:
+    - '**/*'
+  base-directory: apps/frontend/dist
