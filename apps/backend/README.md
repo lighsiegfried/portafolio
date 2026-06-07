@@ -16,11 +16,28 @@ Parte del portafolio profesional de Wilson Vásquez para validar habilidades clo
 | **CSV** | json2csv |
 | **UUID** | crypto.randomUUID() (nativo) |
 
-## Estado actual — Fase 3 completada
+## Estado actual — Fase 4 completada
 
 El backend cuenta con una **capa de abstracción de persistencia** que permite alternar entre mock en memoria (desarrollo) y DynamoDB (cloud) mediante la variable `DATA_SOURCE`.
 
 Actualmente funciona en modo `mock` por defecto. El modo `dynamodb` está implementado pero requiere tablas reales desplegadas vía Terraform.
+
+### Conjunto de datos demo
+
+| Entidad | Registros | Detalle |
+|---------|-----------|---------|
+| Usuarios | 4 | admin, compras, bodega, gerencia |
+| Productos | 12 | 5 categorías: insumo, materia_prima, equipo, servicio, oficina |
+| Requisiciones | 10 | 4 estados: pending (3), approved (3), rejected (1), completed (3) |
+| Items de Requisición | 25 | Distribuidos en las 10 requisiciones |
+| Movimientos de Inventario | 20 | IN inicial (12) + consumo OUT (8) |
+| Leads | 10 | 5 estados: new (2), in_contact (2), negotiation (2), won (2), lost (2) |
+| Notas de Leads | 17 | Asociadas a los 10 leads |
+| Eventos de Auditoría | 0 | Poblados en tiempo de ejecución por auditService |
+
+**Total: 98+ registros semilla.**
+
+Bajo stock (`stock <= minStock`): P2 (azúcar: 5 ≤ 15), P6 (cobre: 2 ≤ 25), P9 (servicio: 1 ≤ 0), P11 (papel: 7 ≤ 10), P12 (tóner: 4 ≤ 5).
 
 ## Estructura
 
@@ -72,8 +89,9 @@ npm run dev
 |---------|-------------|
 | `npm run dev` | Inicia servidor local con recarga automática (puerto 3001) |
 | `npm start` | Inicia servidor local |
-| `npm test` | Ejecuta tests smoke (111 tests) |
-| `npm run seed` | Muestra los datos demo cargados |
+| `npm test` | Ejecuta tests smoke (133 tests) |
+| `npm run seed` | Muestra los datos demo cargados (con validación) |
+| `npm run seed:validate` | Valida consistencia de datos seed (referencias, duplicados, fechas) |
 
 ## API — Formato de respuesta
 
@@ -178,6 +196,22 @@ Todas las respuestas siguen el formato:
 | `compras1` | `compras1234` | Compras |
 | `bodega1` | `bodega1234` | Bodega |
 | `gerencia1` | `gerencia1234` | Gerencia |
+
+## Validación de datos seed
+
+Los datos demo incluyen un validador de consistencia que verifica:
+
+- **Referencias**: todo `createdBy`, `approvedBy`, `completedBy` → usuario existente; `productId` → producto existente; `requisitionId` → requisición existente; `leadId` → lead existente
+- **Duplicados**: SKU de productos, username de usuarios, número de requisición
+- **Valores válidos**: estados (pending/approved/rejected/completed, new/in_contact/negotiation/won/lost), roles (admin/compras/bodega/gerencia), tipos de movimiento (IN/OUT)
+- **Stock**: stock y movimientos sin valores negativos
+- **Fechas**: formato ISO válido donde se requiera
+
+Ejecutar: `npm run seed:validate`
+
+## Seguridad del seed
+
+El script `seed-demo.js` previene escritura accidental en DynamoDB: requiere `DATA_SOURCE=dynamodb` Y `ALLOW_DYNAMODB_SEED=true`. En modo mock solo muestra los datos sin afectar almacenamiento persistente.
 
 ## Ejemplos curl
 

@@ -1139,4 +1139,186 @@ describe('Mini ERP Backend — Smoke Tests', () => {
       assert.ok(body.pagination);
     });
   });
+
+  describe('Phase 4 — Seed Data Validation', () => {
+    it('should validate seed data with zero errors', () => {
+      const { validateSeedData } = require('../src/data/validateSeed');
+      const seed = require('../src/data/seed');
+      const errors = validateSeedData(seed);
+      assert.strictEqual(errors.length, 0, JSON.stringify(errors.slice(0, 5)));
+    });
+
+    it('should validate fresh seed data with zero errors', () => {
+      const { validateSeedData } = require('../src/data/validateSeed');
+      const seed = require('../src/data/seed');
+      const errors = validateSeedData(seed);
+      assert.strictEqual(errors.length, 0, JSON.stringify(errors.slice(0, 5)));
+    });
+
+    it('should detect missing fields in invalid data', () => {
+      const { validateSeedData } = require('../src/data/validateSeed');
+      const badData = {
+        users: [{ id: 'abc', username: 'test' }],
+        products: [],
+        requisitions: [],
+        requisitionItems: [],
+        inventoryMovements: [],
+        leads: [],
+        leadNotes: [],
+        auditEvents: [],
+      };
+      const errors = validateSeedData(badData);
+      assert.ok(errors.length > 0);
+      assert.ok(errors.some((e) => e.type === 'INVALID' && e.field === 'id'));
+    });
+
+    it('should detect invalid product stock', () => {
+      const { validateSeedData } = require('../src/data/validateSeed');
+      const badData = {
+        users: [],
+        products: [{ id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', sku: 'TEST', name: 'Test', stock: -5, category: 'insumo' }],
+        requisitions: [],
+        requisitionItems: [],
+        inventoryMovements: [],
+        leads: [],
+        leadNotes: [],
+        auditEvents: [],
+      };
+      const errors = validateSeedData(badData);
+      assert.ok(errors.some((e) => e.field === 'stock' && e.value === -5));
+    });
+  });
+
+  describe('Phase 4 — Expanded Dataset Counts', () => {
+    it('should have 12 products in seed', () => {
+      const seed = require('../src/data/seed');
+      assert.strictEqual(seed.products.length, 12);
+    });
+
+    it('should have 10 requisitions in seed', () => {
+      const seed = require('../src/data/seed');
+      assert.strictEqual(seed.requisitions.length, 10);
+    });
+
+    it('should have 25 requisition items in seed', () => {
+      const seed = require('../src/data/seed');
+      assert.strictEqual(seed.requisitionItems.length, 25);
+    });
+
+    it('should have 20 inventory movements in seed', () => {
+      const seed = require('../src/data/seed');
+      assert.strictEqual(seed.inventoryMovements.length, 20);
+    });
+
+    it('should have 10 leads in seed', () => {
+      const seed = require('../src/data/seed');
+      assert.strictEqual(seed.leads.length, 10);
+    });
+
+    it('should have 17 lead notes in seed', () => {
+      const seed = require('../src/data/seed');
+      assert.strictEqual(seed.leadNotes.length, 17);
+    });
+
+    it('should have 4 users in seed', () => {
+      const seed = require('../src/data/seed');
+      assert.strictEqual(seed.users.length, 4);
+    });
+  });
+
+  describe('Phase 4 — Cross-Entity References', () => {
+    it('should have all requisition createdBy referencing existing users', () => {
+      const seed = require('../src/data/seed');
+      const userIds = new Set(seed.users.map((u) => u.id));
+      seed.requisitions.forEach((r, i) => {
+        assert.ok(userIds.has(r.createdBy), `R${i} createdBy ${r.createdBy} not found`);
+      });
+    });
+
+    it('should have all approvedBy/completedBy referencing existing users', () => {
+      const seed = require('../src/data/seed');
+      const userIds = new Set(seed.users.map((u) => u.id));
+      seed.requisitions.forEach((r, i) => {
+        if (r.approvedBy) assert.ok(userIds.has(r.approvedBy), `R${i} approvedBy ${r.approvedBy} not found`);
+        if (r.completedBy) assert.ok(userIds.has(r.completedBy), `R${i} completedBy ${r.completedBy} not found`);
+      });
+    });
+
+    it('should have all requisitionItem requisitionId referencing existing requisitions', () => {
+      const seed = require('../src/data/seed');
+      const reqIds = new Set(seed.requisitions.map((r) => r.id));
+      seed.requisitionItems.forEach((item, i) => {
+        assert.ok(reqIds.has(item.requisitionId), `RI${i} requisitionId ${item.requisitionId} not found`);
+      });
+    });
+
+    it('should have all inventoryMovement productId referencing existing products', () => {
+      const seed = require('../src/data/seed');
+      const prodIds = new Set(seed.products.map((p) => p.id));
+      seed.inventoryMovements.forEach((m, i) => {
+        assert.ok(prodIds.has(m.productId), `IM${i} productId ${m.productId} not found`);
+      });
+    });
+
+    it('should have all lead assignedTo referencing existing users', () => {
+      const seed = require('../src/data/seed');
+      const userIds = new Set(seed.users.map((u) => u.id));
+      seed.leads.forEach((l, i) => {
+        if (l.assignedTo) assert.ok(userIds.has(l.assignedTo), `L${i} assignedTo ${l.assignedTo} not found`);
+      });
+    });
+
+    it('should have all leadNote leadId referencing existing leads', () => {
+      const seed = require('../src/data/seed');
+      const leadIds = new Set(seed.leads.map((l) => l.id));
+      seed.leadNotes.forEach((n, i) => {
+        assert.ok(leadIds.has(n.leadId), `LN${i} leadId ${n.leadId} not found`);
+      });
+    });
+  });
+
+  describe('Phase 4 — Dashboard with Expanded Data', () => {
+    it('should return summary with seed + test product counts', async () => {
+      const dashboard = require('../src/modules/dashboard/handler');
+      const result = await dashboard.summary({});
+      const body = JSON.parse(result.body);
+      assert.ok(body.data.totalProducts >= 12);
+    });
+
+    it('should return correct requisition status counts in dashboard', async () => {
+      const dashboard = require('../src/modules/dashboard/handler');
+      const result = await dashboard.summary({});
+      const body = JSON.parse(result.body);
+      assert.ok(body.data.totalRequisitions >= 10);
+      assert.ok(body.data.pendingRequisitions >= 3);
+      assert.ok(body.data.rejectedRequisitions >= 1);
+    });
+  });
+
+  describe('Phase 4 — Reports with Expanded Data', () => {
+    it('should export requisitions CSV with all rows', async () => {
+      const reports = require('../src/modules/reports/handler');
+      const result = await reports.exportRequisitions({});
+      assert.strictEqual(result.statusCode, 200);
+      const rows = result.body.trim().split('\n');
+      assert.ok(rows.length >= 11);
+      assert.ok(rows[0].includes('number'));
+    });
+
+    it('should export inventory CSV with all products', async () => {
+      const reports = require('../src/modules/reports/handler');
+      const result = await reports.exportInventory({});
+      assert.strictEqual(result.statusCode, 200);
+      const rows = result.body.trim().split('\n');
+      assert.ok(rows.length >= 13);
+    });
+
+    it('should export leads CSV with all leads', async () => {
+      const reports = require('../src/modules/reports/handler');
+      const result = await reports.exportLeads({});
+      assert.strictEqual(result.statusCode, 200);
+      const rows = result.body.trim().split('\n');
+      assert.ok(rows.length >= 11);
+    });
+  });
 });
