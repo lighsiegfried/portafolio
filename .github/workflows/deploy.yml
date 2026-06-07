@@ -1,0 +1,211 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        type: environment
+        default: production
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: us-east-1
+  AWS_ROLE_ARN: arn:aws:iam::383000882391:role/github-actions-deploy-role
+  FRONTEND_BUCKET: wilsonvasquezcvaws
+  CLOUDFRONT_DISTRIBUTION_ID: EZKTZCIB8U4LY
+  NODE_VERSION: "24.16.0"
+  TF_VERSION: "1.6.0"
+
+jobs:
+  validate:
+    name: Validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: |
+            apps/backend/package-lock.json
+            apps/frontend/package-lock.json
+
+      - name: Backend install
+        run: npm --prefix apps/backend ci
+
+      - name: Backend tests
+        run: npm --prefix apps/backend test
+
+      - name: Frontend install
+        run: npm --prefix apps/frontend ci
+
+      - name: Frontend build
+        run: npm --prefix apps/frontend run build
+
+  package-backend:
+    name: Package Backend
+    needs: [validate]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Backend install
+        run: npm --prefix apps/backend ci
+
+      - name: Build Lambda zip
+        run: npm --prefix apps/backend run build
+
+      - name: Upload Lambda zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: lambda-zip
+          path: apps/backend/dist/lambda.zip
+          retention-days: 1
+
+  terraform-plan:
+    name: Terraform Plan
+    needs: [validate, package-backend]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Download Lambda zip
+        uses: actions/download-artifact@v4
+        with:
+          name: lambda-zip
+          path: apps/backend/dist
+
+      - name: Terraform Init
+        run: terraform init
+        working-directory: infra/terraform
+
+      - name: Terraform Fmt Check
+        run: terraform fmt -check -recursive
+        working-directory: infra/terraform
+
+      - name: Terraform Validate
+        run: terraform validate
+        working-directory: infra/terraform
+
+      - name: Terraform Plan
+        run: |
+          terraform plan \
+            -var="create_frontend_bucket=false" \
+            -var="manage_cloudfront=false" \
+            -var="existing_frontend_bucket_name=${FRONTEND_BUCKET}" \
+            -var="existing_cloudfront_distribution_id=${CLOUDFRONT_DISTRIBUTION_ID}" \
+            -var="existing_cloudfront_domain=dxxrwydm6m8sc.cloudfront.net" \
+            -var="jwt_secret=${{ secrets.JWT_SECRET }}" \
+            -var="allowed_origins=https://dxxrwydm6m8sc.cloudfront.net" \
+            -var="environment=production" \
+            -var="project_name=portafolio" \
+            -out=tfplan
+        working-directory: infra/terraform
+
+      - name: Upload Terraform Plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan
+          path: infra/terraform/tfplan
+          retention-days: 1
+
+  # ⚠️ terraform apply está comentado intencionalmente.
+  # Se habilitará en una fase posterior con environment approval.
+  # terraform-apply:
+  #   name: Terraform Apply
+  #   needs: [terraform-plan]
+  #   runs-on: ubuntu-latest
+  #   environment: production
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v4
+  #
+  #     - name: Configure AWS credentials
+  #       uses: aws-actions/configure-aws-credentials@v4
+  #       with:
+  #         role-to-assume: ${{ env.AWS_ROLE_ARN }}
+  #         aws-region: ${{ env.AWS_REGION }}
+  #
+  #     - name: Setup Terraform
+  #       uses: hashicorp/setup-terraform@v3
+  #       with:
+  #         terraform_version: ${{ env.TF_VERSION }}
+  #
+  #     - name: Download Terraform Plan
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: tfplan
+  #         path: infra/terraform
+  #
+  #     - name: Download Lambda zip
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: lambda-zip
+  #         path: apps/backend/dist
+  #
+  #     - name: Terraform Init
+  #       run: terraform init
+  #       working-directory: infra/terraform
+  #
+  #     - name: Terraform Apply
+  #       run: terraform apply tfplan
+  #       working-directory: infra/terraform
+
+  deploy-frontend:
+    name: Deploy Frontend
+    needs: [validate]
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: apps/frontend/package-lock.json
+
+      - name: Frontend install
+        run: npm --prefix apps/frontend ci
+
+      - name: Frontend build
+        run: npm --prefix apps/frontend run build
+
+      - name: Sync to S3
+        run: aws s3 sync apps/frontend/dist s3://${{ env.FRONTEND_BUCKET }} --delete
+
+      - name: CloudFront invalidation
+        run: aws cloudfront create-invalidation --distribution-id ${{ env.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"

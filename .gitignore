@@ -11,15 +11,34 @@ node_modules
 apps/*/node_modules/
 dist
 apps/frontend/dist/
+apps/backend/dist/
+apps/backend/dist/lambda.zip
 dist-ssr
 *.local
 .env
-.env.local
-.env.*.local
+.env.*
+!.env.example
 .terraform/
 infra/terraform/.terraform/
 *.tfstate
-*.tfstate.backup
+*.tfstate.*
+*.tfplan
+tfplan
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Catch any .terraform dirs in subdirectories
+**/.terraform/
+
+# Terraform variable files with real values (never commit)
+*.auto.tfvars
+*.auto.tfvars.json
+terraform.tfvars
+terraform.tfvars.json
 
 # Editor directories and files
 .vscode/*

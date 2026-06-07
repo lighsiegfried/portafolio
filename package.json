@@ -11,6 +11,12 @@
     "dev": "npm --prefix apps/frontend run dev",
     "build": "npm --prefix apps/frontend run build",
     "preview": "npm --prefix apps/frontend run preview",
-    "check": "npm --prefix apps/frontend run build"
+    "check": "npm --prefix apps/frontend run build",
+    "build:frontend": "npm --prefix apps/frontend run build",
+    "dev:frontend": "npm --prefix apps/frontend run dev",
+    "build:backend": "npm --prefix apps/backend run build",
+    "test:backend": "npm --prefix apps/backend test",
+    "seed:backend": "npm --prefix apps/backend run seed",
+    "seed:validate": "npm --prefix apps/backend run seed:validate"
   }
 }

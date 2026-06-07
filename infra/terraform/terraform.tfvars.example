@@ -1,0 +1,46 @@
+# =============================================================================
+# REQUIRED — Project & environment identifiers
+# =============================================================================
+project_name           = "portafolio"
+environment            = "production"
+aws_region             = "us-east-1"
+
+# =============================================================================
+# Frontend infrastructure — existing resources (not managed by Terraform)
+# =============================================================================
+create_frontend_bucket = false
+manage_cloudfront      = false
+
+existing_frontend_bucket_name      = "wilsonvasquezcvaws"
+existing_cloudfront_distribution_id = "EZKTZCIB8U4LY"
+existing_cloudfront_domain          = "dxxrwydm6m8sc.cloudfront.net"
+
+# =============================================================================
+# API & Security
+# =============================================================================
+allowed_origins        = "https://wilsonvasquezcvaws.com,http://localhost:5173"
+jwt_secret             = "CHANGE_ME_USE_GITHUB_SECRET"
+jwt_expires_in         = "24h"
+
+# =============================================================================
+# Lambda & Logging
+# =============================================================================
+log_level              = "INFO"
+default_low_stock_threshold = 5
+lambda_zip_path        = "../../apps/backend/dist/lambda.zip"
+cloudwatch_log_retention_days = 7
+
+# =============================================================================
+# DynamoDB
+# =============================================================================
+enable_point_in_time_recovery = false
+
+# =============================================================================
+# Tags
+# =============================================================================
+common_tags = {
+  Project     = "Portafolio Mini ERP"
+  Environment = "production"
+  Owner       = "Wilson Vasquez"
+  ManagedBy   = "Terraform"
+}

@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "node --watch src/local-server.js",
     "start": "node src/local-server.js",
+    "build": "node scripts/build-lambda.js",
+    "package": "node scripts/build-lambda.js",
     "test": "node --test tests/smoke.test.js",
     "seed": "node scripts/seed-demo.js",
     "seed:validate": "node scripts/validate-seed.js"

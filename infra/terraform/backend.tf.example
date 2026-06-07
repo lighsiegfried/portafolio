@@ -1,0 +1,19 @@
+# backend.tf.example — Remote state backend configuration
+#
+# Copy this file to backend.tf when you are ready to use remote state:
+#   cp backend.tf.example backend.tf
+#
+# IMPORTANT:
+# - The S3 bucket for state MUST exist before running terraform init.
+# - See docs/aws-tfstate-bootstrap.md for instructions on creating the bucket.
+# - Do NOT commit backend.tf with real bucket names to Git (it's gitignored).
+# - Never store terraform.tfstate or tfplan in the repository.
+
+terraform {
+  backend "s3" {
+    bucket = "portafolio-production-tfstate-383000882391"
+    key    = "production/terraform.tfstate"
+    region = "us-east-1"
+    encrypt = true
+  }
+}
