@@ -227,9 +227,11 @@ jobs:
         working-directory: infra/terraform
 
       - name: Save API Gateway URL
+        id: save_api_url
         run: |
           API_URL=$(terraform output -raw api_gateway_url 2>/dev/null || echo "not_available")
           echo "API_GATEWAY_URL=$API_URL" >> $GITHUB_ENV
+          echo "api_url=$API_URL" >> $GITHUB_OUTPUT
         working-directory: infra/terraform
 
       - name: Show apply summary
@@ -238,7 +240,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Output | Value |" >> $GITHUB_STEP_SUMMARY
           echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
-          echo "| **API Gateway URL** | \`${{ env.API_GATEWAY_URL }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **API Gateway URL** | \`${{ steps.save_api_url.outputs.api_url }}\` |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Post-apply" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -275,9 +277,11 @@ jobs:
           cache-dependency-path: apps/frontend/package-lock.json
 
       - name: Set production API URL
+        id: set_api_url
         run: |
           if [ -n "${{ vars.VITE_API_BASE_URL_PRODUCTION }}" ]; then
             echo "VITE_API_BASE_URL=${{ vars.VITE_API_BASE_URL_PRODUCTION }}" >> $GITHUB_ENV
+            echo "api_url=${{ vars.VITE_API_BASE_URL_PRODUCTION }}" >> $GITHUB_OUTPUT
             echo "Using production API URL: ${{ vars.VITE_API_BASE_URL_PRODUCTION }}"
           else
             echo "⚠️ VITE_API_BASE_URL_PRODUCTION not set. Frontend will use fallback default."
@@ -290,7 +294,7 @@ jobs:
       - name: Frontend build
         run: npm --prefix apps/frontend run build
         env:
-          VITE_API_BASE_URL: ${{ env.VITE_API_BASE_URL }}
+          VITE_API_BASE_URL: ${{ steps.set_api_url.outputs.api_url }}
           VITE_DEMO_MODE: "false"
 
       - name: Sync to S3
