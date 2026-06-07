@@ -176,7 +176,7 @@ const projects = [
       {
         name: "Mini ERP Cloud-Native para PyME",
         description:
-          "Caso de estudio en desarrollo para demostrar un sistema empresarial pequeño, limpio y documentado con login por roles, requisiciones, aprobaciones, inventario, dashboard, API REST, reportes, CI/CD e infraestructura en AWS.",
+          "Sistema empresarial demo con login por roles, requisiciones, aprobaciones, inventario, dashboard, API REST, reportes CSV, CI/CD e infraestructura en AWS. Incluye dataset profesional, validacion de datos y 133 tests.",
         tags: [
           { name: "React", color: "blue-text-gradient" },
           { name: "Node.js", color: "green-text-gradient" },
@@ -188,6 +188,7 @@ const projects = [
         ],
         image: backend,
         source_code_link: "",
+        demo_link: "/mini-erp/login",
       },
       {
         name: "ERP / Requisiciones / Compras",

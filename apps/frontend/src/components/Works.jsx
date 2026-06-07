@@ -1,6 +1,7 @@
 import React from "react";
 import Tilt from "react-parallax-tilt";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 
 import { styles } from "../styles";
 import { github } from "../assets";
@@ -15,7 +16,9 @@ const ProjectCard = ({
   tags,
   image,
   source_code_link,
+  demo_link,
 }) => {
+  const navigate = useNavigate();
   return (
     <motion.div variants={fadeIn("up", "spring", index * 0.3, 0.75)}>
       <Tilt
@@ -32,8 +35,8 @@ const ProjectCard = ({
             className='w-full h-full object-cover rounded-2xl'
           />
 
-          {source_code_link && (
-            <div className='absolute inset-0 flex justify-end m-3 card-img_hover'>
+          <div className='absolute inset-0 flex justify-end m-3 card-img_hover gap-2'>
+            {source_code_link && (
               <div
                 onClick={() => window.open(source_code_link, "_blank")}
                 className='black-gradient w-10 h-10 rounded-full flex justify-center items-center cursor-pointer'
@@ -44,8 +47,17 @@ const ProjectCard = ({
                   className='w-1/2 h-1/2 object-contain'
                 />
               </div>
-            </div>
-          )}
+            )}
+            {demo_link && (
+              <div
+                onClick={() => navigate(demo_link)}
+                className='violet-gradient w-10 h-10 rounded-full flex justify-center items-center cursor-pointer'
+                title="Ver demo"
+              >
+                <span className='text-white text-xs font-bold'>&#9654;</span>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className='mt-5'>

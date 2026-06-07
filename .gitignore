@@ -40,3 +40,5 @@ docs
 AGENTS.md
 ARCHITECTURE.md
 PROJECT_CONTEXT.md
+apps/frontend/.playwright-mcp
+apps/frontend/e2e

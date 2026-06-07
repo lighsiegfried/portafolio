@@ -60,9 +60,12 @@ const Navbar = () => {
               } hover:text-white text-[18px] font-medium cursor-pointer`}
               onClick={() => setActive(nav.title)}
             >
-              <a href={`#${nav.id}`}>{nav.title}</a>
+              <a href={`/#${nav.id}`}>{nav.title}</a>
             </li>
           ))}
+          <li className="text-secondary hover:text-white text-[18px] font-medium cursor-pointer">
+            <Link to="/mini-erp/login">ERP Demo</Link>
+          </li>
         </ul>
 
         <div className='sm:hidden flex flex-1 justify-end items-center'>
@@ -90,9 +93,12 @@ const Navbar = () => {
                     setActive(nav.title);
                   }}
                 >
-                  <a href={`#${nav.id}`}>{nav.title}</a>
+                  <a href={`/#${nav.id}`}>{nav.title}</a>
                 </li>
               ))}
+              <li className="font-poppins font-medium cursor-pointer text-[16px] text-secondary">
+                <Link to="/mini-erp/login" onClick={() => setToggle(!toggle)}>ERP Demo</Link>
+              </li>
             </ul>
           </div>
         </div>
