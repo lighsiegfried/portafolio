@@ -1,3 +1,7 @@
+# WARNING: Frontend S3 bucket management is DISABLED by default.
+# Both `create_frontend_bucket` and `manage_cloudfront` default to `false`.
+# The existing bucket (wilsonvasquezcvaws) is managed outside Terraform.
+
 module "frontend_bucket" {
   source   = "./modules/s3_frontend"
   for_each = var.create_frontend_bucket ? { frontend = local.frontend_bucket_name } : {}

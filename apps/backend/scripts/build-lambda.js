@@ -8,6 +8,24 @@ const ZIP_NAME = 'lambda.zip';
 const ZIP_PATH = path.join(DIST_DIR, ZIP_NAME);
 const TMP_DIR = path.join(DIST_DIR, '_lambda_build');
 
+const EXCLUDE_PATTERNS = [
+  '.env',
+  '.env.example',
+  '.env.*',
+  '.gitkeep',
+  '*.test.js',
+  '__tests__',
+  'tests',
+  'docs',
+  'local-server.js',
+  'README.md',
+  'node_modules',
+  '.git',
+  '.gitignore',
+  '.terraform',
+  'terraform.tf*',
+];
+
 function removeDir(dir) {
   if (fs.existsSync(dir)) {
     fs.rmSync(dir, { recursive: true, force: true });
@@ -20,14 +38,31 @@ function ensureDir(dir) {
   }
 }
 
+function shouldExclude(name) {
+  return EXCLUDE_PATTERNS.some((pattern) => {
+    if (pattern.includes('*')) {
+      const regex = new RegExp('^' + pattern.replace(/\*/g, '.*') + '$');
+      return regex.test(name);
+    }
+    return name === pattern;
+  });
+}
+
 function copy(src, dest) {
   const stats = fs.statSync(src);
   if (stats.isDirectory()) {
     ensureDir(dest);
     for (const entry of fs.readdirSync(src)) {
+      if (shouldExclude(entry)) {
+        continue;
+      }
       copy(path.join(src, entry), path.join(dest, entry));
     }
   } else {
+    const base = path.basename(src);
+    if (shouldExclude(base)) {
+      return;
+    }
     fs.copyFileSync(src, dest);
   }
 }
@@ -58,8 +93,8 @@ function build() {
   const pkgJson = path.join(ROOT, 'package.json');
   const pkgLock = path.join(ROOT, 'package-lock.json');
 
-  console.log('  [1/4] Copiando src/ ...');
-  copy(srcDir, path.join(TMP_DIR, 'src'));
+  console.log('  [1/4] Copiando src/* a raíz del paquete ...');
+  copy(srcDir, TMP_DIR);
 
   console.log('  [2/4] Copiando package.json ...');
   fs.copyFileSync(pkgJson, path.join(TMP_DIR, 'package.json'));
@@ -70,7 +105,12 @@ function build() {
   }
 
   console.log('  [3/4] Instalando dependencias de producción ...');
-  execSync('npm ci --omit=dev --ignore-scripts', { cwd: TMP_DIR, stdio: 'inherit' });
+  try {
+    execSync('npm ci --omit=dev --ignore-scripts', { cwd: TMP_DIR, stdio: 'inherit' });
+  } catch {
+    console.log('  ⚠️  npm ci falló, usando npm install --omit=dev ...');
+    execSync('npm install --omit=dev --ignore-scripts', { cwd: TMP_DIR, stdio: 'inherit' });
+  }
 
   console.log('  [4/4] Empaquetando lambda.zip ...');
   ensureDir(DIST_DIR);

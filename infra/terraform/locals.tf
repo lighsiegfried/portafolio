@@ -57,6 +57,7 @@ locals {
       name     = "leads"
       hash_key = "id"
       gsis = [
+        { name = "status-index", hash_key = "status" },
         { name = "assignedTo-index", hash_key = "assignedTo" }
       ]
     },

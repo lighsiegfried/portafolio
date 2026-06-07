@@ -1,3 +1,7 @@
+# WARNING: CloudFront management is DISABLED by default.
+# `manage_cloudfront` defaults to `false`.
+# The existing CloudFront (EZKTZCIB8U4LY) is managed outside Terraform.
+
 resource "aws_cloudfront_origin_access_control" "main" {
   count = var.manage_cloudfront ? 1 : 0
 

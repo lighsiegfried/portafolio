@@ -1,13 +1,13 @@
 variable "project_name" {
   description = "Project name used for resource naming"
   type        = string
-  default     = "mini-erp"
+  default     = "portafolio"
 }
 
 variable "environment" {
-  description = "Deployment environment (dev, staging, prod)"
+  description = "Deployment environment (dev, staging, production)"
   type        = string
-  default     = "dev"
+  default     = "production"
 }
 
 variable "aws_region" {
@@ -19,13 +19,13 @@ variable "aws_region" {
 variable "create_frontend_bucket" {
   description = "Whether to create a new S3 bucket for frontend assets. Set false to use an existing bucket."
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "manage_cloudfront" {
   description = "Whether to manage CloudFront distribution via Terraform. Set false to use an existing distribution."
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "frontend_bucket_name" {
@@ -55,7 +55,7 @@ variable "existing_cloudfront_domain" {
 variable "allowed_origins" {
   description = "Comma-separated list of allowed CORS origins"
   type        = string
-  default     = "http://localhost:5173"
+  default     = "https://dxxrwydm6m8sc.cloudfront.net,http://localhost:5173"
 }
 
 variable "jwt_secret" {
@@ -67,19 +67,19 @@ variable "jwt_secret" {
 variable "jwt_expires_in" {
   description = "JWT token expiration duration"
   type        = string
-  default     = "7d"
+  default     = "24h"
 }
 
 variable "log_level" {
   description = "Lambda logging level (debug, info, warn, error)"
   type        = string
-  default     = "info"
+  default     = "INFO"
 }
 
 variable "default_low_stock_threshold" {
   description = "Default threshold for low stock alerts"
   type        = number
-  default     = 10
+  default     = 5
 }
 
 variable "lambda_zip_path" {
@@ -91,13 +91,13 @@ variable "lambda_zip_path" {
 variable "lambda_timeout" {
   description = "Lambda function timeout in seconds"
   type        = number
-  default     = 30
+  default     = 10
 }
 
 variable "lambda_memory_size" {
-  description = "Lambda function memory size in MB"
+  description = "Lambda function memory size in MB (Free Tier: 128 MB)"
   type        = number
-  default     = 256
+  default     = 128
 }
 
 variable "enable_point_in_time_recovery" {
@@ -109,11 +109,11 @@ variable "enable_point_in_time_recovery" {
 variable "cloudwatch_log_retention_days" {
   description = "CloudWatch log retention in days"
   type        = number
-  default     = 14
+  default     = 7
 }
 
 variable "domain_name" {
-  description = "Custom domain name for CloudFront (optional)"
+  description = "Custom domain name for CloudFront (not used in current phase — kept for future use)"
   type        = string
   default     = null
 }
@@ -122,8 +122,9 @@ variable "common_tags" {
   description = "Common tags applied to all resources"
   type        = map(string)
   default = {
-    Project     = "mini-erp"
-    ManagedBy   = "terraform"
-    Environment = "dev"
+    Project     = "Portafolio Mini ERP"
+    Environment = "production"
+    Owner       = "Wilson Vasquez"
+    ManagedBy   = "Terraform"
   }
 }

@@ -4,6 +4,25 @@ Backend serverless del Mini ERP / CRM Lite, construido con Node.js para AWS Lamb
 
 Parte del portafolio profesional de Wilson Vásquez para validar habilidades cloud, full-stack y ERP.
 
+## Lambda packaging
+
+```bash
+npm run build
+```
+
+Genera `dist/lambda.zip` (~3.2 MB) listo para desplegar en AWS Lambda.
+
+| Atributo | Valor |
+|----------|-------|
+| **Zip path** | `apps/backend/dist/lambda.zip` |
+| **Handler** | `index.handler` |
+| **Runtime** | `nodejs20.x` (Lambda), `24.16.0` (local dev) |
+| **Contenido** | `src/` → raíz del zip, `node_modules` (producción) |
+| **Excluido** | `.env`, `local-server.js`, tests, docs, `.gitkeep` |
+
+> **⚠️ No incluir secretos en el zip.** El script `build-lambda.js` excluye `.env` automáticamente.
+> El zip contiene solo dependencias de producción (`npm ci --omit=dev`).
+
 ## Stack
 
 | Capa | Tecnología |

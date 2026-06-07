@@ -1,0 +1,315 @@
+name: Deploy Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      deploy_backend:
+        description: Run terraform apply for backend infrastructure
+        type: boolean
+        default: false
+      deploy_frontend:
+        description: Deploy frontend to existing S3/CloudFront
+        type: boolean
+        default: false
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: us-east-1
+  AWS_ROLE_ARN: arn:aws:iam::383000882391:role/github-actions-deploy-role
+  TF_STATE_BUCKET: portafolio-production-tfstate-383000882391
+  TF_STATE_KEY: production/terraform.tfstate
+  FRONTEND_BUCKET: wilsonvasquezcvaws
+  CLOUDFRONT_DISTRIBUTION_ID: EZKTZCIB8U4LY
+  CLOUDFRONT_DOMAIN: dxxrwydm6m8sc.cloudfront.net
+  NODE_VERSION: "24.16.0"
+  TF_VERSION: "1.6.0"
+
+jobs:
+  validate-and-build:
+    name: Validate & Package
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: |
+            apps/backend/package-lock.json
+            apps/frontend/package-lock.json
+
+      - name: Backend npm ci
+        run: npm --prefix apps/backend ci
+
+      - name: Backend tests
+        run: npm --prefix apps/backend test
+
+      - name: Build Lambda zip
+        run: npm --prefix apps/backend run build
+
+      - name: Upload Lambda zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: lambda-zip
+          path: apps/backend/dist/lambda.zip
+          retention-days: 1
+
+      - name: Frontend npm ci
+        run: npm --prefix apps/frontend ci
+
+  terraform-plan:
+    name: Terraform Plan
+    needs: [validate-and-build]
+    runs-on: ubuntu-latest
+    outputs:
+      plan_exitcode: ${{ steps.plan.outputs.exitcode }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Create backend.tf for remote state
+        run: |
+          cat > infra/terraform/backend.tf << 'EOF'
+          terraform {
+            backend "s3" {
+              bucket  = "${{ env.TF_STATE_BUCKET }}"
+              key     = "${{ env.TF_STATE_KEY }}"
+              region  = "${{ env.AWS_REGION }}"
+              encrypt = true
+            }
+          }
+          EOF
+
+      - name: Download Lambda zip
+        uses: actions/download-artifact@v4
+        with:
+          name: lambda-zip
+          path: apps/backend/dist
+
+      - name: Terraform init
+        run: terraform init -input=false
+        working-directory: infra/terraform
+
+      - name: Terraform fmt check
+        run: terraform fmt -check -recursive
+        working-directory: infra/terraform
+
+      - name: Terraform validate
+        run: terraform validate
+        working-directory: infra/terraform
+
+      - name: Terraform plan
+        id: plan
+        shell: bash
+        run: |
+          set +e
+          terraform plan \
+            -input=false \
+            -var="project_name=portafolio" \
+            -var="environment=production" \
+            -var="aws_region=${{ env.AWS_REGION }}" \
+            -var="create_frontend_bucket=false" \
+            -var="manage_cloudfront=false" \
+            -var="existing_frontend_bucket_name=${{ env.FRONTEND_BUCKET }}" \
+            -var="existing_cloudfront_distribution_id=${{ env.CLOUDFRONT_DISTRIBUTION_ID }}" \
+            -var="existing_cloudfront_domain=${{ env.CLOUDFRONT_DOMAIN }}" \
+            -var="jwt_secret=${{ secrets.JWT_SECRET }}" \
+            -var="allowed_origins=https://${{ env.CLOUDFRONT_DOMAIN }},http://localhost:5173" \
+            -var="enable_point_in_time_recovery=false" \
+            -no-color \
+            2>&1 | tee plan-output.txt
+          PLAN_EXITCODE=${PIPESTATUS[0]}
+          echo "exitcode=$PLAN_EXITCODE" >> $GITHUB_OUTPUT
+          if [ "$PLAN_EXITCODE" -eq 2 ]; then
+            echo "✅ Plan shows changes (exit code 2) — approved for apply"
+          elif [ "$PLAN_EXITCODE" -ne 0 ]; then
+            echo "❌ Plan failed with exit code $PLAN_EXITCODE"
+            exit $PLAN_EXITCODE
+          fi
+        working-directory: infra/terraform
+
+      - name: Show plan summary
+        run: |
+          echo "## Terraform Plan Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          grep -E "^(Plan:|No changes.|Changes to:)" plan-output.txt >> $GITHUB_STEP_SUMMARY || true
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          tail -20 plan-output.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: Clean up backend.tf (prevent local drift)
+        if: always()
+        run: |
+          rm -f infra/terraform/backend.tf
+          rm -f plan-output.txt
+
+  terraform-apply:
+    name: Terraform Apply
+    needs: [terraform-plan]
+    if: github.event.inputs.deploy_backend == 'true'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Create backend.tf for remote state
+        run: |
+          cat > infra/terraform/backend.tf << 'EOF'
+          terraform {
+            backend "s3" {
+              bucket  = "${{ env.TF_STATE_BUCKET }}"
+              key     = "${{ env.TF_STATE_KEY }}"
+              region  = "${{ env.AWS_REGION }}"
+              encrypt = true
+            }
+          }
+          EOF
+
+      - name: Download Lambda zip
+        uses: actions/download-artifact@v4
+        with:
+          name: lambda-zip
+          path: apps/backend/dist
+
+      - name: Terraform init
+        run: terraform init -input=false
+        working-directory: infra/terraform
+
+      - name: Terraform apply
+        id: apply
+        run: |
+          terraform apply \
+            -auto-approve \
+            -input=false \
+            -var="project_name=portafolio" \
+            -var="environment=production" \
+            -var="aws_region=${{ env.AWS_REGION }}" \
+            -var="create_frontend_bucket=false" \
+            -var="manage_cloudfront=false" \
+            -var="existing_frontend_bucket_name=${{ env.FRONTEND_BUCKET }}" \
+            -var="existing_cloudfront_distribution_id=${{ env.CLOUDFRONT_DISTRIBUTION_ID }}" \
+            -var="existing_cloudfront_domain=${{ env.CLOUDFRONT_DOMAIN }}" \
+            -var="jwt_secret=${{ secrets.JWT_SECRET }}" \
+            -var="allowed_origins=https://${{ env.CLOUDFRONT_DOMAIN }},http://localhost:5173" \
+            -var="enable_point_in_time_recovery=false" \
+            -no-color \
+            2>&1 | tee apply-output.txt
+        working-directory: infra/terraform
+
+      - name: Save API Gateway URL
+        run: |
+          API_URL=$(terraform output -raw api_gateway_url 2>/dev/null || echo "not_available")
+          echo "API_GATEWAY_URL=$API_URL" >> $GITHUB_ENV
+        working-directory: infra/terraform
+
+      - name: Show apply summary
+        run: |
+          echo "## ✅ Terraform Apply Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Output | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| **API Gateway URL** | \`${{ env.API_GATEWAY_URL }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Post-apply" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Set the GitHub variable \`VITE_API_BASE_URL_PRODUCTION\` to the API Gateway URL above," >> $GITHUB_STEP_SUMMARY
+          echo "then run the workflow with \`deploy_frontend=true\` to update the frontend." >> $GITHUB_STEP_SUMMARY
+
+      - name: Clean up backend.tf
+        if: always()
+        run: |
+          rm -f infra/terraform/backend.tf
+          rm -f apply-output.txt
+
+  deploy-frontend:
+    name: Deploy Frontend
+    needs: [validate-and-build]
+    if: github.event.inputs.deploy_frontend == 'true'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: apps/frontend/package-lock.json
+
+      - name: Set production API URL
+        run: |
+          if [ -n "${{ vars.VITE_API_BASE_URL_PRODUCTION }}" ]; then
+            echo "VITE_API_BASE_URL=${{ vars.VITE_API_BASE_URL_PRODUCTION }}" >> $GITHUB_ENV
+            echo "Using production API URL: ${{ vars.VITE_API_BASE_URL_PRODUCTION }}"
+          else
+            echo "⚠️ VITE_API_BASE_URL_PRODUCTION not set. Frontend will use fallback default."
+            echo "After first backend deploy, set this variable in GitHub Settings → Secrets and variables → Actions."
+          fi
+
+      - name: Frontend npm ci
+        run: npm --prefix apps/frontend ci
+
+      - name: Frontend build
+        run: npm --prefix apps/frontend run build
+        env:
+          VITE_API_BASE_URL: ${{ env.VITE_API_BASE_URL }}
+          VITE_DEMO_MODE: "false"
+
+      - name: Sync to S3
+        run: |
+          aws s3 sync apps/frontend/dist s3://${{ env.FRONTEND_BUCKET }} --delete
+
+      - name: CloudFront invalidation
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ env.CLOUDFRONT_DISTRIBUTION_ID }} \
+            --paths "/*"
+
+      - name: Show deploy summary
+        run: |
+          echo "## ✅ Frontend Deployed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Resource | Detail |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| **S3 Bucket** | \`${{ env.FRONTEND_BUCKET }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **CloudFront ID** | \`${{ env.CLOUDFRONT_DISTRIBUTION_ID }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **CloudFront URL** | https://${{ env.CLOUDFRONT_DOMAIN }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **API Base** | ${{ env.VITE_API_BASE_URL || '(not set)' }} |" >> $GITHUB_STEP_SUMMARY

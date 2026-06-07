@@ -55,11 +55,6 @@ variable "tags" {
   default     = {}
 }
 
-variable "source_account_id" {
-  description = "AWS account ID for resource policies"
-  type        = string
-}
-
 resource "aws_iam_role" "lambda" {
   name = "${var.function_name}-role"
 

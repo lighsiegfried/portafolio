@@ -1,3 +1,6 @@
+# Lambda runtime: nodejs20.x (AWS Lambda latest stable LTS)
+# Local dev uses Node 24.16.0, but Lambda runtime must match AWS availability.
+# See: https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtimes.html
 module "api_lambda" {
   source = "./modules/lambda_function"
 
@@ -11,7 +14,6 @@ module "api_lambda" {
   log_group_name        = local.log_group_name
   log_retention_days    = var.cloudwatch_log_retention_days
   tags                  = var.common_tags
-  source_account_id     = data.aws_caller_identity.current.account_id
 }
 
 data "aws_caller_identity" "current" {}
