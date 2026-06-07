@@ -25,7 +25,7 @@ env:
   CLOUDFRONT_DISTRIBUTION_ID: EZKTZCIB8U4LY
   CLOUDFRONT_DOMAIN: dxxrwydm6m8sc.cloudfront.net
   NODE_VERSION: "24.16.0"
-  TF_VERSION: "1.6.0"
+  TF_VERSION: "1.15.5"
 
 jobs:
   validate-and-build:
@@ -103,8 +103,8 @@ jobs:
           name: lambda-zip
           path: apps/backend/dist
 
-      - name: Terraform init
-        run: terraform init -input=false
+      - name: Terraform init (upgrade to bypass expired key)
+        run: terraform init -upgrade -input=false
         working-directory: infra/terraform
 
       - name: Terraform fmt check
@@ -201,8 +201,8 @@ jobs:
           name: lambda-zip
           path: apps/backend/dist
 
-      - name: Terraform init
-        run: terraform init -input=false
+      - name: Terraform init (upgrade to bypass expired key)
+        run: terraform init -upgrade -input=false
         working-directory: infra/terraform
 
       - name: Terraform apply
