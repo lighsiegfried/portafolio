@@ -119,7 +119,7 @@ jobs:
         id: plan
         shell: bash
         run: |
-          set +e
+          set +e -o pipefail
           terraform plan \
             -input=false \
             -var="project_name=portafolio" \
@@ -147,19 +147,26 @@ jobs:
 
       - name: Show plan summary
         run: |
+          PLAN_OUTPUT="infra/terraform/plan-output.txt"
           echo "## Terraform Plan Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          grep -E "^(Plan:|No changes.|Changes to:)" plan-output.txt >> $GITHUB_STEP_SUMMARY || true
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          tail -20 plan-output.txt >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
+          if [ -f "$PLAN_OUTPUT" ]; then
+            grep -E "^(Plan:|No changes.|Changes to:)" "$PLAN_OUTPUT" >> $GITHUB_STEP_SUMMARY || true
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            tail -20 "$PLAN_OUTPUT" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ plan-output.txt was not generated." >> $GITHUB_STEP_SUMMARY
+            echo "Terraform plan likely failed before output was captured." >> $GITHUB_STEP_SUMMARY
+            echo "Check the 'Terraform plan' step logs for details." >> $GITHUB_STEP_SUMMARY
+          fi
 
       - name: Clean up backend.tf (prevent local drift)
         if: always()
         run: |
           rm -f infra/terraform/backend.tf
-          rm -f plan-output.txt
+          rm -f infra/terraform/plan-output.txt
 
   terraform-apply:
     name: Terraform Apply
@@ -251,7 +258,7 @@ jobs:
         if: always()
         run: |
           rm -f infra/terraform/backend.tf
-          rm -f apply-output.txt
+          rm -f infra/terraform/apply-output.txt
 
   deploy-frontend:
     name: Deploy Frontend

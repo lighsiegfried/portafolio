@@ -25,18 +25,15 @@ import threejs from "./tech/threejs.svg";
 import meta from "./company/meta.png";
 import indiana from "./company/indiana.png";
 import Polyproductos from "./company/Polyproductos.png";
-import Envaseal from "./company/Envaseal.png";
+import envaseal from "./company/envaseal.png";
 import alorica from "./company/alorica.png";
+import kratt from "./company/kratt.png";
 
 import inventario from "./inventario.png";
 import simpleweb from "./simpleweb.png";
 import java from "./java.png";
 import crudnode from "./crudnode.png"; 
 import tresdmodel from "./tresdmodel.png";
-
-import dani from "./photos/dani.png";
-import gabriela from "./photos/gabriela.png";
-import ricardo from "./photos/ricardo.png";
 
 export {
   logo,
@@ -63,14 +60,12 @@ export {
   meta,
   indiana,
   Polyproductos,
-  Envaseal,
+  envaseal,
   alorica,
+  kratt,
   inventario,
   simpleweb,
   java,
   crudnode,
   tresdmodel,
-  dani,
-  gabriela,
-  ricardo,
 };

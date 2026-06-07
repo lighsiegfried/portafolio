@@ -12,9 +12,10 @@ import {
   docker,
   meta,
   Polyproductos,
-  Envaseal,
+  envaseal,
   alorica,
   indiana,
+  kratt,
   inventario,
   simpleweb,
   java,
@@ -76,7 +77,7 @@ const experiences = [
   {
     title: "Ingeniero Full Stack",
     company_name: "Kratt",
-    icon: backend,
+    icon: kratt,
     iconBg: "#151030",
     date: "Febrero 2026 - Actualmente",
     points: [
@@ -90,7 +91,7 @@ const experiences = [
   {
     title: "Desarrollador de Software",
     company_name: "Envaseal S.A",
-    icon: Envaseal,
+    icon: envaseal,
     iconBg: "#FFFFFF",
     date: "Enero 2024 - Febrero 2026",
     points: [
