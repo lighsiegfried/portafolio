@@ -1,6 +1,5 @@
-import React, { useRef, useState } from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
-import emailjs from "@emailjs/browser";
 
 import { styles } from "../styles";
 import { EarthCanvas } from "./canvas";
@@ -8,7 +7,6 @@ import { SectionWrapper } from "../hoc";
 import { slideIn } from "../utils/motion";
 
 const Contact = () => {
-  const formRef = useRef();
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -16,6 +14,7 @@ const Contact = () => {
   });
 
   const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState(null);
 
   const handleChange = (e) => {
     const { target } = e;
@@ -27,41 +26,35 @@ const Contact = () => {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setStatus(null);
 
-    emailjs
-      .send(
-        import.meta.env.VITE_APP_EMAILJS_SERVICE_ID,
-        import.meta.env.VITE_APP_EMAILJS_TEMPLATE_ID,
-        {
-          from_name: form.name,
-          to_name: "Wilson",
-          from_email: form.email,
-          to_email: "wil.vasquez3@gmail.com",
-          message: form.message,
-        },
-        import.meta.env.VITE_APP_EMAILJS_PUBLIC_KEY
-      )
-      .then(
-        () => {
-          setLoading(false);
-          alert("Muchas gracias por tu tiempo.");
+    const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3001";
 
-          setForm({
-            name: "",
-            email: "",
-            message: "",
-          });
-        },
-        (error) => {
-          setLoading(false);
-          console.error(error);
+    try {
+      const res = await fetch(`${BASE_URL}/api/contact`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
 
-          alert("Al parecer algo salió mal. Por favor intenta de nuevo.");
-        }
-      );
+      const json = await res.json();
+
+      if (!json.ok) {
+        const errMsg = json.error?.message || "Error del servidor";
+        throw new Error(errMsg);
+      }
+
+      setStatus("success");
+      setForm({ name: "", email: "", message: "" });
+    } catch (err) {
+      console.error("Contact error:", err);
+      setStatus("error");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -75,8 +68,20 @@ const Contact = () => {
         <p className={styles.sectionSubText}>Ponte en contacto</p>
         <h3 className={styles.sectionHeadText}>Contacto</h3>
 
+        {status === "success" && (
+          <div className='mt-6 p-4 bg-green-900/50 border border-green-500 rounded-lg text-green-300 text-sm'>
+            Gracias, tu mensaje fue recibido correctamente.
+          </div>
+        )}
+
+        {status === "error" && (
+          <div className='mt-6 p-4 bg-red-900/50 border border-red-500 rounded-lg text-red-300 text-sm'>
+            No pudimos enviar el mensaje en este momento. Intenta nuevamente más
+            tarde.
+          </div>
+        )}
+
         <form
-          ref={formRef}
           onSubmit={handleSubmit}
           className='mt-12 flex flex-col gap-8'
         >

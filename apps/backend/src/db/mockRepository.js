@@ -240,6 +240,7 @@ const COLLECTION_MAP = {
   leads: 'leads',
   leadNotes: 'leadNotes',
   auditEvents: 'auditEvents',
+  contactMessages: 'contactMessages',
 };
 
 function getCollectionArray(collection) {

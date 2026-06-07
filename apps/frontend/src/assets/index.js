@@ -20,11 +20,11 @@ import reactjs from "./tech/reactjs.png";
 import redux from "./tech/redux.png";
 import tailwind from "./tech/tailwind.png";
 import typescript from "./tech/typescript.png";
-import threejs from "./tech/threejs.svg";
+import threejs from "./threejs.png";
 
 import meta from "./company/meta.png";
 import indiana from "./company/indiana.png";
-import Polyproductos from "./company/Polyproductos.png";
+import Polyproductos from "./company/polyproductos.png";
 import envaseal from "./company/envaseal.png";
 import alorica from "./company/alorica.png";
 import kratt from "./company/kratt.png";
@@ -34,6 +34,9 @@ import simpleweb from "./simpleweb.png";
 import java from "./java.png";
 import crudnode from "./crudnode.png"; 
 import tresdmodel from "./tresdmodel.png";
+import portafolio from "./portafolio.png";
+import erp from "./erp.png";
+import erp2 from "./erp2.png";
 
 export {
   logo,
@@ -68,4 +71,7 @@ export {
   java,
   crudnode,
   tresdmodel,
+  portafolio,
+  erp,
+  erp2,
 };

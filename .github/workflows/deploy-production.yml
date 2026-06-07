@@ -131,6 +131,9 @@ jobs:
             -var="existing_cloudfront_distribution_id=${{ env.CLOUDFRONT_DISTRIBUTION_ID }}" \
             -var="existing_cloudfront_domain=${{ env.CLOUDFRONT_DOMAIN }}" \
             -var="jwt_secret=${{ secrets.JWT_SECRET }}" \
+            -var="contact_to_email=${{ secrets.CONTACT_TO_EMAIL }}" \
+            -var="contact_from_email=${{ secrets.CONTACT_FROM_EMAIL }}" \
+            -var="send_contact_confirmation=${{ vars.SEND_CONTACT_CONFIRMATION || 'false' }}" \
             -var="allowed_origins=https://${{ env.CLOUDFRONT_DOMAIN }},http://localhost:5173" \
             -var="enable_point_in_time_recovery=false" \
             -no-color \
@@ -227,6 +230,9 @@ jobs:
             -var="existing_cloudfront_distribution_id=${{ env.CLOUDFRONT_DISTRIBUTION_ID }}" \
             -var="existing_cloudfront_domain=${{ env.CLOUDFRONT_DOMAIN }}" \
             -var="jwt_secret=${{ secrets.JWT_SECRET }}" \
+            -var="contact_to_email=${{ secrets.CONTACT_TO_EMAIL }}" \
+            -var="contact_from_email=${{ secrets.CONTACT_FROM_EMAIL }}" \
+            -var="send_contact_confirmation=${{ vars.SEND_CONTACT_CONFIRMATION || 'false' }}" \
             -var="allowed_origins=https://${{ env.CLOUDFRONT_DOMAIN }},http://localhost:5173" \
             -var="enable_point_in_time_recovery=false" \
             -no-color \
@@ -241,6 +247,33 @@ jobs:
           echo "api_url=$API_URL" >> $GITHUB_OUTPUT
         working-directory: infra/terraform
 
+      - name: Smoke test API Gateway
+        id: smoke_test
+        run: |
+          API_URL="${{ steps.save_api_url.outputs.api_url }}"
+          echo "Testing API Gateway at: ${API_URL}"
+          echo "api_url=${API_URL}" >> $GITHUB_OUTPUT
+
+          # Test /health endpoint
+          HEALTH_RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" "${API_URL}/health")
+          if [ "$HEALTH_RESPONSE" = "200" ]; then
+            echo "✅ /health endpoint returns 200"
+          else
+            echo "❌ /health endpoint returned ${HEALTH_RESPONSE}"
+            curl -s "${API_URL}/health"
+            echo ""
+          fi
+
+          # Test /api/health (for frontend proxy path)
+          API_HEALTH_RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" "${API_URL}/api/health")
+          if [ "$API_HEALTH_RESPONSE" = "200" ]; then
+            echo "✅ /api/health endpoint returns 200"
+          else
+            echo "❌ /api/health endpoint returned ${API_HEALTH_RESPONSE}"
+            curl -s "${API_URL}/api/health"
+            echo ""
+          fi
+
       - name: Show apply summary
         run: |
           echo "## ✅ Terraform Apply Complete" >> $GITHUB_STEP_SUMMARY
@@ -248,11 +281,13 @@ jobs:
           echo "| Output | Value |" >> $GITHUB_STEP_SUMMARY
           echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
           echo "| **API Gateway URL** | \`${{ steps.save_api_url.outputs.api_url }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Health Check** | \`${{ steps.smoke_test.outputs.api_url }}\` |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Post-apply" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Set the GitHub variable \`VITE_API_BASE_URL_PRODUCTION\` to the API Gateway URL above," >> $GITHUB_STEP_SUMMARY
-          echo "then run the workflow with \`deploy_frontend=true\` to update the frontend." >> $GITHUB_STEP_SUMMARY
+          echo "1. Set the GitHub variable \`VITE_API_BASE_URL_PRODUCTION\` to the API Gateway URL above." >> $GITHUB_STEP_SUMMARY
+          echo "2. Run the \`Seed Production Data\` workflow to populate DynamoDB." >> $GITHUB_STEP_SUMMARY
+          echo "3. Run this workflow with \`deploy_frontend=true\` to update the frontend." >> $GITHUB_STEP_SUMMARY
 
       - name: Clean up backend.tf
         if: always()

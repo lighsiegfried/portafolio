@@ -28,11 +28,11 @@ const ProjectCard = ({
         transitionSpeed={450}
         className='bg-tertiary p-4 sm:p-5 rounded-2xl sm:w-[360px] w-full'
       >
-        <div className='relative w-full h-[180px] sm:h-[230px]'>
+        <div className='relative w-full h-[180px] sm:h-[230px] bg-black-200 rounded-2xl overflow-hidden'>
           <img
             src={image}
             alt='project_image'
-            className='w-full h-full object-cover rounded-2xl'
+            className='w-full h-full object-cover object-top rounded-2xl'
           />
 
           <div className='absolute inset-0 flex justify-end m-3 card-img_hover gap-2'>

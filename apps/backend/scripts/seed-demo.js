@@ -11,7 +11,7 @@ try {
 }
 
 function printTable(name, data) {
-  console.log(`\n  \u{1F4CB} ${name}:`);
+  console.log(`\n  ${name}:`);
   console.log(`     ${'\u2500'.repeat(50)}`);
   data.forEach((item) => {
     const firstField = item.name || item.companyName || item.title || item.contactName || item.sku || item.username || '(sin nombre)';
@@ -21,6 +21,33 @@ function printTable(name, data) {
   console.log(`     Total: ${data.length} registros`);
 }
 
+async function seedToDynamo(data) {
+  const { getRepository } = require('../src/db/repositoryFactory');
+  const repo = getRepository();
+
+  const entities = [
+    { key: 'users', items: data.users },
+    { key: 'products', items: data.products },
+    { key: 'requisitions', items: data.requisitions },
+    { key: 'requisitionItems', items: data.requisitionItems },
+    { key: 'inventoryMovements', items: data.inventoryMovements },
+    { key: 'leads', items: data.leads },
+    { key: 'leadNotes', items: data.leadNotes },
+    { key: 'auditEvents', items: data.auditEvents },
+  ];
+
+  let total = 0;
+  for (const entity of entities) {
+    console.log(`  Escribiendo ${entity.items.length} registros en ${entity.key}...`);
+    for (const item of entity.items) {
+      await repo.create(entity.key, item);
+      total++;
+    }
+    console.log(`  ✅ ${entity.key}: ${entity.items.length} registros escritos.`);
+  }
+  return total;
+}
+
 console.log(`
   \u2554\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2557
   \u2551     Mini ERP \u2014 Seed de Datos Demo        \u2551
@@ -28,17 +55,9 @@ console.log(`
 `);
 
 console.log(`  Entorno: ${process.env.NODE_ENV || 'development'}`);
-console.log(`  Fecha:   ${new Date().toISOString()}`);
-
-if (process.env.DATA_SOURCE === 'dynamodb' && !ALLOW_DYNAMODB_SEED) {
-  console.log(`
-  \u26A0\uFE0F  DATOS SEMILLA NO ESCRITOS EN DYNAMODB.
-  Para permitir la escritura en DynamoDB, establezca:
-    DATA_SOURCE=dynamodb ALLOW_DYNAMODB_SEED=true npm run seed
-`);
-} else if (process.env.DATA_SOURCE === 'dynamodb' && ALLOW_DYNAMODB_SEED) {
-  console.log('\n  \u2705  Escribiendo datos semilla en DynamoDB...\n');
-}
+console.log(`  DATA_SOURCE: ${process.env.DATA_SOURCE || 'mock'}`);
+console.log(`  ALLOW_DYNAMODB_SEED: ${ALLOW_DYNAMODB_SEED}`);
+console.log(`  Fecha:   ${new Date().toISOString()}\n`);
 
 const errors = validateSeedData(seedData);
 if (errors.length > 0) {
@@ -53,6 +72,8 @@ if (errors.length > 0) {
   process.exit(1);
 }
 
+console.log('  \u2705 Datos seed válidos.\n');
+
 printTable('Usuarios', seedData.users);
 printTable('Productos', seedData.products);
 printTable('Requisiciones', seedData.requisitions);
@@ -61,15 +82,45 @@ printTable('Movimientos de Inventario', seedData.inventoryMovements);
 printTable('Leads', seedData.leads);
 printTable('Notas de Leads', seedData.leadNotes);
 
-const total = seedData.users.length + seedData.products.length + seedData.requisitions.length + seedData.requisitionItems.length + seedData.inventoryMovements.length + seedData.leads.length + seedData.leadNotes.length;
-console.log(`\n  \u2705 Seed completado. ${total} registros en total.\n`);
+const rawTotal = seedData.users.length + seedData.products.length + seedData.requisitions.length + seedData.requisitionItems.length + seedData.inventoryMovements.length + seedData.leads.length + seedData.leadNotes.length;
 
-log('INFO', 'seed', 'completed', 'Demo data seeded successfully', {
-  users: seedData.users.length,
-  products: seedData.products.length,
-  requisitions: seedData.requisitions.length,
-  requisitionItems: seedData.requisitionItems.length,
-  inventoryMovements: seedData.inventoryMovements.length,
-  leads: seedData.leads.length,
-  leadNotes: seedData.leadNotes.length,
-});
+if (process.env.DATA_SOURCE === 'dynamodb' && ALLOW_DYNAMODB_SEED) {
+  (async () => {
+    console.log('\n  \u2705  Escribiendo datos semilla en DynamoDB...\n');
+    try {
+      const written = await seedToDynamo(seedData);
+      console.log(`\n  \u2705 Seed completado. ${written} registros escritos en DynamoDB.\n`);
+      log('INFO', 'seed', 'completed', 'Demo data seeded to DynamoDB successfully', {
+        users: seedData.users.length,
+        products: seedData.products.length,
+        requisitions: seedData.requisitions.length,
+        requisitionItems: seedData.requisitionItems.length,
+        inventoryMovements: seedData.inventoryMovements.length,
+        leads: seedData.leads.length,
+        leadNotes: seedData.leadNotes.length,
+      });
+    } catch (err) {
+      console.error(`\n  \u274C  Error escribiendo en DynamoDB: ${err.message}\n`);
+      process.exit(1);
+    }
+  })();
+} else {
+  console.log(`\n  \u2705 Seed simulado. ${rawTotal} registros en total (solo lectura).\n`);
+  if (process.env.DATA_SOURCE === 'dynamodb' && !ALLOW_DYNAMODB_SEED) {
+    console.log(`
+  \u26A0\uFE0F  DATOS SEMILLA NO ESCRITOS EN DYNAMODB.
+  Para permitir la escritura en DynamoDB, establezca:
+    DATA_SOURCE=dynamodb ALLOW_DYNAMODB_SEED=true npm run seed
+`);
+  }
+
+  log('INFO', 'seed', 'completed', 'Demo data validated successfully (dry-run)', {
+    users: seedData.users.length,
+    products: seedData.products.length,
+    requisitions: seedData.requisitions.length,
+    requisitionItems: seedData.requisitionItems.length,
+    inventoryMovements: seedData.inventoryMovements.length,
+    leads: seedData.leads.length,
+    leadNotes: seedData.leadNotes.length,
+  });
+}

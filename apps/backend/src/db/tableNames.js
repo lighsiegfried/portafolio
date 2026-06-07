@@ -9,6 +9,7 @@ const COLLECTIONS = {
   leads: 'leads',
   leadNotes: 'lead-notes',
   auditEvents: 'audit-events',
+  contactMessages: 'contact-messages',
 };
 
 function tableName(collection) {

@@ -16,9 +16,12 @@ const inventoryHandler = require('./modules/inventory/handler');
 const leadsHandler = require('./modules/leads/handler');
 const dashboardHandler = require('./modules/dashboard/handler');
 const reportsHandler = require('./modules/reports/handler');
+const contactHandler = require('./modules/contact/handler');
 
 const routes = {
   'GET /health': { handler: () => response.success({ status: 'ok', timestamp: new Date().toISOString() }), auth: false },
+
+  'POST /contact': { handler: contactHandler.submit, auth: false },
 
   'POST /auth/login': { handler: authHandler.login, auth: false },
   'GET /auth/me': { handler: authHandler.me, auth: true },
@@ -82,7 +85,16 @@ function matchRoute(method, path) {
   return null;
 }
 
+function normalizeEvent(event) {
+  if (event.version === '2.0') {
+    event.httpMethod = event.httpMethod || event.requestContext?.http?.method;
+    event.path = event.path || event.rawPath || event.requestContext?.http?.path;
+  }
+  return event;
+}
+
 async function handler(event) {
+  event = normalizeEvent(event);
   const logContext = logger.middleware(event);
 
   try {
@@ -91,7 +103,7 @@ async function handler(event) {
       return corsResult;
     }
 
-    const cleanPath = event.path.replace(/^\/api/, '') || '/';
+    const cleanPath = (event.path || '').replace(/^\/api/, '') || '/';
     const matched = matchRoute(event.httpMethod, cleanPath);
 
     if (!matched) {

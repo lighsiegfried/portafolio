@@ -118,6 +118,30 @@ variable "domain_name" {
   default     = null
 }
 
+variable "contact_to_email" {
+  description = "Email address that receives contact form submissions"
+  type        = string
+  default     = ""
+}
+
+variable "contact_from_email" {
+  description = "Verified SES email address used as sender for contact form emails"
+  type        = string
+  default     = ""
+}
+
+variable "contact_reply_to_enabled" {
+  description = "Whether to set the visitor's email as Reply-To header"
+  type        = string
+  default     = "true"
+}
+
+variable "send_contact_confirmation" {
+  description = "Whether to send a confirmation email to the visitor (set false while SES is in sandbox)"
+  type        = string
+  default     = "false"
+}
+
 variable "common_tags" {
   description = "Common tags applied to all resources"
   type        = map(string)

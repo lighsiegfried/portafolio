@@ -1,3 +1,26 @@
+data "aws_iam_policy_document" "lambda_ses_access" {
+  statement {
+    effect = "Allow"
+    actions = [
+      "ses:SendEmail",
+      "ses:SendRawEmail",
+    ]
+    resources = ["*"]
+  }
+}
+
+resource "aws_iam_policy" "lambda_ses" {
+  name        = "${local.name_prefix}-lambda-ses"
+  description = "Allow Lambda to send emails via Amazon SES"
+  policy      = data.aws_iam_policy_document.lambda_ses_access.json
+  tags        = var.common_tags
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_ses" {
+  role       = module.api_lambda.role_name
+  policy_arn = aws_iam_policy.lambda_ses.arn
+}
+
 data "aws_iam_policy_document" "lambda_dynamodb_access" {
   statement {
     effect = "Allow"

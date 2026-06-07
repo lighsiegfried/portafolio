@@ -53,7 +53,7 @@ export default function LoginPage() {
           </div>
           <h1 className="text-2xl font-bold text-white mb-1">Mini ERP</h1>
           <p className="text-sm text-secondary">Sistema de Gestion Empresarial</p>
-          <p className="text-xs text-white/20 mt-2">Demo tecnica sin almacenamiento real</p>
+          <p className="text-xs text-white/20 mt-2">Demo tecnica conectada a backend serverless en AWS</p>
         </div>
 
         <form onSubmit={handleSubmit} className="bg-tertiary/50 backdrop-blur-sm border border-white/10 rounded-2xl p-6 space-y-4">
@@ -101,7 +101,7 @@ export default function LoginPage() {
         </div>
 
         <p className="text-center text-[10px] text-white/10 mt-8">
-          Demo local -- Datos en memoria. Sin almacenamiento persistente.
+          Datos ficticios de demostracion. Conexion a AWS Lambda + DynamoDB.
         </p>
       </div>
     </div>

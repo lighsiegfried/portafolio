@@ -36,6 +36,14 @@ cloudwatch_log_retention_days = 7
 enable_point_in_time_recovery = false
 
 # =============================================================================
+# Contact Form (Amazon SES)
+# =============================================================================
+contact_to_email          = "tu-email@dominio.com"
+contact_from_email        = "email-verificado-en-ses@dominio.com"
+contact_reply_to_enabled  = "true"
+send_contact_confirmation = "false"
+
+# =============================================================================
 # Tags
 # =============================================================================
 common_tags = {

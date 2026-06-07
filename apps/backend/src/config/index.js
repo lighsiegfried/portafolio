@@ -30,6 +30,13 @@ const config = {
   business: {
     defaultLowStockThreshold: parseInt(process.env.DEFAULT_LOW_STOCK_THRESHOLD, 10) || 5,
   },
+  contact: {
+    toEmail: process.env.CONTACT_TO_EMAIL || '',
+    fromEmail: process.env.CONTACT_FROM_EMAIL || '',
+    replyToEnabled: process.env.CONTACT_REPLY_TO_ENABLED !== 'false',
+    sendConfirmation: process.env.SEND_CONTACT_CONFIRMATION === 'true',
+    sesRegion: process.env.SES_REGION || 'us-east-1',
+  },
 };
 
 module.exports = config;

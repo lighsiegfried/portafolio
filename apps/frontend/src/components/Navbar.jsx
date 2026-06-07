@@ -29,7 +29,7 @@ const Navbar = () => {
     <nav
       className={`${
         styles.paddingX
-      } w-full flex items-center py-5 fixed top-0 z-20 transition-all duration-300 ${
+      } w-full flex items-center py-5 fixed top-0 z-[9999] transition-all duration-300 ${
         scrolled
           ? "bg-primary/80 backdrop-blur-md shadow-[0_2px_20px_rgba(0,0,0,0.3)]"
           : "bg-transparent"
@@ -79,7 +79,7 @@ const Navbar = () => {
           <div
             className={`${
               !toggle ? "hidden" : "flex"
-            } p-6 bg-primary/90 backdrop-blur-lg border border-white/10 absolute top-20 right-0 mx-4 my-2 min-w-[180px] z-10 rounded-xl shadow-2xl`}
+            } p-6 bg-primary/90 backdrop-blur-lg border border-white/10 absolute top-20 right-0 mx-4 my-2 min-w-[180px] z-[10000] rounded-xl shadow-2xl`}
           >
             <ul className='list-none flex justify-end items-start flex-1 flex-col gap-4'>
               {navLinks.map((nav) => (

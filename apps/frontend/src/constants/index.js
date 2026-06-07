@@ -21,7 +21,10 @@ import {
   java,
   crudnode,
   threejs, 
-  tresdmodel
+  tresdmodel,
+  portafolio,
+  erp,
+  erp2,
 } from "../assets";
 
 export const navLinks = [
@@ -78,7 +81,7 @@ const experiences = [
     title: "Ingeniero Full Stack",
     company_name: "Kratt",
     icon: kratt,
-    iconBg: "#151030",
+    iconBg: "#FFFFFF",
     date: "Febrero 2026 - Actualmente",
     points: [
       "Desarrollo y acompañamiento técnico en proyectos CRM, Ticket System y ERP multiorganizacional.",
@@ -171,8 +174,8 @@ const projects = [
           { name: "WAF", color: "pink-text-gradient" },
           { name: "CI/CD", color: "blue-text-gradient" },
         ],
-        image: web,
-        source_code_link: "",
+        image: portafolio,
+        source_code_link: "https://github.com/lighsiegfried/portafolio",
       },
       {
         name: "Mini ERP Cloud-Native para PyME",
@@ -187,7 +190,7 @@ const projects = [
           { name: "Terraform", color: "pink-text-gradient" },
           { name: "GitHub Actions", color: "blue-text-gradient" },
         ],
-        image: backend,
+        image: erp,
         source_code_link: "",
         demo_link: "/mini-erp/login",
       },
@@ -203,7 +206,7 @@ const projects = [
           { name: "Power BI", color: "green-text-gradient" },
           { name: "Linux", color: "blue-text-gradient" },
         ],
-        image: creator,
+        image: erp2,
         source_code_link: "",
       },
     ],

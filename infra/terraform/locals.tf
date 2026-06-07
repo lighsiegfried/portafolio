@@ -74,6 +74,13 @@ locals {
       gsis = [
         { name = "entityType-index", hash_key = "entityType" }
       ]
+    },
+    {
+      name     = "contact-messages"
+      hash_key = "id"
+      gsis = [
+        { name = "status-index", hash_key = "status" }
+      ]
     }
   ]
 
@@ -82,10 +89,15 @@ locals {
     DATA_SOURCE                 = "dynamodb"
     JWT_SECRET                  = var.jwt_secret
     JWT_EXPIRES_IN              = var.jwt_expires_in
-    DYNAMODB_TABLE_PREFIX       = "${local.name_prefix}-"
+    DYNAMODB_TABLE_PREFIX       = local.name_prefix
     DYNAMODB_REGION             = var.aws_region
     LOG_LEVEL                   = var.log_level
     DEFAULT_LOW_STOCK_THRESHOLD = tostring(var.default_low_stock_threshold)
     CORS_ORIGIN                 = var.allowed_origins
+    CONTACT_TO_EMAIL            = var.contact_to_email
+    CONTACT_FROM_EMAIL          = var.contact_from_email
+    CONTACT_REPLY_TO_ENABLED    = var.contact_reply_to_enabled
+    SEND_CONTACT_CONFIRMATION   = var.send_contact_confirmation
+    SES_REGION                  = var.ses_region
   }
 }
