@@ -1,6 +1,7 @@
 const response = require('../../utils/response');
 const { toCSV } = require('../../utils/csvHelper');
-const repo = require('../../db/mockRepository');
+const { getRepository } = require('../../db/repositoryFactory');
+const repo = getRepository();
 
 async function exportRequisitions(event) {
   const data = repo.listRequisitions();

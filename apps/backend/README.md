@@ -10,11 +10,17 @@ Parte del portafolio profesional de Wilson Vásquez para validar habilidades clo
 |------|-----------|
 | **Runtime** | Node.js 24 (JavaScript CommonJS) |
 | **API** | AWS Lambda + API Gateway HTTP API |
-| **DB** | Amazon DynamoDB (on-demand, 8 tablas) |
+| **DB** | Amazon DynamoDB (on-demand, en fase posterior) |
 | **Auth** | JWT HS256 + middleware interno |
 | **Logs** | CloudWatch Logs (JSON estructurado) |
 | **CSV** | json2csv |
 | **UUID** | crypto.randomUUID() (nativo) |
+
+## Estado actual — Fase 3 completada
+
+El backend cuenta con una **capa de abstracción de persistencia** que permite alternar entre mock en memoria (desarrollo) y DynamoDB (cloud) mediante la variable `DATA_SOURCE`.
+
+Actualmente funciona en modo `mock` por defecto. El modo `dynamodb` está implementado pero requiere tablas reales desplegadas vía Terraform.
 
 ## Estructura
 
@@ -50,6 +56,7 @@ npm run dev
 
 | Variable | Default | Descripción |
 |----------|---------|-------------|
+| `DATA_SOURCE` | `mock` | Fuente de datos: `mock` (en memoria) o `dynamodb` |
 | `JWT_SECRET` | `dev-secret...` | Secreto para firmar JWT (cambiar en producción) |
 | `JWT_EXPIRES_IN` | `24h` | Expiración del token JWT |
 | `DYNAMODB_TABLE_PREFIX` | `mini-erp` | Prefijo para nombres de tablas DynamoDB |
@@ -65,7 +72,7 @@ npm run dev
 |---------|-------------|
 | `npm run dev` | Inicia servidor local con recarga automática (puerto 3001) |
 | `npm start` | Inicia servidor local |
-| `npm test` | Ejecuta tests smoke |
+| `npm test` | Ejecuta tests smoke (111 tests) |
 | `npm run seed` | Muestra los datos demo cargados |
 
 ## API — Formato de respuesta
@@ -79,39 +86,89 @@ Todas las respuestas siguen el formato:
 // Lista
 { "ok": true, "data": [...], "meta": { "total": 10 } }
 
+// Lista paginada
+{ "ok": true, "data": [...], "meta": { "total": 50 }, "pagination": { "limit": 10, "nextToken": "offset_10" } }
+
 // Error
 { "ok": false, "error": { "code": "NOT_FOUND", "message": "Recurso no encontrado" } }
 ```
 
 ## Endpoints
 
+### Salud
 | Método | Ruta | Auth | Descripción |
 |--------|------|------|-------------|
-| GET | /health | No | Health check |
-| POST | /auth/login | No | Inicio de sesión |
+| GET | /health | No | Health check del servicio |
+
+### Autenticación
+| Método | Ruta | Auth | Descripción |
+|--------|------|------|-------------|
+| POST | /auth/login | No | Inicio de sesión (devuelve JWT) |
 | GET | /auth/me | Sí | Perfil del usuario autenticado |
-| GET | /dashboard/summary | Sí | KPIs del dashboard |
-| GET | /requisitions | Sí | Lista de requisiciones |
-| POST | /requisitions | Sí | Crear requisición |
-| GET | /requisitions/{id} | Sí | Detalle de requisición |
-| PATCH | /requisitions/{id}/approve | Sí | Aprobar requisición |
-| PATCH | /requisitions/{id}/reject | Sí | Rechazar requisición |
-| PATCH | /requisitions/{id}/complete | Sí | Completar requisición |
-| GET | /products | Sí | Lista de productos |
-| POST | /products | Sí | Crear producto (Fase 2) |
-| PATCH | /products/{id} | Sí | Actualizar producto (Fase 2) |
-| PATCH | /products/{id}/stock | Sí | Ajustar stock (Fase 2) |
-| POST | /inventory/movements | Sí | Crear movimiento (Fase 2) |
-| GET | /inventory/movements | Sí | Lista de movimientos |
-| GET | /inventory/low-stock | Sí | Productos con stock bajo |
-| GET | /leads | Sí | Lista de leads |
-| POST | /leads | Sí | Crear lead (Fase 2) |
-| GET | /leads/{id} | Sí | Detalle de lead |
-| PATCH | /leads/{id} | Sí | Actualizar lead (Fase 2) |
-| POST | /leads/{id}/notes | Sí | Agregar nota (Fase 2) |
-| GET | /reports/requisitions.csv | Sí | Exportar requisiciones CSV |
-| GET | /reports/inventory.csv | Sí | Exportar inventario CSV |
-| GET | /reports/leads.csv | Sí | Exportar leads CSV |
+
+### Dashboard
+| Método | Ruta | Roles | Descripción |
+|--------|------|-------|-------------|
+| GET | /dashboard/summary | admin, compras, bodega, gerencia | KPIs: pending/approved/completed/rejected requisitions, low stock, active leads, recent items |
+
+### Requisiciones
+| Método | Ruta | Roles | Descripción |
+|--------|------|-------|-------------|
+| GET | /requisitions | admin, compras, bodega, gerencia | Lista requisiciones (soporta `?limit=&nextToken=`) |
+| POST | /requisitions | **admin, compras** | Crear requisición (requiere title, description, items) |
+| GET | /requisitions/{id} | admin, compras, bodega, gerencia | Detalle de requisición con items |
+| PATCH | /requisitions/{id}/approve | **admin, gerencia** | Aprobar requisición (solo si está pending) |
+| PATCH | /requisitions/{id}/reject | **admin, gerencia** | Rechazar requisición (requiere reason) |
+| PATCH | /requisitions/{id}/complete | **admin, compras** | Completar requisición (solo si está approved) |
+
+### Productos
+| Método | Ruta | Roles | Descripción |
+|--------|------|-------|-------------|
+| GET | /products | admin, compras, bodega, gerencia | Lista productos (soporta `?limit=&nextToken=`) |
+| POST | /products | **admin** | Crear producto (sku único, price≥0, minStock≥0) |
+| PATCH | /products/{id} | **admin** | Actualizar producto (no permite id/createdAt) |
+| PATCH | /products/{id}/stock | **admin, bodega** | Ajustar stock (type IN/OUT, valida stock negativo) |
+
+### Inventario
+| Método | Ruta | Roles | Descripción |
+|--------|------|-------|-------------|
+| POST | /inventory/movements | **admin, bodega** | Registrar movimiento (productId, type, quantity, reference) |
+| GET | /inventory/movements | admin, bodega | Lista movimientos (soporta `?productId=&limit=&nextToken=`) |
+| GET | /inventory/low-stock | admin, bodega | Productos con stock <= minStock |
+
+### CRM — Leads
+| Método | Ruta | Roles | Descripción |
+|--------|------|-------|-------------|
+| GET | /leads | **admin, gerencia** | Lista leads (soporta `?limit=&nextToken=`) |
+| POST | /leads | **admin, gerencia** | Crear lead (companyName, contactName, email, phone, source) |
+| GET | /leads/{id} | **admin, gerencia** | Detalle de lead con notas |
+| PATCH | /leads/{id} | **admin, gerencia** | Actualizar lead (status válido: new, in_contact, negotiation, won, lost) |
+| POST | /leads/{id}/notes | **admin, gerencia** | Agregar nota a lead (requiere content) |
+
+### Reportes CSV
+| Método | Ruta | Roles | Descripción |
+|--------|------|-------|-------------|
+| GET | /reports/requisitions.csv | admin, compras, gerencia | Exportar requisiciones a CSV |
+| GET | /reports/inventory.csv | admin, bodega, gerencia | Exportar productos a CSV |
+| GET | /reports/leads.csv | admin, gerencia | Exportar leads a CSV |
+
+## Matriz de roles
+
+| Recurso | admin | compras | bodega | gerencia |
+|---------|-------|---------|--------|----------|
+| Dashboard | ✅ | ✅ | ✅ | ✅ |
+| Listar requisiciones | ✅ | ✅ | ✅ | ✅ |
+| Crear requisiciones | ✅ | ✅ | ❌ | ❌ |
+| Aprobar/rechazar | ✅ | ❌ | ❌ | ✅ |
+| Completar requisiciones | ✅ | ✅ | ❌ | ❌ |
+| Ver productos | ✅ | ✅ | ✅ | ✅ |
+| Crear/editar productos | ✅ | ❌ | ❌ | ❌ |
+| Ajustar stock | ✅ | ❌ | ✅ | ❌ |
+| Movimientos inventario | ✅ | ❌ | ✅ | ❌ |
+| CRM Leads | ✅ | ❌ | ❌ | ✅ |
+| Exportar CSV requisiciones | ✅ | ✅ | ❌ | ✅ |
+| Exportar CSV inventario | ✅ | ❌ | ✅ | ✅ |
+| Exportar CSV leads | ✅ | ❌ | ❌ | ✅ |
 
 ## Usuarios demo
 
@@ -121,6 +178,96 @@ Todas las respuestas siguen el formato:
 | `compras1` | `compras1234` | Compras |
 | `bodega1` | `bodega1234` | Bodega |
 | `gerencia1` | `gerencia1234` | Gerencia |
+
+## Ejemplos curl
+
+```bash
+# Login
+curl -s http://localhost:3001/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"wilson","password":"admin1234"}'
+
+# Crear requisición
+curl -s http://localhost:3001/api/requisitions \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <TOKEN>" \
+  -d '{"title":"Nueva req","description":"Test","items":[{"productName":"Papel","quantity":10,"unit":"unidad","estimatedCost":5.50}]}'
+
+# Aprobar requisición
+curl -s -X PATCH http://localhost:3001/api/requisitions/<ID>/approve \
+  -H "Authorization: Bearer <TOKEN>"
+
+# Crear producto
+curl -s -X POST http://localhost:3001/api/products \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <TOKEN>" \
+  -d '{"sku":"NEW-001","name":"Nuevo Producto","category":"insumo","unit":"unidad","price":25,"minStock":5}'
+
+# Registrar movimiento inventario
+curl -s -X POST http://localhost:3001/api/inventory/movements \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <TOKEN>" \
+  -d '{"productId":"<PRODUCT_ID>","type":"IN","quantity":10,"reference":"Compra proveedor"}'
+
+# Crear lead
+curl -s -X POST http://localhost:3001/api/leads \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <TOKEN>" \
+  -d '{"companyName":"Empresa ABC","contactName":"Juan Pérez","email":"juan@abc.com","phone":"555-0000","source":"web"}'
+
+# Descargar CSV
+curl -s http://localhost:3001/api/reports/requisitions.csv \
+  -H "Authorization: Bearer <TOKEN>"
+```
+
+## Auditoría
+
+El sistema registra eventos de auditoría en memoria para las siguientes acciones:
+
+- **Requisiciones**: created, approved, rejected, completed
+- **Productos**: created, updated, stock_updated
+- **Leads**: created, updated, note_added
+
+Los eventos incluyen: entityType, entityId, action, userId, previousState, newState, createdAt.
+
+## Capa de persistencia (Phase 3)
+
+El backend usa una **abstracción de repositorio** para desacoplar la lógica de negocio del almacenamiento:
+
+```
+Handler → repositoryFactory.getRepository() → mockRepository | dynamoRepository
+```
+
+### Interfaz estándar
+
+Todos los repositorios implementan:
+
+| Método | Descripción |
+|--------|-------------|
+| `list(collection, options)` | Lista con paginación (`{ limit, offset }`), devuelve `{ items, nextToken }` |
+| `findById(collection, id)` | Busca por ID, devuelve item o `null` |
+| `findOneBy(collection, field, value)` | Busca primer match por campo |
+| `create(collection, payload)` | Crea un nuevo item con id/createdAt/updatedAt |
+| `update(collection, id, payload)` | Actualiza campos (protege id/createdAt), devuelve item o `null` |
+| `remove(collection, id)` | Elimina item, devuelve item eliminado o `null` |
+| `queryBy(collection, field, value, options)` | Filtra por campo con paginación, devuelve `{ items, nextToken }` |
+
+### Colecciones soportadas
+
+`users`, `products`, `requisitions`, `requisitionItems`, `inventoryMovements`, `leads`, `leadNotes`, `auditEvents`
+
+### Paginación
+
+Los endpoints de listado aceptan `?limit=10&nextToken=offset_10`.
+La respuesta incluye `pagination: { limit, nextToken }`.
+
+## Limitaciones actuales
+
+- **Modo mock por defecto**: `DATA_SOURCE=mock` es la configuración por defecto y la única probada en tests.
+- **Datos en memoria**: Al reiniciar el servidor se pierden los cambios. Los datos semilla se recargan desde `seed.js`.
+- **DynamoDB**: La implementación está lista en `src/db/dynamoRepository.js` pero requiere tablas reales desplegadas vía Terraform. No está probada en tests actuales.
+- **Dashboard no disponible en DynamoDB**: La función `getDashboardSummary()` lanza un error claro cuando `DATA_SOURCE=dynamodb` porque requiere agregaciones que exceden una implementación simple.
+- **Sin tests unitarios**: Los tests actuales son smoke tests de integración. Tests unitarios por módulo vendrán en fases siguientes.
 
 > **Advertencia:** Este es un sistema demo con autenticación JWT simple.
 > No usar en producción. No incluye Cognito, OAuth2, ni MFA.

@@ -1,6 +1,7 @@
 const response = require('../../utils/response');
 const { signToken } = require('../../utils/jwt');
-const repo = require('../../db/mockRepository');
+const { getRepository } = require('../../db/repositoryFactory');
+const repo = getRepository();
 
 async function login(event) {
   const { username, password } = event.body || {};

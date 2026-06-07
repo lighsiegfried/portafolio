@@ -14,10 +14,13 @@ function error(statusCode, code, message) {
   };
 }
 
-function list(data, meta = null, statusCode = 200) {
+function list(data, meta = null, statusCode = 200, pagination = null) {
   const body = { ok: true, data };
   if (meta) {
     body.meta = meta;
+  }
+  if (pagination) {
+    body.pagination = pagination;
   }
   return {
     statusCode,

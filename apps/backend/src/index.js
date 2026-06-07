@@ -4,6 +4,10 @@ const logger = require('./middleware/logger');
 const corsMiddleware = require('./middleware/cors');
 const authMiddleware = require('./middleware/auth');
 const authorizeMiddleware = require('./middleware/authorize');
+const auditService = require('./services/auditService');
+const { getRepository } = require('./db/repositoryFactory');
+
+auditService.init(getRepository());
 
 const authHandler = require('./modules/auth/handler');
 const requisitionsHandler = require('./modules/requisitions/handler');

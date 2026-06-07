@@ -90,6 +90,17 @@ describe('Mini ERP Backend — Smoke Tests', () => {
       assert.strictEqual(result.headers['Content-Type'], 'text/csv');
       assert.ok(result.headers['Content-Disposition'].includes('test.csv'));
     });
+
+    it('should create list response with pagination', () => {
+      const response = require('../src/utils/response');
+      const result = response.list([1, 2], { total: 10 }, 200, { limit: 2, nextToken: 'offset_2' });
+      const body = JSON.parse(result.body);
+      assert.strictEqual(body.ok, true);
+      assert.deepStrictEqual(body.data, [1, 2]);
+      assert.strictEqual(body.meta.total, 10);
+      assert.strictEqual(body.pagination.limit, 2);
+      assert.strictEqual(body.pagination.nextToken, 'offset_2');
+    });
   });
 
   describe('Utils — JWT', () => {
@@ -542,6 +553,590 @@ describe('Mini ERP Backend — Smoke Tests', () => {
       assert.strictEqual(result.statusCode, 200);
       assert.strictEqual(body.ok, true);
       assert.strictEqual(body.data.status, 'ok');
+    });
+  });
+
+  describe('Phase 2 — Requisitions', () => {
+    let adminToken;
+    let comprasToken;
+    let bodegaToken;
+    let gerenciaToken;
+    let createdReqId;
+
+    before(async () => {
+      const { signToken } = require('../src/utils/jwt');
+      const repo = require('../src/db/mockRepository');
+      adminToken = signToken({ userId: repo.findUserByUsername('wilson').id, role: 'admin' });
+      comprasToken = signToken({ userId: repo.findUserByUsername('compras1').id, role: 'compras' });
+      bodegaToken = signToken({ userId: repo.findUserByUsername('bodega1').id, role: 'bodega' });
+      gerenciaToken = signToken({ userId: repo.findUserByUsername('gerencia1').id, role: 'gerencia' });
+    });
+
+    it('should create requisition as compras', async () => {
+      const reqHandler = require('../src/modules/requisitions/handler');
+      const result = await reqHandler.create({
+        user: { userId: 'test-user', role: 'compras' },
+        body: {
+          title: 'Test requisition',
+          description: 'Test description',
+          items: [{ productName: 'Item 1', quantity: 5, unit: 'unidad', estimatedCost: 10 }],
+        },
+      });
+      const body = JSON.parse(result.body);
+      assert.strictEqual(result.statusCode, 201);
+      assert.strictEqual(body.ok, true);
+      assert.ok(body.data.id);
+      assert.strictEqual(body.data.status, 'pending');
+      assert.ok(body.data.number);
+      createdReqId = body.data.id;
+    });
+
+    it('should reject creating requisition without items', async () => {
+      const reqHandler = require('../src/modules/requisitions/handler');
+      const result = await reqHandler.create({
+        user: { userId: 'test-user', role: 'compras' },
+        body: { title: 'No items', description: 'Test' },
+      });
+      const body = JSON.parse(result.body);
+      assert.strictEqual(result.statusCode, 400);
+      assert.strictEqual(body.error.code, 'VALIDATION_ERROR');
+    });
+
+    it('should approve requisition as gerencia', async () => {
+      const reqHandler = require('../src/modules/requisitions/handler');
+      const result = await reqHandler.approve({
+        params: { id: createdReqId },
+        user: { userId: 'test-user', role: 'gerencia' },
+      });
+      const body = JSON.parse(result.body);
+      assert.strictEqual(result.statusCode, 200);
+      assert.strictEqual(body.data.status, 'approved');
+    });
+
+    it('should reject approving already approved requisition', async () => {
+      const reqHandler = require('../src/modules/requisitions/handler');
+      const result = await reqHandler.approve({
+        params: { id: createdReqId },
+        user: { userId: 'test-user', role: 'gerencia' },
+      });
+      const body = JSON.parse(result.body);
+      assert.strictEqual(result.statusCode, 400);
+      assert.strictEqual(body.error.code, 'CONFLICT');
+    });
+
+    it('should complete approved requisition as compras', async () => {
+      const reqHandler = require('../src/modules/requisitions/handler');
+      const result = await reqHandler.complete({
+        params: { id: createdReqId },
+        user: { userId: 'test-user', role: 'compras' },
+      });
+      const body = JSON.parse(result.body);
+      assert.strictEqual(result.statusCode, 200);
+      assert.strictEqual(body.data.status, 'completed');
+    });
+
+    it('should reject completing pending requisition', async () => {
+      const repo = require('../src/db/mockRepository');
+      const pending = repo.listRequisitions().find((r) => r.status === 'pending');
+      if (pending) {
+        const reqHandler = require('../src/modules/requisitions/handler');
+        const result = await reqHandler.complete({
+          params: { id: pending.id },
+          user: { userId: 'test-user', role: 'compras' },
+        });
+        const body = JSON.parse(result.body);
+        assert.strictEqual(result.statusCode, 400);
+        assert.strictEqual(body.error.code, 'CONFLICT');
+      }
+    });
+
+    it('should reject reject without reason', async () => {
+      const repo = require('../src/db/mockRepository');
+      const pending = repo.listRequisitions().find((r) => r.status === 'pending');
+      if (pending) {
+        const reqHandler = require('../src/modules/requisitions/handler');
+        const result = await reqHandler.reject({
+          params: { id: pending.id },
+          user: { userId: 'test-user', role: 'gerencia' },
+          body: {},
+        });
+        const body = JSON.parse(result.body);
+        assert.strictEqual(result.statusCode, 400);
+        assert.strictEqual(body.error.code, 'VALIDATION_ERROR');
+      }
+    });
+  });
+
+  describe('Phase 2 — Products', () => {
+    let adminToken;
+    let comprasToken;
+
+    before(() => {
+      const { signToken } = require('../src/utils/jwt');
+      const repo = require('../src/db/mockRepository');
+      adminToken = signToken({ userId: repo.findUserByUsername('wilson').id, role: 'admin' });
+      comprasToken = signToken({ userId: repo.findUserByUsername('compras1').id, role: 'compras' });
+    });
+
+    it('should create product as admin', async () => {
+      const products = require('../src/modules/products/handler');
+      const result = await products.create({
+        user: { userId: 'test-user', role: 'admin' },
+        body: {
+          sku: 'TEST-001',
+          name: 'Test Product',
+          category: 'insumo',
+          unit: 'unidad',
+          price: 10,
+          minStock: 5,
+          initialStock: 20,
+        },
+      });
+      const body = JSON.parse(result.body);
+      assert.strictEqual(result.statusCode, 201);
+      assert.strictEqual(body.ok, true);
+      assert.strictEqual(body.data.sku, 'TEST-001');
+      assert.strictEqual(body.data.stock, 20);
+    });
+
+    it('should reject duplicate SKU', async () => {
+      const products = require('../src/modules/products/handler');
+      const result = await products.create({
+        user: { userId: 'test-user', role: 'admin' },
+        body: {
+          sku: 'TEST-001',
+          name: 'Duplicate',
+          category: 'insumo',
+          unit: 'unidad',
+          price: 10,
+          minStock: 5,
+        },
+      });
+      const body = JSON.parse(result.body);
+      assert.strictEqual(result.statusCode, 409);
+      assert.strictEqual(body.error.code, 'CONFLICT');
+    });
+
+    it('should reject creating product without required fields', async () => {
+      const products = require('../src/modules/products/handler');
+      const result = await products.create({
+        user: { userId: 'test-user', role: 'admin' },
+        body: { sku: 'TEST-002' },
+      });
+      const body = JSON.parse(result.body);
+      assert.strictEqual(result.statusCode, 400);
+    });
+
+    it('should update product as admin', async () => {
+      const repo = require('../src/db/mockRepository');
+      const product = repo.findProductBySku('TEST-001');
+      const products = require('../src/modules/products/handler');
+      const result = await products.update({
+        params: { id: product.id },
+        user: { userId: 'test-user', role: 'admin' },
+        body: { price: 15, name: 'Updated Product' },
+      });
+      const body = JSON.parse(result.body);
+      assert.strictEqual(result.statusCode, 200);
+      assert.strictEqual(body.data.name, 'Updated Product');
+      assert.strictEqual(body.data.price, 15);
+    });
+
+    it('should update stock IN as bodega', async () => {
+      const repo = require('../src/db/mockRepository');
+      const product = repo.findProductBySku('TEST-001');
+      const products = require('../src/modules/products/handler');
+      const result = await products.updateStock({
+        params: { id: product.id },
+        user: { userId: 'test-user', role: 'bodega' },
+        body: { type: 'IN', quantity: 10, reference: 'Test IN' },
+      });
+      const body = JSON.parse(result.body);
+      assert.strictEqual(result.statusCode, 200);
+      assert.strictEqual(body.data.stock, 30);
+    });
+
+    it('should reject stock OUT if insufficient', async () => {
+      const repo = require('../src/db/mockRepository');
+      const product = repo.findProductBySku('TEST-001');
+      const products = require('../src/modules/products/handler');
+      const result = await products.updateStock({
+        params: { id: product.id },
+        user: { userId: 'test-user', role: 'bodega' },
+        body: { type: 'OUT', quantity: 9999, reference: 'Test OUT' },
+      });
+      const body = JSON.parse(result.body);
+      assert.strictEqual(result.statusCode, 400);
+      assert.strictEqual(body.error.code, 'BAD_REQUEST');
+    });
+  });
+
+  describe('Phase 2 — Inventory', () => {
+    let testProductId;
+
+    before(() => {
+      const repo = require('../src/db/mockRepository');
+      const product = repo.findProductBySku('TEST-001');
+      testProductId = product ? product.id : null;
+    });
+
+    it('should create movement IN as bodega', async () => {
+      if (!testProductId) return;
+      const inv = require('../src/modules/inventory/handler');
+      const result = await inv.createMovement({
+        user: { userId: 'test-user', role: 'bodega' },
+        body: {
+          productId: testProductId,
+          type: 'IN',
+          quantity: 5,
+          reference: 'Repo test',
+          notes: 'Test IN movement',
+        },
+      });
+      const body = JSON.parse(result.body);
+      assert.strictEqual(result.statusCode, 201);
+      assert.strictEqual(body.ok, true);
+      assert.strictEqual(body.data.type, 'IN');
+      assert.ok(body.data.stockBefore != null);
+      assert.ok(body.data.stockAfter != null);
+    });
+
+    it('should create movement OUT as admin', async () => {
+      if (!testProductId) return;
+      const inv = require('../src/modules/inventory/handler');
+      const result = await inv.createMovement({
+        user: { userId: 'test-user', role: 'admin' },
+        body: {
+          productId: testProductId,
+          type: 'OUT',
+          quantity: 3,
+          reference: 'Test OUT movement',
+        },
+      });
+      const body = JSON.parse(result.body);
+      assert.strictEqual(result.statusCode, 201);
+      assert.strictEqual(body.data.type, 'OUT');
+    });
+
+    it('should reject movement without required fields', async () => {
+      const inv = require('../src/modules/inventory/handler');
+      const result = await inv.createMovement({
+        user: { userId: 'test-user', role: 'bodega' },
+        body: { type: 'IN' },
+      });
+      const body = JSON.parse(result.body);
+      assert.strictEqual(result.statusCode, 400);
+    });
+
+    it('should filter movements by productId', async () => {
+      if (!testProductId) return;
+      const inv = require('../src/modules/inventory/handler');
+      const result = await inv.listMovements({ queryStringParameters: { productId: testProductId } });
+      const body = JSON.parse(result.body);
+      assert.strictEqual(result.statusCode, 200);
+      assert.ok(body.data.every((m) => m.productId === testProductId));
+    });
+  });
+
+  describe('Phase 2 — CRM Leads', () => {
+    let createdLeadId;
+
+    it('should create lead as gerencia', async () => {
+      const leads = require('../src/modules/leads/handler');
+      const result = await leads.create({
+        user: { userId: 'test-user', role: 'gerencia' },
+        body: {
+          companyName: 'Test Corp',
+          contactName: 'John Doe',
+          email: 'john@test.com',
+          phone: '555-1234',
+          source: 'web',
+          notes: 'Test lead',
+        },
+      });
+      const body = JSON.parse(result.body);
+      assert.strictEqual(result.statusCode, 201);
+      assert.strictEqual(body.ok, true);
+      assert.strictEqual(body.data.status, 'new');
+      createdLeadId = body.data.id;
+    });
+
+    it('should update lead status', async () => {
+      const leads = require('../src/modules/leads/handler');
+      const result = await leads.update({
+        params: { id: createdLeadId },
+        user: { userId: 'test-user', role: 'gerencia' },
+        body: { status: 'negotiation' },
+      });
+      const body = JSON.parse(result.body);
+      assert.strictEqual(result.statusCode, 200);
+      assert.strictEqual(body.data.status, 'negotiation');
+    });
+
+    it('should reject invalid status', async () => {
+      const leads = require('../src/modules/leads/handler');
+      const result = await leads.update({
+        params: { id: createdLeadId },
+        user: { userId: 'test-user', role: 'gerencia' },
+        body: { status: 'invalid_status' },
+      });
+      const body = JSON.parse(result.body);
+      assert.strictEqual(result.statusCode, 400);
+    });
+
+    it('should add note to lead', async () => {
+      const leads = require('../src/modules/leads/handler');
+      const result = await leads.addNote({
+        params: { id: createdLeadId },
+        user: { userId: 'test-user', role: 'gerencia' },
+        body: { content: 'Nota de prueba' },
+      });
+      const body = JSON.parse(result.body);
+      assert.strictEqual(result.statusCode, 201);
+      assert.strictEqual(body.ok, true);
+    });
+
+    it('should reject note without content', async () => {
+      const leads = require('../src/modules/leads/handler');
+      const result = await leads.addNote({
+        params: { id: createdLeadId },
+        user: { userId: 'test-user', role: 'gerencia' },
+        body: {},
+      });
+      const body = JSON.parse(result.body);
+      assert.strictEqual(result.statusCode, 400);
+    });
+
+    it('should reject creating lead without required fields', async () => {
+      const leads = require('../src/modules/leads/handler');
+      const result = await leads.create({
+        user: { userId: 'test-user', role: 'gerencia' },
+        body: { companyName: 'Test' },
+      });
+      const body = JSON.parse(result.body);
+      assert.strictEqual(result.statusCode, 400);
+    });
+  });
+
+  describe('Phase 2 — Dashboard Enriched', () => {
+    it('should return enriched KPIs', async () => {
+      const dashboard = require('../src/modules/dashboard/handler');
+      const result = await dashboard.summary({});
+      const body = JSON.parse(result.body);
+      assert.strictEqual(result.statusCode, 200);
+      assert.strictEqual(body.ok, true);
+      assert.ok(body.data.pendingRequisitions >= 0);
+      assert.ok(body.data.approvedRequisitions >= 0);
+      assert.ok(body.data.completedRequisitions >= 0);
+      assert.ok(body.data.rejectedRequisitions >= 0);
+      assert.ok(body.data.lowStockProducts >= 0);
+      assert.ok(body.data.activeLeads >= 0);
+      assert.ok(Array.isArray(body.data.recentMovements));
+      assert.ok(Array.isArray(body.data.recentRequisitions));
+      assert.ok(Array.isArray(body.data.recentLeads));
+    });
+  });
+
+  describe('Phase 2 — Audit Events', () => {
+    it('should record audit events for requisition create', async () => {
+      const auditService = require('../src/services/auditService');
+      const events = await auditService.listAll({ entityType: 'requisition', action: 'created' });
+      assert.ok(events.length >= 1);
+    });
+
+    it('should record audit events for product create', async () => {
+      const auditService = require('../src/services/auditService');
+      const events = await auditService.listAll({ entityType: 'product', action: 'created' });
+      assert.ok(events.length >= 1);
+    });
+
+    it('should record audit events for lead create', async () => {
+      const auditService = require('../src/services/auditService');
+      const events = await auditService.listAll({ entityType: 'lead', action: 'created' });
+      assert.ok(events.length >= 1);
+    });
+  });
+
+  describe('Phase 3 — Config Data Source', () => {
+    it('should have dataSource in config', () => {
+      const config = require('../src/config');
+      assert.ok(config.dataSource);
+      assert.strictEqual(config.dataSource, 'mock');
+    });
+
+    it('should reject invalid DATA_SOURCE via validation', () => {
+      const { validDataSources } = (() => {
+        try {
+          const fs = require('fs');
+          const src = fs.readFileSync(require.resolve('../src/config'), 'utf8');
+          const match = src.match(/validDataSources\s*=\s*(\[[^\]]+\])/);
+          return match ? { validDataSources: JSON.parse(match[1].replace(/'/g, '"')) } : { validDataSources: [] };
+        } catch (e) {
+          return { validDataSources: [] };
+        }
+      })();
+      assert.ok(Array.isArray(validDataSources));
+      assert.ok(validDataSources.includes('mock'));
+      assert.ok(validDataSources.includes('dynamodb'));
+      assert.strictEqual(validDataSources.length, 2);
+    });
+  });
+
+  describe('Phase 3 — Table Names', () => {
+    it('should generate table names with prefix', () => {
+      const { tableName, isValidCollection, getCollections } = require('../src/db/tableNames');
+      assert.strictEqual(tableName('users'), 'mini-erp-users');
+      assert.strictEqual(tableName('products'), 'mini-erp-products');
+      assert.strictEqual(tableName('auditEvents'), 'mini-erp-audit-events');
+      assert.ok(isValidCollection('users'));
+      assert.ok(!isValidCollection('nonexistent'));
+      assert.ok(getCollections().length >= 8);
+    });
+  });
+
+  describe('Phase 3 — Repository Factory', () => {
+    it('should return mockRepository by default', () => {
+      const { getRepository, resetCache } = require('../src/db/repositoryFactory');
+      resetCache();
+      const repo = getRepository();
+      assert.ok(repo);
+      assert.ok(typeof repo.list === 'function');
+      assert.ok(typeof repo.create === 'function');
+      assert.ok(typeof repo.findById === 'function');
+      assert.ok(typeof repo.findUserByUsername === 'function');
+    });
+
+    it('should cache repository instance', () => {
+      const { getRepository, resetCache } = require('../src/db/repositoryFactory');
+      resetCache();
+      const a = getRepository();
+      const b = getRepository();
+      assert.strictEqual(a, b);
+    });
+  });
+
+  describe('Phase 3 — Mock Repository Generic Interface', () => {
+    it('should list items with pagination', () => {
+      const repo = require('../src/db/mockRepository');
+      const result = repo.list('products', { limit: 2 });
+      assert.ok(Array.isArray(result.items));
+      assert.ok(result.items.length <= 2);
+      assert.ok(typeof result.nextToken === 'string' || result.nextToken === null);
+    });
+
+    it('should list all items without pagination', () => {
+      const repo = require('../src/db/mockRepository');
+      const result = repo.list('products');
+      assert.ok(result.items.length >= 3);
+    });
+
+    it('should find by id', () => {
+      const repo = require('../src/db/mockRepository');
+      const products = repo.list('products');
+      const first = products.items[0];
+      const found = repo.findById('products', first.id);
+      assert.ok(found);
+      assert.strictEqual(found.id, first.id);
+    });
+
+    it('should return null for unknown id', () => {
+      const repo = require('../src/db/mockRepository');
+      const found = repo.findById('products', 'nonexistent-id');
+      assert.strictEqual(found, null);
+    });
+
+    it('should find one by field', () => {
+      const repo = require('../src/db/mockRepository');
+      const user = repo.findOneBy('users', 'username', 'wilson');
+      assert.ok(user);
+      assert.strictEqual(user.role, 'admin');
+    });
+
+    it('should return null when findOneBy has no match', () => {
+      const repo = require('../src/db/mockRepository');
+      const user = repo.findOneBy('users', 'username', 'noexiste');
+      assert.strictEqual(user, null);
+    });
+
+    it('should create item', () => {
+      const repo = require('../src/db/mockRepository');
+      const created = repo.create('products', { sku: 'GENERIC-TEST', name: 'Generic Test', category: 'insumo', unit: 'unidad', price: 1, minStock: 1 });
+      assert.ok(created.id);
+      assert.ok(created.createdAt);
+      assert.strictEqual(created.sku, 'GENERIC-TEST');
+      const found = repo.findById('products', created.id);
+      assert.ok(found);
+    });
+
+    it('should update item', () => {
+      const repo = require('../src/db/mockRepository');
+      const products = repo.list('products');
+      const first = products.items[0];
+      const updated = repo.update('products', first.id, { name: 'Updated Generic' });
+      assert.ok(updated);
+      assert.strictEqual(updated.name, 'Updated Generic');
+    });
+
+    it('should return null when updating unknown item', () => {
+      const repo = require('../src/db/mockRepository');
+      const updated = repo.update('products', 'nonexistent', { name: 'test' });
+      assert.strictEqual(updated, null);
+    });
+
+    it('should remove item', () => {
+      const repo = require('../src/db/mockRepository');
+      const before = repo.list('products');
+      const target = before.items[0];
+      const removed = repo.remove('products', target.id);
+      assert.ok(removed);
+      assert.strictEqual(removed.id, target.id);
+      const after = repo.findById('products', target.id);
+      assert.strictEqual(after, null);
+    });
+
+    it('should return null when removing unknown item', () => {
+      const repo = require('../src/db/mockRepository');
+      const removed = repo.remove('products', 'nonexistent');
+      assert.strictEqual(removed, null);
+    });
+
+    it('should query by field', () => {
+      const repo = require('../src/db/mockRepository');
+      const result = repo.queryBy('inventoryMovements', 'type', 'IN');
+      assert.ok(Array.isArray(result.items));
+      assert.ok(result.items.every((m) => m.type === 'IN'));
+    });
+  });
+
+  describe('Phase 3 — Pagination on List Endpoints', () => {
+    it('should return pagination in requisitions list', async () => {
+      const reqHandler = require('../src/modules/requisitions/handler');
+      const result = await reqHandler.list({ queryStringParameters: { limit: '1' } });
+      const body = JSON.parse(result.body);
+      assert.ok(body.pagination);
+      assert.strictEqual(body.pagination.limit, 1);
+    });
+
+    it('should return pagination in products list', async () => {
+      const prodHandler = require('../src/modules/products/handler');
+      const result = await prodHandler.list({ queryStringParameters: { limit: '2' } });
+      const body = JSON.parse(result.body);
+      assert.ok(body.pagination);
+      assert.ok(body.data.length <= 2);
+    });
+
+    it('should return pagination in leads list', async () => {
+      const leadsHandler = require('../src/modules/leads/handler');
+      const result = await leadsHandler.list({ queryStringParameters: { limit: '1' } });
+      const body = JSON.parse(result.body);
+      assert.ok(body.pagination);
+    });
+
+    it('should return pagination in inventory movements list', async () => {
+      const invHandler = require('../src/modules/inventory/handler');
+      const result = await invHandler.listMovements({ queryStringParameters: { limit: '1' } });
+      const body = JSON.parse(result.body);
+      assert.ok(body.pagination);
     });
   });
 });
