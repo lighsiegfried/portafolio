@@ -81,11 +81,47 @@ export default function LeadsPage() {
 
 const STATUS_OPTIONS = ['new', 'in_contact', 'negotiation', 'won', 'lost'];
 
+function normalizeLeadNotes(notes) {
+  if (!notes) return [];
+
+  const list = Array.isArray(notes) ? notes : [notes];
+
+  return list
+    .map((note, index) => {
+      if (!note) return null;
+
+      if (typeof note === 'string') {
+        const content = note.trim();
+        return content
+          ? { id: `note-${index}`, content }
+          : null;
+      }
+
+      if (typeof note === 'object') {
+        const content = note.content || note.note || note.text || note.message || '';
+
+        return content
+          ? {
+              id: note.id || `note-${index}`,
+              content,
+            }
+          : null;
+      }
+
+      return null;
+    })
+    .filter(Boolean);
+}
+
 function LeadDetailModal({ lead, onClose, onUpdated, user }) {
   const [status, setStatus] = useState(lead.status);
   const [noteContent, setNoteContent] = useState('');
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState('');
+  
+  const leadNotes = normalizeLeadNotes(
+    lead.notes || lead.leadNotes || lead.lastNote || lead.latestNote
+  );
 
   async function handleUpdateStatus() {
     setErr('');
@@ -124,7 +160,24 @@ function LeadDetailModal({ lead, onClose, onUpdated, user }) {
           <div className="flex justify-between"><span className="text-secondary">Email</span><span className="text-white">{lead.email || '-'}</span></div>
           <div className="flex justify-between"><span className="text-secondary">Telefono</span><span className="text-white">{lead.phone || '-'}</span></div>
           <div className="flex justify-between"><span className="text-secondary">Fuente</span><span className="text-white">{lead.source || '-'}</span></div>
-          {lead.notes && <div><span className="text-secondary">Notas</span><p className="text-white mt-1 text-xs">{lead.notes}</p></div>}
+          <div>
+            <span className="text-secondary">Notas</span>
+
+            {leadNotes.length > 0 ? (
+              <div className="mt-1 space-y-1">
+                {leadNotes.map((note) => (
+                  <p
+                    key={note.id}
+                    className="text-white text-xs leading-relaxed"
+                  >
+                    {note.content}
+                  </p>
+                ))}
+              </div>
+            ) : (
+              <p className="text-secondary mt-1 text-xs">Sin notas</p>
+            )}
+          </div>
         </div>
 
         {userCan(user, 'manageLeads') && (
