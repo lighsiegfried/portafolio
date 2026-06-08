@@ -61,35 +61,23 @@ const Contact = () => {
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState(null);
   const [serverError, setServerError] = useState(null);
-
-  const handleChange = (e) => {
-    const { target } = e;
-    const { name, value } = target;
-
-    setForm((prev) => ({ ...prev, [name]: value }));
-
-    if (formErrors[name]) {
-      setFormErrors((prev) => {
-        const next = { ...prev };
-        delete next[name];
-        return next;
-      });
-    }
-  };
-
+  const [limitNotice, setLimitNotice] = useState("");
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
+
     setStatus(null);
     setServerError(null);
     setFormErrors({});
 
     const errors = validateForm(form);
+
     if (Object.keys(errors).length > 0) {
       setFormErrors(errors);
-      setLoading(false);
       return;
     }
+
+    setLoading(true);
 
     try {
       await post("/contact", {
@@ -99,10 +87,14 @@ const Contact = () => {
       });
 
       setStatus("success");
+      setLimitNotice("");
       setForm({ name: "", email: "", message: "" });
     } catch (err) {
-      if (err.code === "VALIDATION_ERROR" && err.message) {
-        setServerError(err.message);
+      const code = err?.code || err?.error?.code;
+      const message = err?.message || err?.error?.message;
+
+      if (code === "VALIDATION_ERROR" && message) {
+        setServerError(message);
       } else {
         setServerError(
           "No pudimos enviar el mensaje en este momento. Intenta nuevamente más tarde."
@@ -111,6 +103,39 @@ const Contact = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleChange = (e) => {
+  const { name, value } = e.target;
+
+  setStatus(null);
+  setServerError(null);
+
+  let nextValue = value;
+
+  if (name === "message") {
+    if (value.length > MAX_MESSAGE) {
+      nextValue = value.slice(0, MAX_MESSAGE);
+      setLimitNotice(`Tu mensaje llegó al límite de ${MAX_MESSAGE} caracteres.`);
+    } else if (value.length === MAX_MESSAGE) {
+      setLimitNotice(`Tu mensaje llegó al límite de ${MAX_MESSAGE} caracteres.`);
+    } else {
+      setLimitNotice("");
+    }
+  }
+
+  setForm((prev) => ({
+    ...prev,
+    [name]: nextValue,
+  }));
+
+  if (formErrors[name]) {
+    setFormErrors((prev) => {
+      const next = { ...prev };
+      delete next[name];
+      return next;
+    });
+  }
   };
 
   return (
@@ -148,6 +173,7 @@ const Contact = () => {
               name='name'
               value={form.name}
               onChange={handleChange}
+              maxLength={MAX_NAME}
               placeholder="¿Cuál es tu nombre?"
               className={`bg-tertiary py-4 px-6 placeholder:text-secondary text-white rounded-lg outline-none border-none font-medium ${
                 formErrors.name ? "ring-2 ring-red-500" : ""
@@ -166,6 +192,7 @@ const Contact = () => {
               name='email'
               value={form.email}
               onChange={handleChange}
+              maxLength={MAX_EMAIL}
               placeholder="¿Cuál es tu correo electrónico?"
               className={`bg-tertiary py-4 px-6 placeholder:text-secondary text-white rounded-lg outline-none border-none font-medium ${
                 formErrors.email ? "ring-2 ring-red-500" : ""
@@ -184,11 +211,44 @@ const Contact = () => {
               name='message'
               value={form.message}
               onChange={handleChange}
+              maxLength={MAX_MESSAGE}
               placeholder='¿En qué puedo ayudarte?'
               className={`bg-tertiary py-4 px-6 placeholder:text-secondary text-white rounded-lg outline-none border-none font-medium ${
                 formErrors.message ? "ring-2 ring-red-500" : ""
               }`}
             />
+            <div className='mt-2 flex items-center justify-between text-xs'>
+              <span
+                className={
+                  form.message.trim().length > 0 &&
+                  form.message.trim().length < MIN_MESSAGE
+                    ? "text-red-400"
+                    : "text-secondary"
+                }
+              >
+                {form.message.trim().length > 0 &&
+                form.message.trim().length < MIN_MESSAGE
+                  ? `Faltan ${MIN_MESSAGE - form.message.trim().length} caracteres para poder enviar.`
+                  : `${MAX_MESSAGE - form.message.length} caracteres restantes.`}
+              </span>
+
+              <span
+                className={
+                  form.message.length >= MAX_MESSAGE
+                    ? "text-yellow-300"
+                    : "text-secondary"
+                }
+              >
+                {form.message.length} / {MAX_MESSAGE}
+              </span>
+            </div>
+
+            {limitNotice && (
+              <span className='mt-1 text-yellow-300 text-xs'>
+                {limitNotice}
+              </span>
+            )}
+            
             {formErrors.message && (
               <span className='mt-1 text-red-400 text-xs'>
                 {formErrors.message}
