@@ -65,7 +65,7 @@ src/
 ├── config/              # Variables de entorno + matriz de permisos
 ├── db/                  # mockRepository + cliente DynamoDB SDK v3
 ├── middleware/          # auth, authorize, validate, logger, cors
-├── modules/             # auth, requisitions, products, inventory, leads, dashboard, reports
+├── modules/             # auth, requisitions, products, inventory, leads, dashboard, reports, contact
 ├── services/            # auditService (transversal)
 ├── utils/               # response, errors, jwt, idGenerator, csvHelper
 └── data/                # seed.js + mock-db.js (datos demo en memoria)
@@ -101,6 +101,11 @@ npm run dev
 | `LOG_LEVEL` | `INFO` | Nivel de log (ERROR, WARN, INFO, DEBUG) |
 | `PORT` | `3001` | Puerto del servidor local |
 | `DEFAULT_LOW_STOCK_THRESHOLD` | `5` | Umbral global de bajo stock |
+| `CONTACT_TO_EMAIL` | — | Correo destino para notificaciones del formulario de contacto |
+| `CONTACT_FROM_EMAIL` | — | Correo verificado en SES usado como remitente |
+| `CONTACT_REPLY_TO_ENABLED` | `true` | Usar email del visitante como Reply-To |
+| `SEND_CONTACT_CONFIRMATION` | `false` | Enviar confirmación al visitante (desactivado — SES en sandbox) |
+| `SES_REGION` | `us-east-1` | Región AWS de SES |
 
 ## Scripts
 
@@ -131,6 +136,11 @@ Todas las respuestas siguen el formato:
 ```
 
 ## Endpoints
+
+### Contacto
+| Método | Ruta | Auth | Descripción |
+|--------|------|------|-------------|
+| POST | /contact | No | Enviar mensaje desde formulario de contacto (público) |
 
 ### Salud
 | Método | Ruta | Auth | Descripción |
@@ -262,6 +272,11 @@ curl -s -X POST http://localhost:3001/api/inventory/movements \
   -H "Authorization: Bearer <TOKEN>" \
   -d '{"productId":"<PRODUCT_ID>","type":"IN","quantity":10,"reference":"Compra proveedor"}'
 
+# Contacto (público, no requiere token)
+curl -s -X POST http://localhost:3001/api/contact \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Juan Pérez","email":"juan@example.com","message":"Hola, quiero contactarte para una oferta laboral."}'
+
 # Crear lead
 curl -s -X POST http://localhost:3001/api/leads \
   -H "Content-Type: application/json" \
@@ -307,12 +322,33 @@ Todos los repositorios implementan:
 
 ### Colecciones soportadas
 
-`users`, `products`, `requisitions`, `requisitionItems`, `inventoryMovements`, `leads`, `leadNotes`, `auditEvents`
+`users`, `products`, `requisitions`, `requisitionItems`, `inventoryMovements`, `leads`, `leadNotes`, `auditEvents`, `contactMessages`
 
 ### Paginación
 
 Los endpoints de listado aceptan `?limit=10&nextToken=offset_10`.
 La respuesta incluye `pagination: { limit, nextToken }`.
+
+## Contact Form — Amazon SES
+
+El módulo de contacto (`POST /contact`) guarda el mensaje en DynamoDB y envía una notificación por correo via SES.
+
+### ⚠️ SES Sandbox
+
+Actualmente SES está en **sandbox** (modo por defecto para cuentas nuevas). Esto significa:
+- Solo puede enviar correos a direcciones verificadas en SES
+- `wil.vasquez3@gmail.com` ya está verificado y recibirá las notificaciones
+- La confirmación al visitante (`SEND_CONTACT_CONFIRMATION`) está desactivada porque SES no puede enviar a direcciones arbitrarias
+
+Cuando SES salga de sandbox, cambiar `SEND_CONTACT_CONFIRMATION=true` para activar la confirmación automática al visitante.
+
+### Estados del mensaje
+
+| Estado | Significado |
+|--------|-------------|
+| `received` | Guardado en DynamoDB |
+| `email_sent` | Notificación interna enviada correctamente |
+| `email_failed` | Notificación falló (el mensaje NO se pierde) |
 
 ## Limitaciones actuales
 

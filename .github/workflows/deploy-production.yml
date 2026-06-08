@@ -133,7 +133,9 @@ jobs:
             -var="jwt_secret=${{ secrets.JWT_SECRET }}" \
             -var="contact_to_email=${{ secrets.CONTACT_TO_EMAIL }}" \
             -var="contact_from_email=${{ secrets.CONTACT_FROM_EMAIL }}" \
+            -var="contact_reply_to_enabled=${{ vars.CONTACT_REPLY_TO_ENABLED || 'true' }}" \
             -var="send_contact_confirmation=${{ vars.SEND_CONTACT_CONFIRMATION || 'false' }}" \
+            -var="ses_region=${{ vars.SES_REGION || 'us-east-1' }}" \
             -var="allowed_origins=https://${{ env.CLOUDFRONT_DOMAIN }},http://localhost:5173" \
             -var="enable_point_in_time_recovery=false" \
             -no-color \
@@ -232,7 +234,9 @@ jobs:
             -var="jwt_secret=${{ secrets.JWT_SECRET }}" \
             -var="contact_to_email=${{ secrets.CONTACT_TO_EMAIL }}" \
             -var="contact_from_email=${{ secrets.CONTACT_FROM_EMAIL }}" \
+            -var="contact_reply_to_enabled=${{ vars.CONTACT_REPLY_TO_ENABLED || 'true' }}" \
             -var="send_contact_confirmation=${{ vars.SEND_CONTACT_CONFIRMATION || 'false' }}" \
+            -var="ses_region=${{ vars.SES_REGION || 'us-east-1' }}" \
             -var="allowed_origins=https://${{ env.CLOUDFRONT_DOMAIN }},http://localhost:5173" \
             -var="enable_point_in_time_recovery=false" \
             -no-color \

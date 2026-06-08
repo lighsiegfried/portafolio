@@ -42,6 +42,7 @@ contact_to_email          = "tu-email@dominio.com"
 contact_from_email        = "email-verificado-en-ses@dominio.com"
 contact_reply_to_enabled  = "true"
 send_contact_confirmation = "false"
+ses_region                = "us-east-1"
 
 # =============================================================================
 # Tags

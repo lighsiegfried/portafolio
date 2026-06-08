@@ -142,6 +142,12 @@ variable "send_contact_confirmation" {
   default     = "false"
 }
 
+variable "ses_region" {
+  description = "AWS region for Amazon SES"
+  type        = string
+  default     = "us-east-1"
+}
+
 variable "common_tags" {
   description = "Common tags applied to all resources"
   type        = map(string)

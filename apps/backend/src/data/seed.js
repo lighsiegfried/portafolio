@@ -10,4 +10,5 @@ const { auditEvents } = require('./fixtures/auditEvents');
 module.exports = {
   users, products, requisitions, requisitionItems,
   inventoryMovements, leads, leadNotes, auditEvents,
+  contactMessages: [],
 };

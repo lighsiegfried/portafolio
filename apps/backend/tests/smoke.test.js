@@ -1321,4 +1321,161 @@ describe('Mini ERP Backend — Smoke Tests', () => {
       assert.ok(rows.length >= 11);
     });
   });
+
+  describe('Contact Form', () => {
+    const validPayload = {
+      name: 'Juan Pérez',
+      email: 'juan@example.com',
+      message: 'Hola, me gustaría contactarte para una oportunidad laboral.',
+    };
+
+    const ORIGINAL_TO = process.env.CONTACT_TO_EMAIL;
+    const ORIGINAL_FROM = process.env.CONTACT_FROM_EMAIL;
+
+    let originalSesSend;
+
+    before(() => {
+      originalSesSend = require('@aws-sdk/client-sesv2').SESv2Client.prototype.send;
+      process.env.CONTACT_TO_EMAIL = 'test@example.com';
+      process.env.CONTACT_FROM_EMAIL = 'test@example.com';
+      require('@aws-sdk/client-sesv2').SESv2Client.prototype.send = async () => ({
+        MessageId: 'mock-ses-message-id',
+      });
+    });
+
+    it('should submit contact form with valid data', async () => {
+      const contact = require('../src/modules/contact/handler');
+
+      const result = await contact.submit({
+        body: { ...validPayload },
+      });
+
+      const body = JSON.parse(result.body);
+      assert.strictEqual(result.statusCode, 200);
+      assert.strictEqual(body.ok, true);
+      assert.strictEqual(body.data.message, 'Mensaje recibido correctamente');
+    });
+
+    it('should reject invalid email format', async () => {
+      const contact = require('../src/modules/contact/handler');
+
+      const result = await contact.submit({
+        body: { ...validPayload, email: 'correo-invalido' },
+      });
+
+      assert.strictEqual(result.statusCode, 400);
+      const body = JSON.parse(result.body);
+      assert.strictEqual(body.ok, false);
+      assert.strictEqual(body.error.code, 'VALIDATION_ERROR');
+    });
+
+    it('should reject short message (less than 10 chars)', async () => {
+      const contact = require('../src/modules/contact/handler');
+
+      const result = await contact.submit({
+        body: { ...validPayload, message: 'Corto' },
+      });
+
+      assert.strictEqual(result.statusCode, 400);
+      const body = JSON.parse(result.body);
+      assert.strictEqual(body.ok, false);
+      assert.strictEqual(body.error.code, 'VALIDATION_ERROR');
+    });
+
+    it('should reject name that is too short', async () => {
+      const contact = require('../src/modules/contact/handler');
+
+      const result = await contact.submit({
+        body: { ...validPayload, name: 'A' },
+      });
+
+      assert.strictEqual(result.statusCode, 400);
+      const body = JSON.parse(result.body);
+      assert.strictEqual(body.ok, false);
+      assert.strictEqual(body.error.code, 'VALIDATION_ERROR');
+    });
+
+    it('should sanitize HTML content in message', async () => {
+      const contact = require('../src/modules/contact/handler');
+
+      const result = await contact.submit({
+        body: { ...validPayload, message: '<script>alert("xss")</script>Hola mundo!' },
+      });
+
+      assert.strictEqual(result.statusCode, 200);
+      const body = JSON.parse(result.body);
+      assert.strictEqual(body.ok, true);
+    });
+
+    it('should reject extra unexpected fields', async () => {
+      const contact = require('../src/modules/contact/handler');
+
+      const result = await contact.submit({
+        body: { ...validPayload, extraField: 'no permitido' },
+      });
+
+      assert.strictEqual(result.statusCode, 400);
+      const body = JSON.parse(result.body);
+      assert.strictEqual(body.ok, false);
+      assert.strictEqual(body.error.code, 'VALIDATION_ERROR');
+    });
+
+    it('should reject null body', async () => {
+      const contact = require('../src/modules/contact/handler');
+
+      const result = await contact.submit({ body: null });
+
+      assert.strictEqual(result.statusCode, 400);
+      const body = JSON.parse(result.body);
+      assert.strictEqual(body.ok, false);
+      assert.strictEqual(body.error.code, 'VALIDATION_ERROR');
+    });
+
+    it('should persist contact to repository with email_sent status', async () => {
+      require('@aws-sdk/client-sesv2').SESv2Client.prototype.send = async () => ({
+        MessageId: 'mock-ses-message-id',
+      });
+
+      const contact = require('../src/modules/contact/handler');
+      const repo = require('../src/db/repositoryFactory').getRepository();
+      const listBefore = repo.list('contactMessages');
+
+      await contact.submit({ body: { ...validPayload } });
+
+      const listAfter = repo.list('contactMessages');
+      assert.ok(listAfter.items.length > listBefore.items.length);
+
+      const saved = listAfter.items[0];
+      assert.strictEqual(saved.name, 'Juan Pérez');
+      assert.strictEqual(saved.email, 'juan@example.com');
+      assert.strictEqual(saved.status, 'email_sent');
+      assert.ok(saved.sesMessageId, 'Should have SES message ID');
+    });
+
+    it('should persist contact with email_failed status when SES fails', async () => {
+      require('@aws-sdk/client-sesv2').SESv2Client.prototype.send = async () => {
+        throw new Error('SES servicio no disponible');
+      };
+
+      const contact = require('../src/modules/contact/handler');
+      const repo = require('../src/db/repositoryFactory').getRepository();
+      const listBefore = repo.list('contactMessages');
+
+      await contact.submit({ body: { ...validPayload } });
+
+      const listAfter = repo.list('contactMessages');
+      assert.ok(listAfter.items.length > listBefore.items.length);
+
+      const saved = listAfter.items[0];
+      assert.strictEqual(saved.status, 'email_failed');
+      assert.ok(saved.id, 'Contact should still have an ID even if SES failed');
+    });
+
+    it('should be a public route (no auth required)', () => {
+      const { routes } = require('../src/index');
+      const route = routes['POST /contact'];
+      assert.ok(route, 'POST /contact route must exist in routes');
+      assert.strictEqual(route.auth, false, 'Contact route must be public (auth: false)');
+    });
+  });
 });

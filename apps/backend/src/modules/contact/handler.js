@@ -3,6 +3,7 @@ const logger = require('../../middleware/logger');
 const { getRepository } = require('../../db/repositoryFactory');
 const { validate } = require('./validator');
 const { sendInternalContactEmail, sendVisitorConfirmationEmail } = require('./service');
+const { AppError } = require('../../utils/errors');
 
 const repo = getRepository();
 
@@ -65,6 +66,11 @@ async function submit(event) {
       message: 'Mensaje recibido correctamente',
     });
   } catch (err) {
+    logger.log('ERROR', 'contact', 'send_failed', err.message, { stack: err.stack });
+    if (err instanceof AppError) {
+      logger.log('WARN', 'contact', 'validation_failed', err.message);
+      return response.error(err.statusCode, err.code, err.message);
+    }
     logger.log('ERROR', 'contact', 'send_failed', err.message, { stack: err.stack });
     return response.error(500, 'CONTACT_SEND_FAILED', 'No se pudo enviar el mensaje en este momento');
   }
