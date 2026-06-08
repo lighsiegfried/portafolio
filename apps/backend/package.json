@@ -8,9 +8,10 @@
     "start": "node src/local-server.js",
     "build": "node scripts/build-lambda.js",
     "package": "node scripts/build-lambda.js",
-    "test": "node --test tests/smoke.test.js",
+    "test": "node --test tests/smoke.test.js tests/repair-scripts.test.js",
     "seed": "node scripts/seed-demo.js",
     "seed:validate": "node scripts/validate-seed.js",
+    "verify:demo-passwords": "node scripts/verify-demo-user-passwords.js",
     "repair:demo-users": "node scripts/repair-demo-users.js"
   },
   "keywords": ["erp", "crm", "serverless", "aws", "lambda"],

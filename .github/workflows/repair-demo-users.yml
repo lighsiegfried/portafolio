@@ -4,10 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       confirm_repair:
-        description: 'Confirm repair of demo user password hashes in DynamoDB'
+        description: 'Type true to repair demo user password hashes'
         required: true
-        type: boolean
-        default: false
+        default: 'false'
 
 permissions:
   id-token: write
@@ -43,6 +42,14 @@ jobs:
       - name: Install dependencies
         run: npm --prefix apps/backend ci
 
+      - name: Verify current password hashes
+        run: npm --prefix apps/backend run verify:demo-passwords
+        env:
+          DATA_SOURCE: dynamodb
+          DYNAMODB_REGION: us-east-1
+          DYNAMODB_TABLE_PREFIX: portafolio-production
+          NODE_ENV: production
+
       - name: Repair demo users password hashes
         run: npm --prefix apps/backend run repair:demo-users
         env:
@@ -50,4 +57,12 @@ jobs:
           DYNAMODB_REGION: us-east-1
           DYNAMODB_TABLE_PREFIX: portafolio-production
           ALLOW_USER_REPAIR: 'true'
+          NODE_ENV: production
+
+      - name: Verify repaired password hashes
+        run: npm --prefix apps/backend run verify:demo-passwords
+        env:
+          DATA_SOURCE: dynamodb
+          DYNAMODB_REGION: us-east-1
+          DYNAMODB_TABLE_PREFIX: portafolio-production
           NODE_ENV: production
