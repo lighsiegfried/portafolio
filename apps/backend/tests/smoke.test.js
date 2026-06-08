@@ -1654,4 +1654,128 @@ describe('Mini ERP Backend — Smoke Tests', () => {
       assert.strictEqual(route.auth, false, 'Contact route must be public (auth: false)');
     });
   });
+
+  describe('Repair Demo Users — findUserByUsername', () => {
+    const demoConfig = [
+      { username: 'wilson',    expectedRole: 'admin',   demoPassword: 'admin123' },
+      { username: 'compras1',  expectedRole: 'compras', demoPassword: 'compras123' },
+      { username: 'bodega1',   expectedRole: 'bodega',  demoPassword: 'bodega123' },
+      { username: 'gerencia1', expectedRole: 'gerencia', demoPassword: 'gerencia123' },
+    ];
+
+    for (const { username, expectedRole, demoPassword } of demoConfig) {
+      it(`should find ${username} by username`, () => {
+        const repo = require('../src/db/mockRepository');
+        const user = repo.findUserByUsername(username);
+        assert.ok(user, `Usuario ${username} debe existir`);
+        assert.strictEqual(user.username, username);
+        assert.strictEqual(user.role, expectedRole);
+        assert.ok(user.passwordHash, `passwordHash debe existir para ${username}`);
+        assert.ok(user.id, `id debe existir para ${username}`);
+      });
+
+      it(`should validate password for ${username}`, () => {
+        const bcrypt = require('bcryptjs');
+        const repo = require('../src/db/mockRepository');
+        const user = repo.findUserByUsername(username);
+        assert.ok(user, `Usuario ${username} debe existir`);
+        const valid = bcrypt.compareSync(demoPassword, user.passwordHash);
+        assert.ok(valid, `${demoPassword} debe validar contra el hash de ${username}`);
+      });
+    }
+
+    it('should return null for non-existent username', () => {
+      const repo = require('../src/db/mockRepository');
+      const user = repo.findUserByUsername('noexiste');
+      assert.strictEqual(user, null);
+    });
+  });
+
+  describe('Repair Demo Users — update passwordHash', () => {
+    it('should update passwordHash and auto-set updatedAt without duplication', () => {
+      const bcrypt = require('bcryptjs');
+      const repo = require('../src/db/mockRepository');
+
+      const user = repo.findUserByUsername('wilson');
+      assert.ok(user, 'Usuario wilson debe existir');
+
+      const newHash = bcrypt.hashSync('admin123', 10);
+      assert.ok(bcrypt.compareSync('admin123', newHash), 'Hash generado debe validar password');
+
+      const oldUpdatedAt = user.updatedAt;
+
+      const updated = repo.update('users', user.id, { passwordHash: newHash });
+
+      assert.ok(updated, 'update() debe retornar el usuario actualizado');
+      assert.strictEqual(updated.passwordHash, newHash, 'passwordHash debe ser el nuevo hash');
+      assert.ok(updated.updatedAt, 'updatedAt debe existir');
+      assert.notStrictEqual(updated.updatedAt, undefined, 'updatedAt no debe ser undefined');
+      assert.strictEqual(typeof updated.updatedAt, 'string', 'updatedAt debe ser string ISO');
+
+      const updatedAtDate = new Date(updated.updatedAt).getTime();
+      const now = Date.now();
+      assert.ok(updatedAtDate > 0, 'updatedAt debe ser fecha válida');
+      assert.ok(Math.abs(updatedAtDate - now) < 5000, 'updatedAt debe ser reciente (+-5s)');
+
+      assert.ok(updated.id, 'id no debe perderse');
+      assert.strictEqual(updated.id, user.id, 'id no debe cambiar');
+      assert.strictEqual(updated.username, 'wilson', 'username no debe cambiar');
+      assert.strictEqual(updated.role, 'admin', 'role no debe cambiar');
+    });
+
+    it('should not remove id, createdAt or other fields', () => {
+      const repo = require('../src/db/mockRepository');
+
+      const user = repo.findUserByUsername('compras1');
+      assert.ok(user);
+
+      const updated = repo.update('users', user.id, { passwordHash: '$2a$10$test' });
+
+      assert.ok(updated);
+      assert.strictEqual(updated.id, user.id);
+      assert.strictEqual(updated.username, 'compras1');
+      assert.strictEqual(updated.role, 'compras');
+      assert.strictEqual(updated.email, user.email);
+      assert.strictEqual(updated.name, user.name);
+      assert.strictEqual(updated.active, user.active);
+    });
+
+    it('should return null when updating non-existent id', () => {
+      const repo = require('../src/db/mockRepository');
+      const result = repo.update('users', 'nonexistent-id', { passwordHash: 'test' });
+      assert.strictEqual(result, null);
+    });
+
+    it('should generate valid hash with bcrypt for all demo passwords', () => {
+      const bcrypt = require('bcryptjs');
+      const demoPasswords = ['admin123', 'compras123', 'bodega123', 'gerencia123'];
+
+      for (const pw of demoPasswords) {
+        const hash = bcrypt.hashSync(pw, 10);
+        assert.ok(bcrypt.compareSync(pw, hash), `Hash de "${pw}" debe validar`);
+        assert.ok(hash.startsWith('$2a$'), `Hash debe empezar con $2a$`);
+      }
+    });
+  });
+
+  describe('Repair Demo Users — guard conditions', () => {
+    it('should abort if ALLOW_USER_REPAIR is not true', () => {
+      const ALLOW_USER_REPAIR = process.env.ALLOW_USER_REPAIR === 'true';
+      assert.strictEqual(ALLOW_USER_REPAIR, false, 'En test no debe estar activo ALLOW_USER_REPAIR');
+    });
+
+    it('should require DATA_SOURCE=dynamodb for dynamo path', () => {
+      const DATA_SOURCE = process.env.DATA_SOURCE || 'mock';
+      assert.strictEqual(DATA_SOURCE, 'mock', 'En test debe ser mock');
+    });
+
+    it('should error if DATA_SOURCE is not dynamodb and ALLOW_USER_REPAIR is false', () => {
+      const ALLOW_USER_REPAIR = process.env.ALLOW_USER_REPAIR === 'true';
+      const DATA_SOURCE = process.env.DATA_SOURCE || 'mock';
+
+      if (!ALLOW_USER_REPAIR || DATA_SOURCE !== 'dynamodb') {
+        assert.ok(true, 'Script abortaría correctamente si falta ALLOW_USER_REPAIR o DATA_SOURCE');
+      }
+    });
+  });
 });

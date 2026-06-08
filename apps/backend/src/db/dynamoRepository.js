@@ -2,7 +2,7 @@ const { getClient } = require('./client');
 const { tableName } = require('./tableNames');
 const { generateId, generateRequisitionNumber } = require('../utils/idGenerator');
 const bcrypt = require('bcryptjs');
-const { PutCommand, GetCommand, UpdateCommand, DeleteCommand, ScanCommand } = require('@aws-sdk/lib-dynamodb');
+const { PutCommand, GetCommand, UpdateCommand, DeleteCommand, ScanCommand, QueryCommand } = require('@aws-sdk/lib-dynamodb');
 
 function requireDynamo() {
   if (!getClient) {
@@ -89,6 +89,7 @@ async function update(collection, id, payload) {
   const allowed = { ...payload };
   delete allowed.id;
   delete allowed.createdAt;
+  delete allowed.updatedAt; // update() always sets updatedAt to current time
 
   const updateExpressions = [];
   const expressionAttributeNames = {};
@@ -168,7 +169,57 @@ async function queryBy(collection, field, value, options = {}) {
 }
 
 async function findUserByUsername(username) {
-  return await findOneBy('users', 'username', username);
+  requireDynamo();
+  const client = getClient();
+  const tbl = tableName('users');
+
+  try {
+    const queryResult = await client.send(new QueryCommand({
+      TableName: tbl,
+      IndexName: 'username-index',
+      KeyConditionExpression: 'username = :username',
+      ExpressionAttributeValues: { ':username': username },
+      Limit: 2,
+    }));
+
+    if (queryResult.Items && queryResult.Items.length > 0) {
+      if (queryResult.Items.length > 1) {
+        throw new Error(`findUserByUsername encontró ${queryResult.Items.length} usuarios con username=${username}`);
+      }
+      return queryResult.Items[0];
+    }
+  } catch (err) {
+    if (err.name === 'ResourceNotFoundException') {
+      const scanResult = await client.send(new ScanCommand({
+        TableName: tbl,
+        FilterExpression: 'username = :username',
+        ExpressionAttributeValues: { ':username': username },
+      }));
+
+      if (scanResult.Items && scanResult.Items.length > 0) {
+        if (scanResult.Items.length > 1) {
+          throw new Error(`findUserByUsername encontró ${scanResult.Items.length} usuarios con username=${username}`);
+        }
+        return scanResult.Items[0];
+      }
+      return null;
+    }
+    throw err;
+  }
+
+  const scanResult = await client.send(new ScanCommand({
+    TableName: tbl,
+    FilterExpression: 'username = :username',
+    ExpressionAttributeValues: { ':username': username },
+  }));
+
+  if (scanResult.Items && scanResult.Items.length > 0) {
+    if (scanResult.Items.length > 1) {
+      throw new Error(`findUserByUsername encontró ${scanResult.Items.length} usuarios con username=${username}`);
+    }
+    return scanResult.Items[0];
+  }
+  return null;
 }
 
 async function findUserById(id) {
