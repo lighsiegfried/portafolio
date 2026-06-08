@@ -1802,6 +1802,194 @@ describe('Mini ERP Backend — Smoke Tests', () => {
     });
   });
 
+  describe('Phase 9 — Limit and Pagination Edge Cases (Mock Repository)', () => {
+    it('should handle string limit "50" as number in requisitions list', async () => {
+      const reqHandler = require('../src/modules/requisitions/handler');
+      const result = await reqHandler.list({ queryStringParameters: { limit: '50' } });
+      const body = JSON.parse(result.body);
+      assert.strictEqual(result.statusCode, 200);
+      assert.strictEqual(body.ok, true);
+      assert.ok(Array.isArray(body.data));
+      assert.ok(body.pagination);
+      assert.strictEqual(body.pagination.limit, 50);
+    });
+
+    it('should handle missing limit with default in requisitions list', async () => {
+      const reqHandler = require('../src/modules/requisitions/handler');
+      const result = await reqHandler.list({ queryStringParameters: {} });
+      const body = JSON.parse(result.body);
+      assert.strictEqual(result.statusCode, 200);
+      assert.ok(body.pagination);
+    });
+
+    it('should handle missing queryStringParameters in dashboard summary', async () => {
+      const dashboard = require('../src/modules/dashboard/handler');
+      const result = await dashboard.summary({ queryStringParameters: {} });
+      const body = JSON.parse(result.body);
+      assert.strictEqual(result.statusCode, 200);
+      assert.strictEqual(body.ok, true);
+    });
+
+    it('should handle missing queryStringParameters in products list', async () => {
+      const prodHandler = require('../src/modules/products/handler');
+      const result = await prodHandler.list({ queryStringParameters: {} });
+      const body = JSON.parse(result.body);
+      assert.strictEqual(result.statusCode, 200);
+      assert.strictEqual(body.ok, true);
+    });
+
+    it('should handle missing queryStringParameters in movements list', async () => {
+      const invHandler = require('../src/modules/inventory/handler');
+      const result = await invHandler.listMovements({ queryStringParameters: {} });
+      const body = JSON.parse(result.body);
+      assert.strictEqual(result.statusCode, 200);
+      assert.strictEqual(body.ok, true);
+    });
+
+    it('should handle missing queryStringParameters in leads list', async () => {
+      const leadsHandler = require('../src/modules/leads/handler');
+      const result = await leadsHandler.list({ queryStringParameters: {} });
+      const body = JSON.parse(result.body);
+      assert.strictEqual(result.statusCode, 200);
+      assert.strictEqual(body.ok, true);
+    });
+
+    it('should return empty array when no items exist (via lowStock)', async () => {
+      const invHandler = require('../src/modules/inventory/handler');
+      const result = await invHandler.lowStock({ queryStringParameters: {} });
+      const body = JSON.parse(result.body);
+      assert.strictEqual(result.statusCode, 200);
+      assert.ok(Array.isArray(body.data));
+    });
+
+    it('should handle leading zeros in limit string', async () => {
+      const reqHandler = require('../src/modules/requisitions/handler');
+      const result = await reqHandler.list({ queryStringParameters: { limit: '005' } });
+      const body = JSON.parse(result.body);
+      assert.strictEqual(result.statusCode, 200);
+      assert.ok(body.pagination);
+      assert.strictEqual(body.pagination.limit, 5);
+    });
+  });
+
+  describe('Phase 9 — Auth Protection (401 for protected endpoints)', () => {
+    function makeEventWithAuth(path, token) {
+      return {
+        httpMethod: 'GET',
+        path,
+        headers: { Authorization: `Bearer ${token}` },
+        queryStringParameters: {},
+      };
+    }
+
+    function makeEventNoAuth() {
+      return { httpMethod: 'GET', path: '/requisitions', headers: {}, queryStringParameters: {} };
+    }
+
+    it('should reject requisitions without token (401)', async () => {
+      const { handler } = require('../src/index');
+      const result = await handler(makeEventNoAuth());
+      assert.strictEqual(result.statusCode, 401);
+      const body = JSON.parse(result.body);
+      assert.strictEqual(body.ok, false);
+      assert.strictEqual(body.error.code, 'UNAUTHORIZED');
+    });
+
+    it('should reject products without token (401)', async () => {
+      const { handler } = require('../src/index');
+      const result = await handler({ httpMethod: 'GET', path: '/products', headers: {}, queryStringParameters: {} });
+      assert.strictEqual(result.statusCode, 401);
+    });
+
+    it('should reject dashboard without token (401)', async () => {
+      const { handler } = require('../src/index');
+      const result = await handler({ httpMethod: 'GET', path: '/dashboard/summary', headers: {}, queryStringParameters: {} });
+      assert.strictEqual(result.statusCode, 401);
+    });
+
+    it('should reject inventory movements without token (401)', async () => {
+      const { handler } = require('../src/index');
+      const result = await handler({ httpMethod: 'GET', path: '/inventory/movements', headers: {}, queryStringParameters: {} });
+      assert.strictEqual(result.statusCode, 401);
+    });
+
+    it('should reject inventory low-stock without token (401)', async () => {
+      const { handler } = require('../src/index');
+      const result = await handler({ httpMethod: 'GET', path: '/inventory/low-stock', headers: {}, queryStringParameters: {} });
+      assert.strictEqual(result.statusCode, 401);
+    });
+
+    it('should reject leads without token (401)', async () => {
+      const { handler } = require('../src/index');
+      const result = await handler({ httpMethod: 'GET', path: '/leads', headers: {}, queryStringParameters: {} });
+      assert.strictEqual(result.statusCode, 401);
+    });
+
+    it('should accept requisitions with valid token (200)', async () => {
+      const { signToken } = require('../src/utils/jwt');
+      const repo = require('../src/db/mockRepository');
+      const user = repo.findUserByUsername('wilson');
+      const token = signToken({ userId: user.id, role: user.role });
+      const { handler } = require('../src/index');
+      const result = await handler(makeEventWithAuth('/requisitions', token));
+      assert.strictEqual(result.statusCode, 200);
+      const body = JSON.parse(result.body);
+      assert.strictEqual(body.ok, true);
+    });
+
+    it('should accept dashboard summary with valid token (200)', async () => {
+      const { signToken } = require('../src/utils/jwt');
+      const repo = require('../src/db/mockRepository');
+      const user = repo.findUserByUsername('wilson');
+      const token = signToken({ userId: user.id, role: user.role });
+      const { handler } = require('../src/index');
+      const result = await handler(makeEventWithAuth('/dashboard/summary', token));
+      assert.strictEqual(result.statusCode, 200);
+      const body = JSON.parse(result.body);
+      assert.strictEqual(body.ok, true);
+    });
+
+    it('should accept products list with valid token (200)', async () => {
+      const { signToken } = require('../src/utils/jwt');
+      const repo = require('../src/db/mockRepository');
+      const user = repo.findUserByUsername('wilson');
+      const token = signToken({ userId: user.id, role: user.role });
+      const { handler } = require('../src/index');
+      const result = await handler(makeEventWithAuth('/products', token));
+      assert.strictEqual(result.statusCode, 200);
+    });
+
+    it('should accept inventory movements with valid token (200)', async () => {
+      const { signToken } = require('../src/utils/jwt');
+      const repo = require('../src/db/mockRepository');
+      const user = repo.findUserByUsername('wilson');
+      const token = signToken({ userId: user.id, role: user.role });
+      const { handler } = require('../src/index');
+      const result = await handler(makeEventWithAuth('/inventory/movements', token));
+      assert.strictEqual(result.statusCode, 200);
+    });
+
+    it('should accept inventory low-stock with valid token (200)', async () => {
+      const { signToken } = require('../src/utils/jwt');
+      const repo = require('../src/db/mockRepository');
+      const user = repo.findUserByUsername('wilson');
+      const token = signToken({ userId: user.id, role: user.role });
+      const { handler } = require('../src/index');
+      const result = await handler(makeEventWithAuth('/inventory/low-stock', token));
+      assert.strictEqual(result.statusCode, 200);
+    });
+
+    it('should accept leads list with valid token (200)', async () => {
+      const { signToken } = require('../src/utils/jwt');
+      const repo = require('../src/db/mockRepository');
+      const user = repo.findUserByUsername('wilson');
+      const token = signToken({ userId: user.id, role: user.role });
+      const { handler } = require('../src/index');
+      const result = await handler(makeEventWithAuth('/leads', token));
+      assert.strictEqual(result.statusCode, 200);
+    });
+  });
+
   describe('Repair Demo Users — guard conditions', () => {
     it('should abort if ALLOW_USER_REPAIR is not true', () => {
       const ALLOW_USER_REPAIR = process.env.ALLOW_USER_REPAIR === 'true';

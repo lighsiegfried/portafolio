@@ -1,18 +1,45 @@
 const response = require('../../utils/response');
 const { getRepository } = require('../../db/repositoryFactory');
 const auditService = require('../../services/auditService');
+const logger = require('../../middleware/logger');
 const repo = getRepository();
 
 const VALID_STATUSES = ['new', 'in_contact', 'negotiation', 'won', 'lost'];
 
 async function list(event) {
   const qs = event.queryStringParameters || {};
-  const result = repo.list('leads', { limit: qs.limit, offset: qs.nextToken ? parseInt(qs.nextToken.replace('offset_', ''), 10) : 0 });
-  const data = result.items.map((l) => ({
-    ...l,
-    notes: repo.getLeadNotes(l.id),
-  }));
-  return response.list(data, { total: repo.listLeads().length }, 200, { limit: parseInt(qs.limit, 10) || 50, nextToken: result.nextToken });
+  const limit = qs.limit;
+  const nextToken = qs.nextToken || null;
+
+  let result;
+  try {
+    result = await repo.list('leads', { limit, nextToken });
+  } catch (err) {
+    logger.log('ERROR', 'leads', 'list_failed', 'Failed to list leads', {
+      tableName: 'leads',
+      limit,
+      errorName: err.name,
+      errorMessage: err.message,
+    });
+    return response.error(500, 'INTERNAL_ERROR', 'Error al listar leads');
+  }
+
+  const items = result.items || [];
+  let enriched;
+  try {
+    enriched = await Promise.all(items.map(async (l) => {
+      let notes = [];
+      try { notes = await repo.getLeadNotes(l.id); } catch (e) { notes = []; }
+      return { ...l, notes };
+    }));
+  } catch (err) {
+    logger.log('WARN', 'leads', 'enrich_failed', 'Failed to enrich leads with notes', {
+      errorMessage: err.message,
+    });
+    enriched = items;
+  }
+
+  return response.list(enriched, null, 200, { limit: parseInt(limit, 10) || 50, nextToken: result.nextToken });
 }
 
 async function create(event) {
@@ -22,7 +49,7 @@ async function create(event) {
     return response.error(400, 'VALIDATION_ERROR', 'companyName, contactName, email, phone y source son requeridos');
   }
 
-  const data = repo.createLead({
+  const data = await repo.createLead({
     companyName: body.companyName,
     contactName: body.contactName,
     email: body.email,
@@ -38,15 +65,17 @@ async function create(event) {
 }
 
 async function getById(event) {
-  const lead = repo.findLeadById(event.params.id);
+  const lead = await repo.findLeadById(event.params.id);
   if (!lead) {
     return response.error(404, 'NOT_FOUND', 'Lead no encontrado');
   }
-  return response.success({ ...lead, notes: repo.getLeadNotes(lead.id) });
+  let notes = [];
+  try { notes = await repo.getLeadNotes(lead.id); } catch (e) { notes = []; }
+  return response.success({ ...lead, notes });
 }
 
 async function update(event) {
-  const existing = repo.findLeadById(event.params.id);
+  const existing = await repo.findLeadById(event.params.id);
   if (!existing) {
     return response.error(404, 'NOT_FOUND', 'Lead no encontrado');
   }
@@ -70,13 +99,15 @@ async function update(event) {
   }
 
   const previous = { ...existing };
-  const updated = repo.updateLead(existing.id, changes);
+  const updated = await repo.updateLead(existing.id, changes);
   await auditService.record('lead', existing.id, 'updated', event.user.userId, previous, updated);
-  return response.success({ ...updated, notes: repo.getLeadNotes(updated.id) });
+  let notes = [];
+  try { notes = await repo.getLeadNotes(updated.id); } catch (e) { notes = []; }
+  return response.success({ ...updated, notes });
 }
 
 async function addNote(event) {
-  const existing = repo.findLeadById(event.params.id);
+  const existing = await repo.findLeadById(event.params.id);
   if (!existing) {
     return response.error(404, 'NOT_FOUND', 'Lead no encontrado');
   }
@@ -86,7 +117,7 @@ async function addNote(event) {
     return response.error(400, 'VALIDATION_ERROR', 'content es requerido');
   }
 
-  const note = repo.addLeadNote({
+  const note = await repo.addLeadNote({
     leadId: existing.id,
     content: body.content,
     createdBy: event.user.userId,

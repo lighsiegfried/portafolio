@@ -3,6 +3,7 @@ const { tableName } = require('./tableNames');
 const { generateId, generateRequisitionNumber } = require('../utils/idGenerator');
 const bcrypt = require('bcryptjs');
 const { PutCommand, GetCommand, UpdateCommand, DeleteCommand, ScanCommand, QueryCommand } = require('@aws-sdk/lib-dynamodb');
+const logger = require('../middleware/logger');
 
 function requireDynamo() {
   if (!getClient) {
@@ -13,18 +14,32 @@ function requireDynamo() {
 async function list(collection, options = {}) {
   requireDynamo();
   const client = getClient();
+  const tblName = tableName(collection);
   const params = {
-    TableName: tableName(collection),
+    TableName: tblName,
   };
 
-  if (options.nextToken) {
-    params.ExclusiveStartKey = typeof options.nextToken === 'string'
-      ? JSON.parse(Buffer.from(options.nextToken, 'base64').toString('utf-8'))
-      : options.nextToken;
+  let rawLimit = options.limit;
+  if (rawLimit === undefined || rawLimit === null || rawLimit === '') {
+    rawLimit = 50;
   }
+  const numericLimit = Math.min(Math.max(parseInt(rawLimit, 10) || 50, 1), 100);
+  params.Limit = numericLimit;
 
-  if (options.limit) {
-    params.Limit = Math.min(parseInt(options.limit, 10) || 50, 100);
+  if (options.nextToken) {
+    try {
+      const decoded = typeof options.nextToken === 'string'
+        ? JSON.parse(Buffer.from(options.nextToken, 'base64').toString('utf-8'))
+        : options.nextToken;
+      if (decoded && typeof decoded === 'object' && Object.keys(decoded).length > 0) {
+        params.ExclusiveStartKey = decoded;
+      }
+    } catch (err) {
+      logger.log('WARN', 'dynamoRepository', 'list_invalid_nextToken', `Invalid nextToken for ${collection}`, {
+        collection,
+        errorMessage: err.message,
+      });
+    }
   }
 
   const result = await client.send(new ScanCommand(params));
@@ -33,6 +48,15 @@ async function list(collection, options = {}) {
   if (result.LastEvaluatedKey) {
     nextToken = Buffer.from(JSON.stringify(result.LastEvaluatedKey)).toString('base64');
   }
+
+  logger.log('INFO', 'dynamoRepository', 'list_ok', `List ${collection} returned ${items.length} items`, {
+    collection,
+    limit: numericLimit,
+    nextTokenPresent: !!options.nextToken,
+    itemsCount: items.length,
+    tableName: tblName,
+    hasMore: !!result.LastEvaluatedKey,
+  });
 
   return { items, nextToken };
 }
@@ -141,21 +165,36 @@ async function remove(collection, id) {
 async function queryBy(collection, field, value, options = {}) {
   requireDynamo();
   const client = getClient();
+  const tblName = tableName(collection);
   const params = {
-    TableName: tableName(collection),
+    TableName: tblName,
     FilterExpression: `#field = :value`,
     ExpressionAttributeNames: { '#field': field },
     ExpressionAttributeValues: { ':value': value },
   };
 
-  if (options.nextToken) {
-    params.ExclusiveStartKey = typeof options.nextToken === 'string'
-      ? JSON.parse(Buffer.from(options.nextToken, 'base64').toString('utf-8'))
-      : options.nextToken;
+  let rawLimit = options.limit;
+  if (rawLimit === undefined || rawLimit === null || rawLimit === '') {
+    rawLimit = 50;
   }
+  const numericLimit = Math.min(Math.max(parseInt(rawLimit, 10) || 50, 1), 100);
+  params.Limit = numericLimit;
 
-  if (options.limit) {
-    params.Limit = Math.min(parseInt(options.limit, 10) || 50, 100);
+  if (options.nextToken) {
+    try {
+      const decoded = typeof options.nextToken === 'string'
+        ? JSON.parse(Buffer.from(options.nextToken, 'base64').toString('utf-8'))
+        : options.nextToken;
+      if (decoded && typeof decoded === 'object' && Object.keys(decoded).length > 0) {
+        params.ExclusiveStartKey = decoded;
+      }
+    } catch (err) {
+      logger.log('WARN', 'dynamoRepository', 'queryBy_invalid_nextToken', `Invalid nextToken for ${collection}`, {
+        collection,
+        field,
+        errorMessage: err.message,
+      });
+    }
   }
 
   const result = await client.send(new ScanCommand(params));
@@ -319,8 +358,11 @@ function updateProductStock(id, newStock) {
   return update('products', id, { stock: newStock });
 }
 
-function listLowStockProducts(threshold) {
-  return list('products').then((r) => r.items.filter((p) => p.stock <= threshold));
+function listLowStockProducts(threshold, options = {}) {
+  return list('products', { limit: options.limit || 100 }).then((r) => ({
+    items: r.items.filter((p) => p.stock <= threshold),
+    nextToken: r.nextToken,
+  }));
 }
 
 function listLeads() {
@@ -389,8 +431,27 @@ function getAuditEvents() {
   return list('auditEvents').then((r) => r.items.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
 }
 
-function getDashboardSummary() {
-  throw new Error('getDashboardSummary no está disponible en modo DynamoDB. Usa DATA_SOURCE=mock para desarrollo local.');
+async function getDashboardSummary() {
+  const repo = {
+    list,
+    listRequisitions: async () => {
+      const r = await list('requisitions', { limit: 100 });
+      return r.items.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    },
+    listProducts: async () => {
+      const r = await list('products', { limit: 100 });
+      return r.items.sort((a, b) => a.name.localeCompare(b.name));
+    },
+    listLeads: async () => {
+      const r = await list('leads', { limit: 100 });
+      return r.items.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    },
+    listInventoryMovements: async () => {
+      const r = await list('inventoryMovements', { limit: 100 });
+      return r.items.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    },
+  };
+  return repo;
 }
 
 function getDb() {

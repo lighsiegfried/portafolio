@@ -1,12 +1,28 @@
 const response = require('../../utils/response');
 const { getRepository } = require('../../db/repositoryFactory');
 const auditService = require('../../services/auditService');
+const logger = require('../../middleware/logger');
 const repo = getRepository();
 
 async function list(event) {
   const qs = event.queryStringParameters || {};
-  const result = repo.list('products', { limit: qs.limit, offset: qs.nextToken ? parseInt(qs.nextToken.replace('offset_', ''), 10) : 0 });
-  return response.list(result.items, { total: repo.listProducts().length }, 200, { limit: parseInt(qs.limit, 10) || 50, nextToken: result.nextToken });
+  const limit = qs.limit;
+  const nextToken = qs.nextToken || null;
+
+  let result;
+  try {
+    result = await repo.list('products', { limit, nextToken });
+  } catch (err) {
+    logger.log('ERROR', 'products', 'list_failed', 'Failed to list products', {
+      tableName: 'products',
+      limit,
+      errorName: err.name,
+      errorMessage: err.message,
+    });
+    return response.error(500, 'INTERNAL_ERROR', 'Error al listar productos');
+  }
+
+  return response.list(result.items || [], null, 200, { limit: parseInt(limit, 10) || 50, nextToken: result.nextToken });
 }
 
 async function create(event) {
@@ -25,12 +41,13 @@ async function create(event) {
     return response.error(400, 'VALIDATION_ERROR', 'initialStock debe ser mayor o igual a 0');
   }
 
-  const existing = repo.findProductBySku(body.sku);
+  let existing;
+  try { existing = await repo.findProductBySku(body.sku); } catch (e) { existing = null; }
   if (existing) {
     return response.error(409, 'CONFLICT', `El SKU '${body.sku}' ya existe`);
   }
 
-  const data = repo.createProduct({
+  const data = await repo.createProduct({
     sku: body.sku,
     name: body.name,
     description: body.description,
@@ -42,7 +59,7 @@ async function create(event) {
   });
 
   if (body.initialStock != null && body.initialStock > 0) {
-    repo.createInventoryMovement({
+    await repo.createInventoryMovement({
       productId: data.id,
       type: 'IN',
       quantity: body.initialStock,
@@ -58,7 +75,7 @@ async function create(event) {
 }
 
 async function update(event) {
-  const existing = repo.findProductById(event.params.id);
+  const existing = await repo.findProductById(event.params.id);
   if (!existing) {
     return response.error(404, 'NOT_FOUND', 'Producto no encontrado');
   }
@@ -85,7 +102,8 @@ async function update(event) {
   }
 
   if (body.sku && body.sku !== existing.sku) {
-    const skuExists = repo.findProductBySku(body.sku);
+    let skuExists;
+    try { skuExists = await repo.findProductBySku(body.sku); } catch (e) { skuExists = null; }
     if (skuExists) {
       return response.error(409, 'CONFLICT', `El SKU '${body.sku}' ya existe`);
     }
@@ -93,13 +111,13 @@ async function update(event) {
   }
 
   const previous = { ...existing };
-  const updated = repo.updateProduct(existing.id, changes);
+  const updated = await repo.updateProduct(existing.id, changes);
   await auditService.record('product', existing.id, 'updated', event.user.userId, previous, updated);
   return response.success(updated);
 }
 
 async function updateStock(event) {
-  const existing = repo.findProductById(event.params.id);
+  const existing = await repo.findProductById(event.params.id);
   if (!existing) {
     return response.error(404, 'NOT_FOUND', 'Producto no encontrado');
   }
@@ -121,7 +139,7 @@ async function updateStock(event) {
   }
 
   const previous = { ...existing };
-  repo.createInventoryMovement({
+  await repo.createInventoryMovement({
     productId: existing.id,
     type: body.type,
     quantity: body.quantity,
@@ -132,7 +150,7 @@ async function updateStock(event) {
     createdBy: event.user.userId,
   });
 
-  const updated = repo.updateProductStock(existing.id, newStock);
+  const updated = await repo.updateProductStock(existing.id, newStock);
   await auditService.record('product', existing.id, 'stock_updated', event.user.userId, previous, updated);
   return response.success(updated);
 }

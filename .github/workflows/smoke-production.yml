@@ -1,0 +1,74 @@
+name: Smoke Test Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_smoke:
+        description: 'Confirmar smoke test en producción (debe ser "true")'
+        required: true
+        default: 'false'
+        type: string
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  API_URL: ${{ vars.VITE_API_BASE_URL_PRODUCTION || 'https://2t1wxsttb5.execute-api.us-east-1.amazonaws.com' }}
+
+jobs:
+  smoke-test:
+    if: ${{ inputs.confirm_smoke == 'true' }}
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm --prefix apps/backend ci
+
+      - name: Smoke Test — Login
+        id: login
+        run: |
+          echo "🔐 Logging in as wilson..."
+          LOGIN_RESPONSE=$(curl -s -X POST "${{ env.API_URL }}/auth/login" \
+            -H "Content-Type: application/json" \
+            -d '{"username":"wilson","password":"admin123"}')
+          echo "Login response: $LOGIN_RESPONSE"
+          TOKEN=$(echo "$LOGIN_RESPONSE" | node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{try{const r=JSON.parse(d);if(r.ok&&r.data.token){console.log(r.data.token)}else{console.error('Login failed:',JSON.stringify(r));process.exit(1)}}catch(e){console.error('Parse error:',e.message);process.exit(1)}})")
+          echo "TOKEN=$TOKEN" >> $GITHUB_OUTPUT
+
+      - name: Smoke Test — GET /dashboard/summary
+        run: |
+          curl -s -o /dev/null -w "%{http_code}" -H "Authorization: Bearer ${{ steps.login.outputs.TOKEN }}" "${{ env.API_URL }}/dashboard/summary" | grep -q 200 && echo "✅ /dashboard/summary OK" || (echo "❌ /dashboard/summary failed" && exit 1)
+
+      - name: Smoke Test — GET /requisitions
+        run: |
+          curl -s -o /dev/null -w "%{http_code}" -H "Authorization: Bearer ${{ steps.login.outputs.TOKEN }}" "${{ env.API_URL }}/requisitions?limit=50" | grep -q 200 && echo "✅ /requisitions OK" || (echo "❌ /requisitions failed" && exit 1)
+
+      - name: Smoke Test — GET /products
+        run: |
+          curl -s -o /dev/null -w "%{http_code}" -H "Authorization: Bearer ${{ steps.login.outputs.TOKEN }}" "${{ env.API_URL }}/products" | grep -q 200 && echo "✅ /products OK" || (echo "❌ /products failed" && exit 1)
+
+      - name: Smoke Test — GET /inventory/movements
+        run: |
+          curl -s -o /dev/null -w "%{http_code}" -H "Authorization: Bearer ${{ steps.login.outputs.TOKEN }}" "${{ env.API_URL }}/inventory/movements" | grep -q 200 && echo "✅ /inventory/movements OK" || (echo "❌ /inventory/movements failed" && exit 1)
+
+      - name: Smoke Test — GET /inventory/low-stock
+        run: |
+          curl -s -o /dev/null -w "%{http_code}" -H "Authorization: Bearer ${{ steps.login.outputs.TOKEN }}" "${{ env.API_URL }}/inventory/low-stock" | grep -q 200 && echo "✅ /inventory/low-stock OK" || (echo "❌ /inventory/low-stock failed" && exit 1)
+
+      - name: Smoke Test — GET /leads
+        run: |
+          curl -s -o /dev/null -w "%{http_code}" -H "Authorization: Bearer ${{ steps.login.outputs.TOKEN }}" "${{ env.API_URL }}/leads" | grep -q 200 && echo "✅ /leads OK" || (echo "❌ /leads failed" && exit 1)
+
+      - name: Smoke Test Summary
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "  ✅ Todos los endpoints responden 200"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
