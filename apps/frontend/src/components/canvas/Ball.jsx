@@ -8,9 +8,10 @@ import {
   useTexture,
 } from "@react-three/drei";
 import CanvasLoader from "../Loader";
+import ErrorBoundary from "../ErrorBoundary";
 
 const Ball = (props) => {
-  const [decal] = useTexture([props.imgUrl]);
+  const texture = useTexture(props.imgUrl);
   const meshRef = useRef();
 
   useFrame(() => {
@@ -35,7 +36,7 @@ const Ball = (props) => {
           position={[0, 0, 1]}
           rotation={[0, 0, 0]}
           scale={1.1}
-          map={decal}
+          map={texture}
           flatShading
         />
       </mesh>
@@ -43,19 +44,25 @@ const Ball = (props) => {
   );
 };
 
+const Fallback = () => (
+  <div className="w-12 h-12 border-2 border-violet-500/30 border-t-violet-400 rounded-full animate-spin" />
+);
+
 const BallCanvas = ({ icon }) => {
   return (
-    <Canvas
-      frameloop='always'
-      dpr={[1, 2]}
-      gl={{ preserveDrawingBuffer: true }}
-    >
-      <Suspense fallback={<CanvasLoader />}>
-        <OrbitControls enableZoom={false} />
-        <Ball imgUrl={icon} />
-      </Suspense>
-      <Preload all />
-    </Canvas>
+    <ErrorBoundary fallback={<Fallback />}>
+      <Canvas
+        frameloop='always'
+        dpr={[1, 2]}
+        gl={{ preserveDrawingBuffer: true }}
+      >
+        <Suspense fallback={<CanvasLoader />}>
+          <OrbitControls enableZoom={false} />
+          <Ball imgUrl={icon} />
+        </Suspense>
+        <Preload all />
+      </Canvas>
+    </ErrorBoundary>
   );
 };
 
