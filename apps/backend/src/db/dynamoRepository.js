@@ -2,6 +2,7 @@ const { getClient } = require('./client');
 const { tableName } = require('./tableNames');
 const { generateId, generateRequisitionNumber } = require('../utils/idGenerator');
 const bcrypt = require('bcryptjs');
+const { PutCommand, GetCommand, UpdateCommand, DeleteCommand, ScanCommand } = require('@aws-sdk/lib-dynamodb');
 
 function requireDynamo() {
   if (!getClient) {
@@ -26,7 +27,7 @@ async function list(collection, options = {}) {
     params.Limit = Math.min(parseInt(options.limit, 10) || 50, 100);
   }
 
-  const result = await client.scan(params);
+  const result = await client.send(new ScanCommand(params));
   const items = result.Items || [];
   let nextToken = null;
   if (result.LastEvaluatedKey) {
@@ -43,7 +44,7 @@ async function findById(collection, id) {
     TableName: tableName(collection),
     Key: { id },
   };
-  const result = await client.get(params);
+  const result = await client.send(new GetCommand(params));
   return result.Item || null;
 }
 
@@ -57,7 +58,7 @@ async function findOneBy(collection, field, value) {
     ExpressionAttributeValues: { ':value': value },
     Limit: 1,
   };
-  const result = await client.scan(params);
+  const result = await client.send(new ScanCommand(params));
   return result.Items && result.Items.length > 0 ? result.Items[0] : null;
 }
 
@@ -75,7 +76,7 @@ async function create(collection, payload) {
     TableName: tableName(collection),
     Item: item,
   };
-  await client.put(params);
+  await client.send(new PutCommand(params));
   return item;
 }
 
@@ -118,7 +119,7 @@ async function update(collection, id, payload) {
     ReturnValues: 'ALL_NEW',
   };
 
-  const result = await client.update(params);
+  const result = await client.send(new UpdateCommand(params));
   return result.Attributes || existing;
 }
 
@@ -132,7 +133,7 @@ async function remove(collection, id) {
     TableName: tableName(collection),
     Key: { id },
   };
-  await client.delete(params);
+  await client.send(new DeleteCommand(params));
   return existing;
 }
 
@@ -156,7 +157,7 @@ async function queryBy(collection, field, value, options = {}) {
     params.Limit = Math.min(parseInt(options.limit, 10) || 50, 100);
   }
 
-  const result = await client.scan(params);
+  const result = await client.send(new ScanCommand(params));
   const items = result.Items || [];
   let nextToken = null;
   if (result.LastEvaluatedKey) {

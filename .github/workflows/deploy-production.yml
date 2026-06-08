@@ -1,14 +1,14 @@
-name: Deploy Production
+name: 🚀 Deploy Production
 
 on:
   workflow_dispatch:
     inputs:
       deploy_backend:
-        description: Run terraform apply for backend infrastructure
+        description: "BACKEND: Apply Terraform changes for Lambda/API Gateway/DynamoDB"
         type: boolean
         default: false
       deploy_frontend:
-        description: Deploy frontend to existing S3/CloudFront
+        description: "FRONTEND: Build and upload React app to S3 + invalidate CloudFront"
         type: boolean
         default: false
 
@@ -29,7 +29,7 @@ env:
 
 jobs:
   validate-and-build:
-    name: Validate & Package
+    name: Validate, Test & Package
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -64,7 +64,7 @@ jobs:
         run: npm --prefix apps/frontend ci
 
   terraform-plan:
-    name: Terraform Plan
+    name: Backend Terraform Plan
     needs: [validate-and-build]
     runs-on: ubuntu-latest
     outputs:
@@ -174,7 +174,7 @@ jobs:
           rm -f infra/terraform/plan-output.txt
 
   terraform-apply:
-    name: Terraform Apply
+    name: Backend Terraform Apply
     needs: [terraform-plan]
     if: github.event.inputs.deploy_backend == 'true'
     runs-on: ubuntu-latest
@@ -300,7 +300,7 @@ jobs:
           rm -f infra/terraform/apply-output.txt
 
   deploy-frontend:
-    name: Deploy Frontend
+    name: Frontend Build + S3/CloudFront Deploy
     needs: [validate-and-build]
     if: github.event.inputs.deploy_frontend == 'true'
     runs-on: ubuntu-latest
