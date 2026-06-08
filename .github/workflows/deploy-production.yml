@@ -79,6 +79,38 @@ jobs:
           role-to-assume: ${{ env.AWS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
+      - name: Validate required secrets and variables
+        shell: bash
+        run: |
+          if [ -z "${{ secrets.JWT_SECRET }}" ]; then
+            echo "❌ Missing required secret: JWT_SECRET"
+            exit 1
+          fi
+          if [ -z "${{ vars.CONTACT_TO_EMAIL }}" ]; then
+            echo "❌ Missing required variable: CONTACT_TO_EMAIL"
+            exit 1
+          fi
+          if [ -z "${{ vars.CONTACT_FROM_EMAIL }}" ]; then
+            echo "❌ Missing required variable: CONTACT_FROM_EMAIL"
+            exit 1
+          fi
+          if [ -z "${{ vars.SES_REGION }}" ]; then
+            echo "❌ Missing required variable: SES_REGION"
+            exit 1
+          fi
+          if [ -z "${{ vars.CONTACT_REPLY_TO_ENABLED }}" ]; then
+            echo "❌ Missing required variable: CONTACT_REPLY_TO_ENABLED"
+            exit 1
+          fi
+          if [ -z "${{ vars.SEND_CONTACT_CONFIRMATION }}" ]; then
+            echo "❌ Missing required variable: SEND_CONTACT_CONFIRMATION"
+            exit 1
+          fi
+          if [ -z "${{ vars.VITE_API_BASE_URL_PRODUCTION }}" ]; then
+            echo "⚠️  VITE_API_BASE_URL_PRODUCTION not set (needed for frontend deploy)"
+          fi
+          echo "✅ All required secrets and variables are configured"
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
@@ -131,8 +163,8 @@ jobs:
             -var="existing_cloudfront_distribution_id=${{ env.CLOUDFRONT_DISTRIBUTION_ID }}" \
             -var="existing_cloudfront_domain=${{ env.CLOUDFRONT_DOMAIN }}" \
             -var="jwt_secret=${{ secrets.JWT_SECRET }}" \
-            -var="contact_to_email=${{ secrets.CONTACT_TO_EMAIL }}" \
-            -var="contact_from_email=${{ secrets.CONTACT_FROM_EMAIL }}" \
+            -var="contact_to_email=${{ vars.CONTACT_TO_EMAIL }}" \
+            -var="contact_from_email=${{ vars.CONTACT_FROM_EMAIL }}" \
             -var="contact_reply_to_enabled=${{ vars.CONTACT_REPLY_TO_ENABLED || 'true' }}" \
             -var="send_contact_confirmation=${{ vars.SEND_CONTACT_CONFIRMATION || 'false' }}" \
             -var="ses_region=${{ vars.SES_REGION || 'us-east-1' }}" \
@@ -189,6 +221,35 @@ jobs:
           role-to-assume: ${{ env.AWS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
+      - name: Validate required secrets and variables
+        shell: bash
+        run: |
+          if [ -z "${{ secrets.JWT_SECRET }}" ]; then
+            echo "❌ Missing required secret: JWT_SECRET"
+            exit 1
+          fi
+          if [ -z "${{ vars.CONTACT_TO_EMAIL }}" ]; then
+            echo "❌ Missing required variable: CONTACT_TO_EMAIL"
+            exit 1
+          fi
+          if [ -z "${{ vars.CONTACT_FROM_EMAIL }}" ]; then
+            echo "❌ Missing required variable: CONTACT_FROM_EMAIL"
+            exit 1
+          fi
+          if [ -z "${{ vars.SES_REGION }}" ]; then
+            echo "❌ Missing required variable: SES_REGION"
+            exit 1
+          fi
+          if [ -z "${{ vars.CONTACT_REPLY_TO_ENABLED }}" ]; then
+            echo "❌ Missing required variable: CONTACT_REPLY_TO_ENABLED"
+            exit 1
+          fi
+          if [ -z "${{ vars.SEND_CONTACT_CONFIRMATION }}" ]; then
+            echo "❌ Missing required variable: SEND_CONTACT_CONFIRMATION"
+            exit 1
+          fi
+          echo "✅ All required secrets and variables are configured"
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
@@ -232,8 +293,8 @@ jobs:
             -var="existing_cloudfront_distribution_id=${{ env.CLOUDFRONT_DISTRIBUTION_ID }}" \
             -var="existing_cloudfront_domain=${{ env.CLOUDFRONT_DOMAIN }}" \
             -var="jwt_secret=${{ secrets.JWT_SECRET }}" \
-            -var="contact_to_email=${{ secrets.CONTACT_TO_EMAIL }}" \
-            -var="contact_from_email=${{ secrets.CONTACT_FROM_EMAIL }}" \
+            -var="contact_to_email=${{ vars.CONTACT_TO_EMAIL }}" \
+            -var="contact_from_email=${{ vars.CONTACT_FROM_EMAIL }}" \
             -var="contact_reply_to_enabled=${{ vars.CONTACT_REPLY_TO_ENABLED || 'true' }}" \
             -var="send_contact_confirmation=${{ vars.SEND_CONTACT_CONFIRMATION || 'false' }}" \
             -var="ses_region=${{ vars.SES_REGION || 'us-east-1' }}" \

@@ -36,7 +36,8 @@ async function sendInternalContactEmail({ name, email, message, messageId }) {
   const replyToEnabled = process.env.CONTACT_REPLY_TO_ENABLED !== 'false';
 
   if (!fromEmail || !toEmail) {
-    throw new Error('CONTACT_FROM_EMAIL y CONTACT_TO_EMAIL deben estar configurados');
+    logger.log('ERROR', 'contact', 'config_missing', 'Contact email configuration is missing (CONTACT_FROM_EMAIL or CONTACT_TO_EMAIL)');
+    throw new Error('Contact email configuration is missing');
   }
 
   const { internalNotification } = require('./emailTemplates');
@@ -67,6 +68,11 @@ async function sendInternalContactEmail({ name, email, message, messageId }) {
 
 async function sendVisitorConfirmationEmail({ name, email }) {
   const fromEmail = process.env.CONTACT_FROM_EMAIL;
+
+  if (!fromEmail) {
+    logger.log('ERROR', 'contact', 'config_missing', 'Contact email configuration is missing (CONTACT_FROM_EMAIL)');
+    throw new Error('Contact email configuration is missing');
+  }
 
   const { visitorConfirmation } = require('./emailTemplates');
 
