@@ -61,3 +61,4 @@ ARCHITECTURE.md
 PROJECT_CONTEXT.md
 apps/frontend/.playwright-mcp
 apps/frontend/e2e
+.playwright-mcp
