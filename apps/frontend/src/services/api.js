@@ -1,4 +1,19 @@
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
+const rawBaseUrl = import.meta.env.VITE_API_BASE_URL;
+
+function getBaseUrl() {
+  const isProduction = import.meta.env.PROD;
+  if (isProduction) {
+    if (!rawBaseUrl) {
+      throw new Error('VITE_API_BASE_URL is required in production');
+    }
+    if (rawBaseUrl.includes('localhost')) {
+      throw new Error('VITE_API_BASE_URL cannot point to localhost in production');
+    }
+  }
+  return (rawBaseUrl || 'http://localhost:3001').replace(/\/+$/, '');
+}
+
+const BASE_URL = getBaseUrl();
 
 function getToken() {
   try {
@@ -11,6 +26,10 @@ function getToken() {
   return null;
 }
 
+function normalizePath(path) {
+  return path.startsWith('/') ? path : `/${path}`;
+}
+
 async function handleResponse(res) {
   if (res.headers.get('Content-Type')?.includes('text/csv')) {
     const text = await res.text();
@@ -18,8 +37,11 @@ async function handleResponse(res) {
   }
   const json = await res.json();
   if (!json.ok) {
-    const err = new Error(json.error?.message || 'Error del servidor');
-    err.code = json.error?.code || 'UNKNOWN_ERROR';
+    const code = json.error?.code || 'UNKNOWN_ERROR';
+    const message = json.error?.message || 'Error del servidor';
+    console.error('[API Error]', { url: res.url, status: res.status, code, message });
+    const err = new Error(message);
+    err.code = code;
     err.statusCode = res.status;
     throw err;
   }
@@ -27,7 +49,7 @@ async function handleResponse(res) {
 }
 
 function buildUrl(path, params) {
-  const url = new URL(`${BASE_URL}/api${path}`);
+  const url = new URL(`${BASE_URL}${normalizePath(path)}`);
   if (params) {
     Object.entries(params).forEach(([k, v]) => {
       if (v !== undefined && v !== null && v !== '') url.searchParams.set(k, v);

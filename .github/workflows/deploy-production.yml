@@ -386,17 +386,36 @@ jobs:
       - name: Set production API URL
         id: set_api_url
         run: |
-          if [ -n "${{ vars.VITE_API_BASE_URL_PRODUCTION }}" ]; then
-            echo "VITE_API_BASE_URL=${{ vars.VITE_API_BASE_URL_PRODUCTION }}" >> $GITHUB_ENV
-            echo "api_url=${{ vars.VITE_API_BASE_URL_PRODUCTION }}" >> $GITHUB_OUTPUT
-            echo "Using production API URL: ${{ vars.VITE_API_BASE_URL_PRODUCTION }}"
-          else
-            echo "⚠️ VITE_API_BASE_URL_PRODUCTION not set. Frontend will use fallback default."
-            echo "After first backend deploy, set this variable in GitHub Settings → Secrets and variables → Actions."
+          API_URL="${{ vars.VITE_API_BASE_URL_PRODUCTION }}"
+          if [ -z "$API_URL" ]; then
+            echo "❌ VITE_API_BASE_URL_PRODUCTION not set"
+            echo "Set it in GitHub → Settings → Secrets and variables → Actions → Variables"
+            exit 1
           fi
+          if echo "$API_URL" | grep -q "localhost"; then
+            echo "❌ VITE_API_BASE_URL_PRODUCTION cannot be localhost in production"
+            exit 1
+          fi
+          echo "VITE_API_BASE_URL=$API_URL" >> $GITHUB_ENV
+          echo "api_url=$API_URL" >> $GITHUB_OUTPUT
+          echo "✅ Using production API URL: $API_URL"
 
       - name: Frontend npm ci
         run: npm --prefix apps/frontend ci
+
+      - name: Validate frontend env
+        shell: bash
+        run: |
+          API_URL="${{ steps.set_api_url.outputs.api_url }}"
+          if [ -z "$API_URL" ]; then
+            echo "❌ Missing GitHub variable: VITE_API_BASE_URL_PRODUCTION"
+            exit 1
+          fi
+          if echo "$API_URL" | grep -q "localhost"; then
+            echo "❌ VITE_API_BASE_URL cannot be localhost in production"
+            exit 1
+          fi
+          echo "✅ Using API base URL: $API_URL"
 
       - name: Frontend build
         run: npm --prefix apps/frontend run build

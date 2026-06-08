@@ -5,6 +5,7 @@ import { styles } from "../styles";
 import { EarthCanvas } from "./canvas";
 import { SectionWrapper } from "../hoc";
 import { slideIn } from "../utils/motion";
+import { post } from "../services/api";
 
 const Contact = () => {
   const [form, setForm] = useState({
@@ -31,26 +32,16 @@ const Contact = () => {
     setLoading(true);
     setStatus(null);
 
-    const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3001";
-
     try {
-      const res = await fetch(`${BASE_URL}/api/contact`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+      await post("/contact", {
+        name: form.name,
+        email: form.email,
+        message: form.message,
       });
-
-      const json = await res.json();
-
-      if (!json.ok) {
-        const errMsg = json.error?.message || "Error del servidor";
-        throw new Error(errMsg);
-      }
 
       setStatus("success");
       setForm({ name: "", email: "", message: "" });
     } catch (err) {
-      console.error("Contact error:", err);
       setStatus("error");
     } finally {
       setLoading(false);
