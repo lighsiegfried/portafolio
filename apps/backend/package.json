@@ -12,7 +12,8 @@
     "seed": "node scripts/seed-demo.js",
     "seed:validate": "node scripts/validate-seed.js",
     "verify:demo-passwords": "node scripts/verify-demo-user-passwords.js",
-    "repair:demo-users": "node scripts/repair-demo-users.js"
+    "repair:demo-users": "node scripts/repair-demo-users.js",
+    "diagnose:auth-user": "node scripts/diagnose-auth-user.js"
   },
   "keywords": ["erp", "crm", "serverless", "aws", "lambda"],
   "license": "MIT",

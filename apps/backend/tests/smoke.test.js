@@ -415,6 +415,50 @@ describe('Mini ERP Backend — Smoke Tests', () => {
     });
   });
 
+  describe('Auth — GSI + Base Table Pattern', () => {
+    it('findUserByUsername debe devolver usuario con passwordHash', () => {
+      const repo = require('../src/db/mockRepository');
+      const user = repo.findUserByUsername('wilson');
+      assert.ok(user, 'usuario debe existir');
+      assert.ok(user.id, 'debe tener id');
+      assert.ok(user.passwordHash, 'debe tener passwordHash');
+      assert.ok(user.passwordHash.startsWith('$2a$'), 'passwordHash debe ser bcrypt');
+      assert.strictEqual(user.role, 'admin');
+    });
+
+    it('findById debe devolver usuario completo con passwordHash', () => {
+      const repo = require('../src/db/mockRepository');
+      const user = repo.findUserByUsername('wilson');
+      assert.ok(user, 'usuario debe existir');
+      const byId = repo.findById('users', user.id);
+      assert.ok(byId, 'debe encontrar por id');
+      assert.ok(byId.passwordHash, 'debe tener passwordHash');
+      assert.strictEqual(byId.username, 'wilson');
+      assert.strictEqual(byId.role, 'admin');
+    });
+
+    it('Query GSI conceptual: get id, then findById gives full user', () => {
+      const repo = require('../src/db/mockRepository');
+      const partial = { id: repo.findUserByUsername('compras1').id, username: 'compras1' };
+      assert.ok(partial.id, 'id del GSI');
+      assert.strictEqual(partial.username, 'compras1');
+      const full = repo.findById('users', partial.id);
+      assert.ok(full, 'debe encontrar por id');
+      assert.ok(full.passwordHash, 'passwordHash debe venir de tabla base');
+      assert.strictEqual(full.role, 'compras');
+      assert.ok(full.name, 'debe tener name desde tabla base');
+    });
+
+    it('todos los usuarios seed tienen passwordHash', () => {
+      const { users } = require('../src/data/fixtures/users');
+      assert.ok(users.length >= 4, 'debe haber al menos 4 usuarios');
+      for (const user of users) {
+        assert.ok(user.passwordHash, `${user.username} debe tener passwordHash`);
+        assert.ok(user.passwordHash.startsWith('$2a$'), `${user.username} hash debe ser bcrypt`);
+      }
+    });
+  });
+
   describe('Auth — verifyPassword defensivo', () => {
     it('should return false when hash is undefined', () => {
       const repo = require('../src/db/mockRepository');

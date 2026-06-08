@@ -172,53 +172,51 @@ async function findUserByUsername(username) {
   requireDynamo();
   const client = getClient();
   const tbl = tableName('users');
+  const trimmed = (username || '').trim();
+  if (!trimmed) return null;
+
+  let partialItem = null;
 
   try {
     const queryResult = await client.send(new QueryCommand({
       TableName: tbl,
       IndexName: 'username-index',
       KeyConditionExpression: 'username = :username',
-      ExpressionAttributeValues: { ':username': username },
+      ExpressionAttributeValues: { ':username': trimmed },
+      ProjectionExpression: 'id, username',
       Limit: 2,
     }));
 
     if (queryResult.Items && queryResult.Items.length > 0) {
       if (queryResult.Items.length > 1) {
-        throw new Error(`findUserByUsername encontró ${queryResult.Items.length} usuarios con username=${username}`);
+        throw new Error(`findUserByUsername encontró ${queryResult.Items.length} usuarios con username=${trimmed}`);
       }
-      return queryResult.Items[0];
+      partialItem = queryResult.Items[0];
     }
   } catch (err) {
-    if (err.name === 'ResourceNotFoundException') {
-      const scanResult = await client.send(new ScanCommand({
-        TableName: tbl,
-        FilterExpression: 'username = :username',
-        ExpressionAttributeValues: { ':username': username },
-      }));
-
-      if (scanResult.Items && scanResult.Items.length > 0) {
-        if (scanResult.Items.length > 1) {
-          throw new Error(`findUserByUsername encontró ${scanResult.Items.length} usuarios con username=${username}`);
-        }
-        return scanResult.Items[0];
-      }
-      return null;
+    if (err.name !== 'ResourceNotFoundException') {
+      throw err;
     }
-    throw err;
+  }
+
+  if (partialItem) {
+    const fullItem = await findById('users', partialItem.id);
+    return fullItem;
   }
 
   const scanResult = await client.send(new ScanCommand({
     TableName: tbl,
     FilterExpression: 'username = :username',
-    ExpressionAttributeValues: { ':username': username },
+    ExpressionAttributeValues: { ':username': trimmed },
   }));
 
   if (scanResult.Items && scanResult.Items.length > 0) {
     if (scanResult.Items.length > 1) {
-      throw new Error(`findUserByUsername encontró ${scanResult.Items.length} usuarios con username=${username}`);
+      throw new Error(`findUserByUsername encontró ${scanResult.Items.length} usuarios con username=${trimmed}`);
     }
     return scanResult.Items[0];
   }
+
   return null;
 }
 
