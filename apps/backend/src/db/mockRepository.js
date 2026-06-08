@@ -11,6 +11,9 @@ function findUserById(id) {
 }
 
 function verifyPassword(plain, hash) {
+  if (!plain || !hash) {
+    return false;
+  }
   return bcrypt.compareSync(plain, hash);
 }
 

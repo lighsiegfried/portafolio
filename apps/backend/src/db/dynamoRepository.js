@@ -167,15 +167,18 @@ async function queryBy(collection, field, value, options = {}) {
   return { items, nextToken };
 }
 
-function findUserByUsername(username) {
-  return findOneBy('users', 'username', username);
+async function findUserByUsername(username) {
+  return await findOneBy('users', 'username', username);
 }
 
-function findUserById(id) {
-  return findById('users', id);
+async function findUserById(id) {
+  return await findById('users', id);
 }
 
 function verifyPassword(plain, hash) {
+  if (!plain || !hash) {
+    return false;
+  }
   return bcrypt.compareSync(plain, hash);
 }
 

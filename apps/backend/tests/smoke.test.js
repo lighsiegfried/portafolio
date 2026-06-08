@@ -415,6 +415,115 @@ describe('Mini ERP Backend — Smoke Tests', () => {
     });
   });
 
+  describe('Auth — verifyPassword defensivo', () => {
+    it('should return false when hash is undefined', () => {
+      const repo = require('../src/db/mockRepository');
+      assert.strictEqual(repo.verifyPassword('admin123', undefined), false);
+    });
+
+    it('should return false when plain password is undefined', () => {
+      const repo = require('../src/db/mockRepository');
+      assert.strictEqual(repo.verifyPassword(undefined, '$2a$10$HkaDAa2LR.8d/.nTQrp7PeQjcjRUTPXhFdMpKsRfz00MtW7ukvWbC'), false);
+    });
+
+    it('should return false when both are undefined', () => {
+      const repo = require('../src/db/mockRepository');
+      assert.strictEqual(repo.verifyPassword(undefined, undefined), false);
+    });
+
+    it('should return false when hash is null', () => {
+      const repo = require('../src/db/mockRepository');
+      assert.strictEqual(repo.verifyPassword('admin123', null), false);
+    });
+
+    it('should return false when plain is empty string', () => {
+      const repo = require('../src/db/mockRepository');
+      assert.strictEqual(repo.verifyPassword('', '$2a$10$HkaDAa2LR.8d/.nTQrp7PeQjcjRUTPXhFdMpKsRfz00MtW7ukvWbC'), false);
+    });
+  });
+
+  describe('Auth — sanitizeUser', () => {
+    it('should remove passwordHash from user object', () => {
+      const { sanitizeUser } = require('../src/modules/auth/handler');
+      const user = {
+        id: 'u1',
+        username: 'wilson',
+        role: 'admin',
+        passwordHash: '$2a$10$abc123',
+        createdAt: '2026-01-01T00:00:00.000Z',
+      };
+      const safe = sanitizeUser(user);
+      assert.strictEqual(safe.id, 'u1');
+      assert.strictEqual(safe.username, 'wilson');
+      assert.strictEqual(safe.role, 'admin');
+      assert.strictEqual(safe.passwordHash, undefined);
+      assert.ok(!('passwordHash' in safe));
+    });
+
+    it('should return all non-sensitive fields', () => {
+      const { sanitizeUser } = require('../src/modules/auth/handler');
+      const user = {
+        id: 'u1',
+        username: 'wilson',
+        name: 'Carlos Admin',
+        email: 'carlos@erp.local',
+        role: 'admin',
+        active: true,
+        passwordHash: '$2a$10$abc123',
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+      };
+      const safe = sanitizeUser(user);
+      assert.strictEqual(safe.id, 'u1');
+      assert.strictEqual(safe.username, 'wilson');
+      assert.strictEqual(safe.name, 'Carlos Admin');
+      assert.strictEqual(safe.email, 'carlos@erp.local');
+      assert.strictEqual(safe.role, 'admin');
+      assert.strictEqual(safe.active, true);
+      assert.strictEqual(safe.createdAt, '2026-01-01T00:00:00.000Z');
+      assert.strictEqual(safe.updatedAt, '2026-01-01T00:00:00.000Z');
+      assert.strictEqual(safe.passwordHash, undefined);
+    });
+  });
+
+  describe('Auth Handler — passwordHash en respuesta', () => {
+    it('should NOT include passwordHash in login response', async () => {
+      const auth = require('../src/modules/auth/handler');
+      const result = await auth.login({ body: { username: 'wilson', password: 'admin1234' } });
+      const body = JSON.parse(result.body);
+      assert.strictEqual(body.ok, true);
+      assert.strictEqual(body.data.user.passwordHash, undefined);
+    });
+
+    it('should return 401 for user without passwordHash', async () => {
+      const { sanitizeUser } = require('../src/modules/auth/handler');
+      const repo = require('../src/db/mockRepository');
+      const originalFindUser = repo.findUserByUsername;
+      const user = repo.findUserByUsername('wilson');
+      const userNoHash = { ...user, passwordHash: undefined };
+      repo.findUserByUsername = () => userNoHash;
+      try {
+        const auth = require('../src/modules/auth/handler');
+        const result = await auth.login({ body: { username: 'wilson', password: 'admin1234' } });
+        const body = JSON.parse(result.body);
+        assert.strictEqual(result.statusCode, 401);
+        assert.strictEqual(body.ok, false);
+        assert.strictEqual(body.error.code, 'UNAUTHORIZED');
+      } finally {
+        repo.findUserByUsername = originalFindUser;
+      }
+    });
+
+    it('should return 401 for non-existent username', async () => {
+      const auth = require('../src/modules/auth/handler');
+      const result = await auth.login({ body: { username: 'noexiste', password: 'anything' } });
+      const body = JSON.parse(result.body);
+      assert.strictEqual(result.statusCode, 401);
+      assert.strictEqual(body.ok, false);
+      assert.strictEqual(body.error.code, 'UNAUTHORIZED');
+    });
+  });
+
   describe('Dashboard Handler', () => {
     it('should return summary', async () => {
       const dashboard = require('../src/modules/dashboard/handler');

@@ -1,7 +1,13 @@
 const response = require('../../utils/response');
 const { signToken } = require('../../utils/jwt');
 const { getRepository } = require('../../db/repositoryFactory');
+const logger = require('../../middleware/logger');
 const repo = getRepository();
+
+function sanitizeUser(user) {
+  const { passwordHash, ...safeUser } = user;
+  return safeUser;
+}
 
 async function login(event) {
   const { username, password } = event.body || {};
@@ -10,8 +16,21 @@ async function login(event) {
     return response.error(400, 'VALIDATION_ERROR', 'Usuario y contraseña requeridos');
   }
 
-  const user = repo.findUserByUsername(username);
-  if (!user || !repo.verifyPassword(password, user.passwordHash)) {
+  const user = await repo.findUserByUsername(username);
+
+  if (!user) {
+    logger.log('WARN', 'auth', 'login', 'Usuario no encontrado', { username, user_found: false });
+    return response.error(401, 'UNAUTHORIZED', 'Credenciales inválidas');
+  }
+
+  const hashPresent = !!user.passwordHash;
+  logger.log('INFO', 'auth', 'login', 'Verificando credenciales', {
+    username,
+    user_found: true,
+    passwordHash_present: hashPresent,
+  });
+
+  if (!hashPresent || !repo.verifyPassword(password, user.passwordHash)) {
     return response.error(401, 'UNAUTHORIZED', 'Credenciales inválidas');
   }
 
@@ -19,29 +38,17 @@ async function login(event) {
 
   return response.success({
     token,
-    user: {
-      id: user.id,
-      username: user.username,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-    },
+    user: sanitizeUser(user),
   });
 }
 
 async function me(event) {
-  const user = repo.findUserById(event.user.userId);
+  const user = await repo.findUserById(event.user.userId);
   if (!user) {
     return response.error(404, 'NOT_FOUND', 'Usuario no encontrado');
   }
 
-  return response.success({
-    id: user.id,
-    username: user.username,
-    name: user.name,
-    email: user.email,
-    role: user.role,
-  });
+  return response.success(sanitizeUser(user));
 }
 
-module.exports = { login, me };
+module.exports = { login, me, sanitizeUser };
