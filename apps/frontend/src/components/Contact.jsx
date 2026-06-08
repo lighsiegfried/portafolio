@@ -7,6 +7,49 @@ import { SectionWrapper } from "../hoc";
 import { slideIn } from "../utils/motion";
 import { post } from "../services/api";
 
+const MIN_NAME = 2;
+const MAX_NAME = 120;
+const MAX_EMAIL = 180;
+const MIN_MESSAGE = 10;
+const MAX_MESSAGE = 2000;
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function validateForm({ name, email, message }) {
+  const errors = {};
+
+  const trimmedName = name.trim();
+  if (!trimmedName) {
+    errors.name = "El nombre es requerido.";
+  } else if (trimmedName.length < MIN_NAME) {
+    errors.name = `Tu nombre debe tener al menos ${MIN_NAME} caracteres.`;
+  } else if (trimmedName.length > MAX_NAME) {
+    errors.name = `Tu nombre no puede superar ${MAX_NAME} caracteres.`;
+  }
+
+  const trimmedEmail = email.trim();
+  if (!trimmedEmail) {
+    errors.email = "El correo electrónico es requerido.";
+  } else if (!EMAIL_REGEX.test(trimmedEmail)) {
+    errors.email = "Ingresa un correo electrónico válido.";
+  } else if (trimmedEmail.length > MAX_EMAIL) {
+    errors.email = `El correo no puede superar ${MAX_EMAIL} caracteres.`;
+  }
+
+  if (!message || typeof message !== "string" || !message.trim()) {
+    errors.message = "El mensaje es requerido.";
+  } else {
+    const trimmedMessage = message.trim();
+    if (trimmedMessage.length < MIN_MESSAGE) {
+      errors.message = `Tu mensaje debe tener al menos ${MIN_MESSAGE} caracteres.`;
+    } else if (trimmedMessage.length > MAX_MESSAGE) {
+      errors.message = `Tu mensaje no puede superar ${MAX_MESSAGE} caracteres.`;
+    }
+  }
+
+  return errors;
+}
+
 const Contact = () => {
   const [form, setForm] = useState({
     name: "",
@@ -14,35 +57,57 @@ const Contact = () => {
     message: "",
   });
 
+  const [formErrors, setFormErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState(null);
+  const [serverError, setServerError] = useState(null);
 
   const handleChange = (e) => {
     const { target } = e;
     const { name, value } = target;
 
-    setForm({
-      ...form,
-      [name]: value,
-    });
+    setForm((prev) => ({ ...prev, [name]: value }));
+
+    if (formErrors[name]) {
+      setFormErrors((prev) => {
+        const next = { ...prev };
+        delete next[name];
+        return next;
+      });
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setStatus(null);
+    setServerError(null);
+    setFormErrors({});
+
+    const errors = validateForm(form);
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      setLoading(false);
+      return;
+    }
 
     try {
       await post("/contact", {
-        name: form.name,
-        email: form.email,
-        message: form.message,
+        name: form.name.trim(),
+        email: form.email.trim(),
+        message: form.message.trim(),
       });
 
       setStatus("success");
       setForm({ name: "", email: "", message: "" });
     } catch (err) {
-      setStatus("error");
+      if (err.code === "VALIDATION_ERROR" && err.message) {
+        setServerError(err.message);
+      } else {
+        setServerError(
+          "No pudimos enviar el mensaje en este momento. Intenta nuevamente más tarde."
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -65,27 +130,34 @@ const Contact = () => {
           </div>
         )}
 
-        {status === "error" && (
+        {serverError && (
           <div className='mt-6 p-4 bg-red-900/50 border border-red-500 rounded-lg text-red-300 text-sm'>
-            No pudimos enviar el mensaje en este momento. Intenta nuevamente más
-            tarde.
+            {serverError}
           </div>
         )}
 
         <form
           onSubmit={handleSubmit}
+          noValidate
           className='mt-12 flex flex-col gap-8'
         >
           <label className='flex flex-col'>
-            <span className='text-white font-medium mb-4'> Tu nombre</span>
+            <span className='text-white font-medium mb-4'>Tu nombre</span>
             <input
               type='text'
               name='name'
               value={form.name}
               onChange={handleChange}
               placeholder="¿Cuál es tu nombre?"
-              className='bg-tertiary py-4 px-6 placeholder:text-secondary text-white rounded-lg outline-none border-none font-medium'
+              className={`bg-tertiary py-4 px-6 placeholder:text-secondary text-white rounded-lg outline-none border-none font-medium ${
+                formErrors.name ? "ring-2 ring-red-500" : ""
+              }`}
             />
+            {formErrors.name && (
+              <span className='mt-1 text-red-400 text-xs'>
+                {formErrors.name}
+              </span>
+            )}
           </label>
           <label className='flex flex-col'>
             <span className='text-white font-medium mb-4'>Tu e-mail</span>
@@ -95,8 +167,15 @@ const Contact = () => {
               value={form.email}
               onChange={handleChange}
               placeholder="¿Cuál es tu correo electrónico?"
-              className='bg-tertiary py-4 px-6 placeholder:text-secondary text-white rounded-lg outline-none border-none font-medium'
+              className={`bg-tertiary py-4 px-6 placeholder:text-secondary text-white rounded-lg outline-none border-none font-medium ${
+                formErrors.email ? "ring-2 ring-red-500" : ""
+              }`}
             />
+            {formErrors.email && (
+              <span className='mt-1 text-red-400 text-xs'>
+                {formErrors.email}
+              </span>
+            )}
           </label>
           <label className='flex flex-col'>
             <span className='text-white font-medium mb-4'>Tu mensaje</span>
@@ -106,13 +185,23 @@ const Contact = () => {
               value={form.message}
               onChange={handleChange}
               placeholder='¿En qué puedo ayudarte?'
-              className='bg-tertiary py-4 px-6 placeholder:text-secondary text-white rounded-lg outline-none border-none font-medium'
+              className={`bg-tertiary py-4 px-6 placeholder:text-secondary text-white rounded-lg outline-none border-none font-medium ${
+                formErrors.message ? "ring-2 ring-red-500" : ""
+              }`}
             />
+            {formErrors.message && (
+              <span className='mt-1 text-red-400 text-xs'>
+                {formErrors.message}
+              </span>
+            )}
           </label>
 
           <button
             type='submit'
-            className='bg-tertiary py-3 px-8 rounded-xl outline-none w-fit text-white font-bold shadow-md shadow-primary'
+            disabled={loading}
+            className={`bg-tertiary py-3 px-8 rounded-xl outline-none w-fit text-white font-bold shadow-md shadow-primary ${
+              loading ? "opacity-50 cursor-not-allowed" : ""
+            }`}
           >
             {loading ? "Enviando..." : "Enviar"}
           </button>

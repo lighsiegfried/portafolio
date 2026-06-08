@@ -1681,7 +1681,12 @@ describe('Mini ERP Backend — Smoke Tests', () => {
       const repo = require('../src/db/repositoryFactory').getRepository();
       const listBefore = repo.list('contactMessages');
 
-      await contact.submit({ body: { ...validPayload } });
+      const result = await contact.submit({ body: { ...validPayload } });
+
+      const body = JSON.parse(result.body);
+      assert.strictEqual(result.statusCode, 200);
+      assert.strictEqual(body.ok, true, 'Should return ok=true even if SES fails');
+      assert.strictEqual(body.data.message, 'Mensaje recibido correctamente');
 
       const listAfter = repo.list('contactMessages');
       assert.ok(listAfter.items.length > listBefore.items.length);
@@ -1689,6 +1694,30 @@ describe('Mini ERP Backend — Smoke Tests', () => {
       const saved = listAfter.items[0];
       assert.strictEqual(saved.status, 'email_failed');
       assert.ok(saved.id, 'Contact should still have an ID even if SES failed');
+    });
+
+    it('should not send confirmation to visitor when SEND_CONTACT_CONFIRMATION is not true', async () => {
+      require('@aws-sdk/client-sesv2').SESv2Client.prototype.send = async () => ({
+        MessageId: 'mock-ses-message-id',
+      });
+
+      const originalEnv = process.env.SEND_CONTACT_CONFIRMATION;
+      delete process.env.SEND_CONTACT_CONFIRMATION;
+
+      const contact = require('../src/modules/contact/handler');
+      const result = await contact.submit({ body: { ...validPayload } });
+
+      process.env.SEND_CONTACT_CONFIRMATION = originalEnv;
+
+      const body = JSON.parse(result.body);
+      assert.strictEqual(result.statusCode, 200);
+      assert.strictEqual(body.ok, true);
+
+      const repo = require('../src/db/repositoryFactory').getRepository();
+      const list = repo.list('contactMessages');
+      const saved = list.items[0];
+      assert.strictEqual(saved.confirmationSent, false, 'confirmationSent must be false');
+      assert.strictEqual(saved.status, 'email_sent');
     });
 
     it('should be a public route (no auth required)', () => {
