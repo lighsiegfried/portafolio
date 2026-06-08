@@ -358,7 +358,7 @@ describe('Mini ERP Backend — Smoke Tests', () => {
     it('should verify password', () => {
       const repo = require('../src/db/mockRepository');
       const user = repo.findUserByUsername('wilson');
-      assert.ok(repo.verifyPassword('admin1234', user.passwordHash));
+      assert.ok(repo.verifyPassword('admin123', user.passwordHash));
       assert.ok(!repo.verifyPassword('wrong', user.passwordHash));
     });
 
@@ -385,7 +385,7 @@ describe('Mini ERP Backend — Smoke Tests', () => {
   describe('Auth Handler', () => {
     it('should login with valid credentials', async () => {
       const auth = require('../src/modules/auth/handler');
-      const result = await auth.login({ body: { username: 'wilson', password: 'admin1234' } });
+      const result = await auth.login({ body: { username: 'wilson', password: 'admin123' } });
       const body = JSON.parse(result.body);
       assert.strictEqual(result.statusCode, 200);
       assert.strictEqual(body.ok, true);
@@ -489,7 +489,7 @@ describe('Mini ERP Backend — Smoke Tests', () => {
   describe('Auth Handler — passwordHash en respuesta', () => {
     it('should NOT include passwordHash in login response', async () => {
       const auth = require('../src/modules/auth/handler');
-      const result = await auth.login({ body: { username: 'wilson', password: 'admin1234' } });
+      const result = await auth.login({ body: { username: 'wilson', password: 'admin123' } });
       const body = JSON.parse(result.body);
       assert.strictEqual(body.ok, true);
       assert.strictEqual(body.data.user.passwordHash, undefined);
@@ -504,7 +504,7 @@ describe('Mini ERP Backend — Smoke Tests', () => {
       repo.findUserByUsername = () => userNoHash;
       try {
         const auth = require('../src/modules/auth/handler');
-        const result = await auth.login({ body: { username: 'wilson', password: 'admin1234' } });
+        const result = await auth.login({ body: { username: 'wilson', password: 'admin123' } });
         const body = JSON.parse(result.body);
         assert.strictEqual(result.statusCode, 401);
         assert.strictEqual(body.ok, false);
@@ -521,6 +521,71 @@ describe('Mini ERP Backend — Smoke Tests', () => {
       assert.strictEqual(result.statusCode, 401);
       assert.strictEqual(body.ok, false);
       assert.strictEqual(body.error.code, 'UNAUTHORIZED');
+    });
+  });
+
+  describe('Auth — bcrypt hash validation for demo users', () => {
+    const bcrypt = require('bcryptjs');
+    const { users } = require('../src/data/fixtures/users');
+
+    it('wilson hash should validate admin123', () => {
+      const user = users.find((u) => u.username === 'wilson');
+      assert.ok(user, 'wilson user not found');
+      assert.ok(bcrypt.compareSync('admin123', user.passwordHash), 'hash does not match admin123');
+    });
+
+    it('compras1 hash should validate compras123', () => {
+      const user = users.find((u) => u.username === 'compras1');
+      assert.ok(user, 'compras1 user not found');
+      assert.ok(bcrypt.compareSync('compras123', user.passwordHash), 'hash does not match compras123');
+    });
+
+    it('bodega1 hash should validate bodega123', () => {
+      const user = users.find((u) => u.username === 'bodega1');
+      assert.ok(user, 'bodega1 user not found');
+      assert.ok(bcrypt.compareSync('bodega123', user.passwordHash), 'hash does not match bodega123');
+    });
+
+    it('gerencia1 hash should validate gerencia123', () => {
+      const user = users.find((u) => u.username === 'gerencia1');
+      assert.ok(user, 'gerencia1 user not found');
+      assert.ok(bcrypt.compareSync('gerencia123', user.passwordHash), 'hash does not match gerencia123');
+    });
+
+    it('login with bodega1/bodega123 should succeed', async () => {
+      const auth = require('../src/modules/auth/handler');
+      const result = await auth.login({ body: { username: 'bodega1', password: 'bodega123' } });
+      const body = JSON.parse(result.body);
+      assert.strictEqual(result.statusCode, 200);
+      assert.strictEqual(body.ok, true);
+      assert.ok(body.data.token);
+      assert.strictEqual(body.data.user.role, 'bodega');
+    });
+
+    it('wrong password should return 401', async () => {
+      const auth = require('../src/modules/auth/handler');
+      const result = await auth.login({ body: { username: 'wilson', password: 'wrongpassword' } });
+      const body = JSON.parse(result.body);
+      assert.strictEqual(result.statusCode, 401);
+      assert.strictEqual(body.ok, false);
+      assert.strictEqual(body.error.code, 'UNAUTHORIZED');
+    });
+
+    it('non-existent user should return 401', async () => {
+      const auth = require('../src/modules/auth/handler');
+      const result = await auth.login({ body: { username: 'noexiste', password: 'anything' } });
+      const body = JSON.parse(result.body);
+      assert.strictEqual(result.statusCode, 401);
+      assert.strictEqual(body.ok, false);
+      assert.strictEqual(body.error.code, 'UNAUTHORIZED');
+    });
+
+    it('login response should not include passwordHash', async () => {
+      const auth = require('../src/modules/auth/handler');
+      const result = await auth.login({ body: { username: 'wilson', password: 'admin123' } });
+      const body = JSON.parse(result.body);
+      assert.strictEqual(body.ok, true);
+      assert.strictEqual(body.data.user.passwordHash, undefined);
     });
   });
 

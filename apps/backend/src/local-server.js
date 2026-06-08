@@ -48,9 +48,9 @@ server.listen(port, () => {
   });
 
   console.log(`\n  Usuarios demo:`);
-  console.log(`    wilson   / admin1234  (admin)`);
-  console.log(`    compras1 / compras1234 (compras)`);
-  console.log(`    bodega1  / bodega1234  (bodega)`);
-  console.log(`    gerencia1/ gerencia1234 (gerencia)`);
+  console.log(`    wilson   / admin123    (admin)`);
+  console.log(`    compras1 / compras123  (compras)`);
+  console.log(`    bodega1  / bodega123   (bodega)`);
+  console.log(`    gerencia1/ gerencia123 (gerencia)`);
   console.log(`\n  Presiona Ctrl+C para detener.\n`);
 });

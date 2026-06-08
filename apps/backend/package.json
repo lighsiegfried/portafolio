@@ -10,7 +10,8 @@
     "package": "node scripts/build-lambda.js",
     "test": "node --test tests/smoke.test.js",
     "seed": "node scripts/seed-demo.js",
-    "seed:validate": "node scripts/validate-seed.js"
+    "seed:validate": "node scripts/validate-seed.js",
+    "repair:demo-users": "node scripts/repair-demo-users.js"
   },
   "keywords": ["erp", "crm", "serverless", "aws", "lambda"],
   "license": "MIT",

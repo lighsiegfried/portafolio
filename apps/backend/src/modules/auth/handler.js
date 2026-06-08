@@ -24,14 +24,25 @@ async function login(event) {
   }
 
   const hashPresent = !!user.passwordHash;
+  const isActive = user.active ?? user.isActive ?? true;
+  const passwordValid = hashPresent ? repo.verifyPassword(password, user.passwordHash) : false;
+
   logger.log('INFO', 'auth', 'login', 'Verificando credenciales', {
     username,
     user_found: true,
     passwordHash_present: hashPresent,
+    password_valid: passwordValid,
+    role: user.role,
+    active: isActive,
   });
 
-  if (!hashPresent || !repo.verifyPassword(password, user.passwordHash)) {
+  if (!hashPresent || !passwordValid) {
     return response.error(401, 'UNAUTHORIZED', 'Credenciales inválidas');
+  }
+
+  if (!isActive) {
+    logger.log('WARN', 'auth', 'login', 'Cuenta inactiva', { username, active: false });
+    return response.error(401, 'UNAUTHORIZED', 'Cuenta desactivada');
   }
 
   const token = signToken({ userId: user.id, role: user.role });

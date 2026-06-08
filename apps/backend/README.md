@@ -221,10 +221,10 @@ Todas las respuestas siguen el formato:
 
 | Usuario | Contraseña | Rol |
 |---------|-----------|-----|
-| `wilson` | `admin1234` | Administrador |
-| `compras1` | `compras1234` | Compras |
-| `bodega1` | `bodega1234` | Bodega |
-| `gerencia1` | `gerencia1234` | Gerencia |
+| `wilson` | `admin123` | Administrador |
+| `compras1` | `compras123` | Compras |
+| `bodega1` | `bodega123` | Bodega |
+| `gerencia1` | `gerencia123` | Gerencia |
 
 ## Validación de datos seed
 
@@ -248,7 +248,7 @@ El script `seed-demo.js` previene escritura accidental en DynamoDB: requiere `DA
 # Login
 curl -s http://localhost:3001/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"username":"wilson","password":"admin1234"}'
+  -d '{"username":"wilson","password":"admin123"}'
 
 # Crear requisición
 curl -s http://localhost:3001/api/requisitions \

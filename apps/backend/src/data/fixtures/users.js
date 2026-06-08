@@ -4,7 +4,7 @@ const users = [
   {
     id: IDS.U1,
     username: 'wilson',
-    passwordHash: '$2a$10$HkaDAa2LR.8d/.nTQrp7PeQjcjRUTPXhFdMpKsRfz00MtW7ukvWbC',
+    passwordHash: '$2a$10$VxC0xb6gDwEZ0bAPfYiMbOpLdBKZe3C9bCXxTynFXTGAzgsfIcpRe',
     role: 'admin',
     name: 'Carlos Admin',
     email: 'carlos@erp.local',
@@ -14,7 +14,7 @@ const users = [
   {
     id: IDS.U2,
     username: 'compras1',
-    passwordHash: '$2a$10$UsTVrZZNQffTubtPIc0rZeJ74B0LCPYpPdDS5RDSsmcDQiixxljv.',
+    passwordHash: '$2a$10$b8JB2ubkv6mQbb1syqxF/.gwbQGT1uvQUgN1nIt0pwr.RMLhfxr1a',
     role: 'compras',
     name: 'María Compras',
     email: 'maria@erp.local',
@@ -24,7 +24,7 @@ const users = [
   {
     id: IDS.U3,
     username: 'bodega1',
-    passwordHash: '$2a$10$7QIZXVSXc4.G6u1fPgnkYOfsI1.2YatQ9bXxtbIzjHbysVsTLUSvq',
+    passwordHash: '$2a$10$q.TJdvehOMiEQzlRObpleOed6OSAIJmYxcsV7/Z.y7x6Fg2iCUqzO',
     role: 'bodega',
     name: 'José Bodega',
     email: 'jose@erp.local',
@@ -34,7 +34,7 @@ const users = [
   {
     id: IDS.U4,
     username: 'gerencia1',
-    passwordHash: '$2a$10$r/cvzSbi85eZ0MFKqHokKuo.0/cMtoC7jSwzcQke/lmI89QQxyqw.',
+    passwordHash: '$2a$10$xFdtruIK4ii.ALjZK/bJ3ezVvMhzb9FW1X6laF3IMCiown58yKVrq',
     role: 'gerencia',
     name: 'Ana Gerencia',
     email: 'ana@erp.local',

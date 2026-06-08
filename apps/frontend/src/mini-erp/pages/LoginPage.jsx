@@ -4,10 +4,10 @@ import { login as loginApi } from '../../services/authApi';
 import { useAuth } from '../hooks/useAuth';
 
 const DEMO_USERS = [
-  { username: 'wilson', password: 'admin1234', role: 'admin', name: 'Carlos Admin' },
-  { username: 'compras1', password: 'compras1234', role: 'compras', name: 'Maria Compras' },
-  { username: 'bodega1', password: 'bodega1234', role: 'bodega', name: 'Jose Bodega' },
-  { username: 'gerencia1', password: 'gerencia1234', role: 'gerencia', name: 'Ana Gerencia' },
+  { username: 'wilson', password: 'admin123', role: 'admin', name: 'Carlos Admin' },
+  { username: 'compras1', password: 'compras123', role: 'compras', name: 'Maria Compras' },
+  { username: 'bodega1', password: 'bodega123', role: 'bodega', name: 'Jose Bodega' },
+  { username: 'gerencia1', password: 'gerencia123', role: 'gerencia', name: 'Ana Gerencia' },
 ];
 
 export default function LoginPage() {
@@ -72,7 +72,7 @@ export default function LoginPage() {
             <label className="block text-xs text-secondary mb-1.5">Contrasena</label>
             <input
               type="password" value={password} onChange={(e) => setPassword(e.target.value)}
-              placeholder="admin1234"
+              placeholder="admin123"
               className="w-full bg-primary/50 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm placeholder-white/20 focus:outline-none focus:border-violet-500/50 transition-colors"
             />
           </div>
