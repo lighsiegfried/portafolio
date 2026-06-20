@@ -31,17 +31,17 @@ export default function UserMenu() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="h-9 gap-2 px-2">
-          <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-violet-500/20 text-xs font-semibold text-violet-200">
+          <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[hsl(var(--primary))]/20 text-xs font-semibold text-[hsl(var(--primary-hover))]">
             {initial}
           </span>
           <span className="hidden text-left text-sm leading-tight sm:block">{name}</span>
           <ChevronsUpDown className="hidden size-4 text-muted-foreground sm:block" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel className="font-normal">
-          <div className="flex flex-col gap-1">
-            <span className="text-sm font-medium">{name}</span>
+      <DropdownMenuContent align="end" className="w-60 p-1.5 shadow-2xl">
+        <DropdownMenuLabel className="font-normal px-2 py-2">
+          <div className="flex flex-col gap-1.5">
+            <span className="text-sm font-medium text-foreground">{name}</span>
             <div>
               <Badge variant="secondary" className="text-[10px]">{role}</Badge>
             </div>

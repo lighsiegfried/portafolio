@@ -12,56 +12,68 @@
  *  - No global `*`/`body` base layer is applied (audit R2). Base background/text
  *    are scoped to `.mini-erp-root` only.
  *
- * Values implement the "Enterprise Navy + Indigo" dark theme: deep navy
- * surfaces (#080B12 base → #151C2E elevated), slate text ramp, soft slate
- * borders, and an indigo (#6366F1) primary accent with cyan as the info accent.
- * HSL triplets are the exact conversions of the hex palette.
+ * Values implement a refined dark-neutral enterprise theme using "soft solid
+ * tinted surfaces" (not pure black, not transparent glass). Surfaces step up in
+ * lightness for clear layer separation:
+ *   app #0F1115 (7%) → card #181C23 (12%) → elevated #1F2430 (15%)
+ *   → modal/popover #202633 (16%) → section #252C38 (18%)
+ * All surface tokens are fully OPAQUE so modals, dropdowns, command palette and
+ * popovers never visually mix with the page behind them.
+ *
+ * Theme-ready: these tokens are the single source of truth; a future light
+ * theme can be added by overriding them under a `.light` scope (not implemented
+ * here — no theme switch is wired yet).
  */
 
 :root {
   --radius: 0.5rem;
 
-  --background: 222 38% 5%; /* #080B12 base */
-  --foreground: 210 40% 98%; /* #F8FAFC text primary */
+  --background: 220 17% 7%; /* #0F1115 app background */
+  --foreground: 216 33% 97%; /* #F5F7FA text primary */
 
-  --card: 222 38% 10%; /* #101624 surface card */
-  --card-foreground: 210 40% 98%;
+  --card: 218 19% 12%; /* #181C23 card surface (soft solid) */
+  --card-foreground: 216 33% 97%;
 
-  --popover: 223 37% 13%; /* #151C2E surface elevated — solid premium popover */
-  --popover-foreground: 210 40% 98%;
+  /* Modal / dropdown / command palette / popover surface — solid, slightly
+     lighter than cards so overlays read as a distinct elevated layer. */
+  --popover: 221 23% 16%; /* #202633 */
+  --popover-foreground: 216 33% 97%;
 
-  --muted: 223 37% 13%; /* #151C2E — secondary surfaces / buttons */
-  --muted-foreground: 215 20% 65%; /* #94A3B8 text muted */
+  --muted: 218 20% 18%; /* #252C38 soft section surface / secondary buttons */
+  --muted-foreground: 218 16% 70%; /* #A7B0BF text muted */
 
-  --accent: 221 35% 16%; /* #1B2438 — subtle hover surface */
-  --accent-foreground: 210 40% 98%;
+  --accent: 221 20% 21%; /* #2A3140 — clear hover surface on popovers/menus */
+  --accent-foreground: 216 33% 97%;
 
   --destructive: 0 84% 60%; /* #EF4444 danger */
-  --destructive-foreground: 210 40% 98%;
+  --destructive-foreground: 216 33% 97%;
 
-  --border: 220 26% 18%; /* soft slate border ≈ rgba(148,163,184,.14) */
-  --input: 221 25% 22%; /* slightly stronger for form controls */
-  --ring: 239 84% 67%; /* #6366F1 indigo focus ring */
+  --border: 221 16% 20%; /* medium border ≈ rgba(255,255,255,.10) */
+  --input: 222 15% 17%; /* soft border for form controls */
+  --ring: 241 100% 71%; /* #6D6BFF primary focus ring */
 
-  /* Primary action (indigo) — consumed by the Button primitive. */
-  --primary: 239 84% 67%; /* #6366F1 */
-  --primary-foreground: 210 40% 98%;
-  --primary-hover: 234 89% 74%; /* #818CF8 */
+  /* Primary action accent — consumed by Button/Badge/links. */
+  --primary: 241 100% 71%; /* #6D6BFF */
+  --primary-foreground: 216 33% 97%;
+  --primary-hover: 240 100% 74%; /* #7C7BFF */
 
-  --sidebar-background: 225 46% 5%; /* #070A13 */
-  --sidebar-foreground: 213 27% 84%; /* #CBD5E1 text secondary */
-  --sidebar-primary: 239 84% 67%; /* indigo */
-  --sidebar-primary-foreground: 210 40% 98%;
-  --sidebar-accent: 222 38% 10%; /* #101624 hover item */
-  --sidebar-accent-foreground: 210 40% 98%;
-  --sidebar-border: 222 30% 14%; /* soft */
-  --sidebar-ring: 239 84% 67%;
+  /* Form-control fill — intentionally darker than card/modal for separation. */
+  --surface-input: 222 20% 10%; /* #14171E */
 
-  --chart-1: 239 84% 67%; /* indigo */
-  --chart-2: 198 93% 60%; /* cyan #38BDF8 — info */
-  --chart-3: 142 71% 45%; /* green #22C55E — success */
-  --chart-4: 38 92% 50%; /* amber #F59E0B — warning */
-  --chart-5: 234 89% 74%; /* indigo-light #818CF8 */
+  --sidebar-background: 225 18% 9%; /* #12141A */
+  --sidebar-foreground: 219 20% 86%; /* #D5DAE3 text secondary */
+  --sidebar-primary: 241 100% 71%; /* primary */
+  --sidebar-primary-foreground: 216 33% 97%;
+  --sidebar-accent: 218 19% 12%; /* #181C23 hover item */
+  --sidebar-accent-foreground: 216 33% 97%;
+  --sidebar-border: 222 15% 14%; /* soft */
+  --sidebar-ring: 241 100% 71%;
+
+  --chart-1: 241 100% 71%; /* primary #6D6BFF */
+  --chart-2: 211 100% 65%; /* info #4DA3FF */
+  --chart-3: 142 71% 45%; /* success #22C55E */
+  --chart-4: 38 92% 50%; /* warning #F59E0B */
+  --chart-5: 258 90% 66%; /* secondary #8B5CF6 */
 }
 
 /* Base surface scoped to the Mini ERP shell only — never global. */
