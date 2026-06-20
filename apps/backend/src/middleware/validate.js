@@ -1,5 +1,7 @@
 const { ValidationError } = require('../utils/errors');
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 const VALIDATORS = {
   string: (v) => typeof v === 'string',
   number: (v) => typeof v === 'number' && !Number.isNaN(v),
@@ -89,6 +91,18 @@ function validateField(field, value, rules) {
     errors.push({ field, message: `El campo '${field}' debe ser uno de: ${rules.enum.join(', ')}` });
   }
 
+  if (rules.positive && typeof value === 'number' && !(value > 0)) {
+    errors.push({ field, message: `El campo '${field}' debe ser mayor a 0` });
+  }
+
+  if (rules.email && typeof value === 'string' && !EMAIL_RE.test(value)) {
+    errors.push({ field, message: `El campo '${field}' debe ser un email válido` });
+  }
+
+  if (rules.date && typeof value === 'string' && Number.isNaN(Date.parse(value))) {
+    errors.push({ field, message: `El campo '${field}' debe ser una fecha válida` });
+  }
+
   return errors;
 }
 
@@ -120,4 +134,14 @@ function middleware(schema) {
   };
 }
 
-module.exports = { middleware, validate, VALIDATORS };
+/**
+ * Run a schema against a plain object and return the first human-readable error
+ * message, or null when valid. Handlers use this to return a single, clear
+ * VALIDATION_ERROR without coupling to the custom router.
+ */
+function firstError(schema, data) {
+  const errors = validate(schema, data || {});
+  return errors.length > 0 ? errors[0].message : null;
+}
+
+module.exports = { middleware, validate, firstError, VALIDATORS };

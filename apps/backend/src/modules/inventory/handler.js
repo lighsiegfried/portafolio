@@ -3,20 +3,25 @@ const response = require('../../utils/response');
 const { getRepository } = require('../../db/repositoryFactory');
 const auditService = require('../../services/auditService');
 const idempotency = require('../../services/idempotencyService');
+const { firstError } = require('../../middleware/validate');
+const { ERROR_CODES } = require('../../utils/errorCodes');
 const logger = require('../../middleware/logger');
 const repo = getRepository();
+
+const MOVEMENT_SCHEMA = {
+  productId: { required: true, type: 'string' },
+  type: { required: true, type: 'string', enum: ['IN', 'OUT'] },
+  quantity: { required: true, type: 'number', positive: true },
+  reference: { required: true, type: 'string', maxLength: 200 },
+  notes: { type: 'string', maxLength: 500 },
+};
 
 async function createMovement(event) {
   const body = event.validatedBody || event.body || {};
 
-  if (!body.productId || !body.type || !body.reference) {
-    return response.error(400, 'VALIDATION_ERROR', 'productId, type y reference son requeridos');
-  }
-  if (!['IN', 'OUT'].includes(body.type)) {
-    return response.error(400, 'VALIDATION_ERROR', 'type debe ser IN o OUT');
-  }
-  if (body.quantity == null || body.quantity <= 0) {
-    return response.error(400, 'VALIDATION_ERROR', 'quantity debe ser mayor a 0');
+  const verr = firstError(MOVEMENT_SCHEMA, body);
+  if (verr) {
+    return response.error(400, ERROR_CODES.VALIDATION_ERROR, verr);
   }
 
   // Wrap the side effects (stock adjust + movement) so a retried request with
@@ -33,7 +38,7 @@ async function createMovement(event) {
     const delta = body.type === 'IN' ? body.quantity : -body.quantity;
     const updatedProduct = await repo.adjustProductStock(body.productId, delta);
     if (!updatedProduct) {
-      return response.error(400, 'BAD_REQUEST', 'Stock insuficiente para realizar la salida');
+      return response.error(400, ERROR_CODES.INSUFFICIENT_STOCK, 'Stock insuficiente para realizar la salida');
     }
 
     const stockAfter = updatedProduct.stock;

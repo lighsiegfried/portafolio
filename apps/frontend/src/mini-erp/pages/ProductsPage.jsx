@@ -219,7 +219,12 @@ export default function ProductsPage() {
 
       {products.length === 0 ? (
         <Card className="p-6">
-          <EmptyState message="Aún no hay productos en el catálogo" />
+          <EmptyState
+            icon={Package}
+            title="Catálogo vacío"
+            message="Agrega tu primer producto para empezar a gestionar el inventario."
+            action={canCreate ? { label: 'Nuevo producto', icon: Plus, onClick: () => setFormState({ open: true, product: null }) } : undefined}
+          />
         </Card>
       ) : (
         <DataTable

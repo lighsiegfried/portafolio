@@ -20,6 +20,7 @@ import LeadsTable from '../components/data-display/LeadsTable';
 import LeadDetailSheet from '../components/data-display/LeadDetailSheet';
 import LeadsBoardSkeleton from '../components/feedback/LeadsBoardSkeleton';
 import LeadFormDialog from '../components/forms/LeadFormDialog';
+import ConfirmDialog from '../components/feedback/ConfirmDialog';
 import EmptyState from '../components/EmptyState';
 import ErrorState from '../components/ErrorState';
 import { LEAD_SOURCES, leadCompany, leadContact, stageLabel } from '../config/leads';
@@ -37,6 +38,7 @@ export default function LeadsPage() {
   const [selectedId, setSelectedId] = useState(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [formState, setFormState] = useState({ open: false, lead: null });
+  const [pendingMove, setPendingMove] = useState(null); // { lead, newStatus } for confirmation
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -93,6 +95,24 @@ export default function LeadsPage() {
       toast.error(err.message || 'Error al mover el lead');
     }
   }, [leads]);
+
+  // Quick status moves (board/table). Marking a lead as "Perdido" is a negative,
+  // hard-to-reverse outcome, so it requires explicit confirmation first.
+  const requestMove = useCallback((lead, newStatus) => {
+    if (lead.status === newStatus) return;
+    if (newStatus === 'lost') {
+      setPendingMove({ lead, newStatus });
+      return;
+    }
+    moveLead(lead, newStatus);
+  }, [moveLead]);
+
+  async function confirmMove() {
+    if (!pendingMove) return;
+    const { lead, newStatus } = pendingMove;
+    setPendingMove(null);
+    await moveLead(lead, newStatus);
+  }
 
   if (loading) {
     return (
@@ -174,12 +194,17 @@ export default function LeadsPage() {
 
       {leads.length === 0 ? (
         <div className="rounded-xl border border-border p-6">
-          <EmptyState message="Aún no hay leads registrados" />
+          <EmptyState
+            icon={Users}
+            title="Sin leads todavía"
+            message="Registra tu primer lead para empezar a construir el pipeline."
+            action={canManage ? { label: 'Nuevo lead', icon: Plus, onClick: () => setFormState({ open: true, lead: null }) } : undefined}
+          />
         </div>
       ) : view === 'kanban' ? (
-        <LeadsBoard leads={filtered} canManage={canManage} onOpen={openDetail} onMove={moveLead} />
+        <LeadsBoard leads={filtered} canManage={canManage} onOpen={openDetail} onMove={requestMove} />
       ) : (
-        <LeadsTable leads={filtered} canManage={canManage} onOpen={openDetail} onMove={moveLead} />
+        <LeadsTable leads={filtered} canManage={canManage} onOpen={openDetail} onMove={requestMove} />
       )}
 
       <LeadDetailSheet
@@ -196,6 +221,16 @@ export default function LeadsPage() {
         lead={formState.lead}
         onOpenChange={(open) => setFormState((s) => ({ ...s, open }))}
         onSaved={load}
+      />
+
+      <ConfirmDialog
+        open={Boolean(pendingMove)}
+        onOpenChange={(o) => { if (!o) setPendingMove(null); }}
+        title="Marcar lead como perdido"
+        description={pendingMove ? `"${leadCompany(pendingMove.lead)}" se moverá a "Perdido". Podrás reactivarlo cambiando su estado más adelante.` : ''}
+        confirmLabel="Marcar como perdido"
+        destructive
+        onConfirm={confirmMove}
       />
     </div>
   );

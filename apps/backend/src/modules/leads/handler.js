@@ -2,10 +2,33 @@ const response = require('../../utils/response');
 const { getRepository } = require('../../db/repositoryFactory');
 const auditService = require('../../services/auditService');
 const idempotency = require('../../services/idempotencyService');
+const { firstError } = require('../../middleware/validate');
+const { ERROR_CODES } = require('../../utils/errorCodes');
 const logger = require('../../middleware/logger');
 const repo = getRepository();
 
 const VALID_STATUSES = ['new', 'in_contact', 'negotiation', 'won', 'lost'];
+
+const CREATE_SCHEMA = {
+  companyName: { required: true, type: 'string', maxLength: 200 },
+  contactName: { required: true, type: 'string', maxLength: 200 },
+  email: { required: true, type: 'string', email: true },
+  phone: { required: true, type: 'string', maxLength: 40 },
+  source: { required: true, type: 'string', maxLength: 40 },
+  notes: { type: 'string', maxLength: 1000 },
+  nextFollowUp: { type: 'string', date: true },
+};
+
+const UPDATE_SCHEMA = {
+  companyName: { type: 'string', maxLength: 200 },
+  contactName: { type: 'string', maxLength: 200 },
+  email: { type: 'string', email: true },
+  phone: { type: 'string', maxLength: 40 },
+  source: { type: 'string', maxLength: 40 },
+  status: { type: 'string', enum: VALID_STATUSES },
+  nextFollowUp: { type: 'string', date: true },
+  notes: { type: 'string', maxLength: 1000 },
+};
 
 async function list(event) {
   const qs = event.queryStringParameters || {};
@@ -46,8 +69,9 @@ async function list(event) {
 async function create(event) {
   const body = event.validatedBody || event.body || {};
 
-  if (!body.companyName || !body.contactName || !body.email || !body.phone || !body.source) {
-    return response.error(400, 'VALIDATION_ERROR', 'companyName, contactName, email, phone y source son requeridos');
+  const verr = firstError(CREATE_SCHEMA, body);
+  if (verr) {
+    return response.error(400, ERROR_CODES.VALIDATION_ERROR, verr);
   }
 
   return idempotency.run(event, 'leads.create', async () => {
@@ -85,8 +109,9 @@ async function update(event) {
 
   const body = event.validatedBody || event.body || {};
 
-  if (body.status && !VALID_STATUSES.includes(body.status)) {
-    return response.error(400, 'VALIDATION_ERROR', `Status inválido. Debe ser uno de: ${VALID_STATUSES.join(', ')}`);
+  const verr = firstError(UPDATE_SCHEMA, body);
+  if (verr) {
+    return response.error(400, ERROR_CODES.VALIDATION_ERROR, verr);
   }
 
   const changes = {};
@@ -98,7 +123,7 @@ async function update(event) {
   }
 
   if (Object.keys(changes).length === 0) {
-    return response.error(400, 'VALIDATION_ERROR', 'No hay campos válidos para actualizar');
+    return response.error(400, ERROR_CODES.VALIDATION_ERROR, 'No hay campos válidos para actualizar');
   }
 
   const previous = { ...existing };

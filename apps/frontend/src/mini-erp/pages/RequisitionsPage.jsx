@@ -157,7 +157,12 @@ export default function RequisitionsPage() {
 
           {requisitions.length === 0 ? (
             <div className="rounded-xl border border-border p-6">
-              <EmptyState message="Aún no hay requisiciones registradas" />
+              <EmptyState
+                icon={FileText}
+                title="Sin requisiciones"
+                message="Crea una requisición para iniciar el flujo de aprobación de compras."
+                action={canCreate ? { label: 'Nueva requisición', icon: Plus, onClick: () => setCreateOpen(true) } : undefined}
+              />
             </div>
           ) : (
             <RequisitionsTable

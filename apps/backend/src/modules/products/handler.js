@@ -1,8 +1,39 @@
 const response = require('../../utils/response');
 const { getRepository } = require('../../db/repositoryFactory');
 const auditService = require('../../services/auditService');
+const { firstError } = require('../../middleware/validate');
+const { ERROR_CODES } = require('../../utils/errorCodes');
 const logger = require('../../middleware/logger');
 const repo = getRepository();
+
+const SKU_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
+
+const CREATE_SCHEMA = {
+  sku: { required: true, type: 'string', maxLength: 50, pattern: SKU_PATTERN },
+  name: { required: true, type: 'string', maxLength: 120 },
+  description: { type: 'string', maxLength: 500 },
+  category: { required: true, type: 'string' },
+  unit: { required: true, type: 'string' },
+  price: { required: true, type: 'number', min: 0 },
+  minStock: { required: true, type: 'number', min: 0 },
+  initialStock: { type: 'number', min: 0 },
+};
+
+const UPDATE_SCHEMA = {
+  sku: { type: 'string', maxLength: 50, pattern: SKU_PATTERN },
+  name: { type: 'string', maxLength: 120 },
+  description: { type: 'string', maxLength: 500 },
+  category: { type: 'string' },
+  unit: { type: 'string' },
+  price: { type: 'number', min: 0 },
+  minStock: { type: 'number', min: 0 },
+  active: { type: 'boolean' },
+};
+
+const STOCK_SCHEMA = {
+  type: { required: true, type: 'string', enum: ['IN', 'OUT'] },
+  quantity: { required: true, type: 'number', positive: true },
+};
 
 async function list(event) {
   const qs = event.queryStringParameters || {};
@@ -28,23 +59,15 @@ async function list(event) {
 async function create(event) {
   const body = event.validatedBody || event.body || {};
 
-  if (!body.sku || !body.name || !body.category || !body.unit) {
-    return response.error(400, 'VALIDATION_ERROR', 'sku, name, category y unit son requeridos');
-  }
-  if (body.price == null || body.price < 0) {
-    return response.error(400, 'VALIDATION_ERROR', 'price debe ser mayor o igual a 0');
-  }
-  if (body.minStock == null || body.minStock < 0) {
-    return response.error(400, 'VALIDATION_ERROR', 'minStock debe ser mayor o igual a 0');
-  }
-  if (body.initialStock != null && body.initialStock < 0) {
-    return response.error(400, 'VALIDATION_ERROR', 'initialStock debe ser mayor o igual a 0');
+  const verr = firstError(CREATE_SCHEMA, body);
+  if (verr) {
+    return response.error(400, ERROR_CODES.VALIDATION_ERROR, verr);
   }
 
   let existing;
   try { existing = await repo.findProductBySku(body.sku); } catch (e) { existing = null; }
   if (existing) {
-    return response.error(409, 'CONFLICT', `El SKU '${body.sku}' ya existe`);
+    return response.error(409, ERROR_CODES.CONFLICT, `El SKU '${body.sku}' ya existe`);
   }
 
   const data = await repo.createProduct({
@@ -82,6 +105,11 @@ async function update(event) {
 
   const body = event.validatedBody || event.body || {};
 
+  const verr = firstError(UPDATE_SCHEMA, body);
+  if (verr) {
+    return response.error(400, ERROR_CODES.VALIDATION_ERROR, verr);
+  }
+
   const changes = {};
   const allowedFields = ['name', 'description', 'category', 'unit', 'price', 'minStock', 'active'];
   for (const field of allowedFields) {
@@ -90,22 +118,15 @@ async function update(event) {
     }
   }
 
-  if (Object.keys(changes).length === 0) {
-    return response.error(400, 'VALIDATION_ERROR', 'No hay campos válidos para actualizar');
-  }
-
-  if (changes.price != null && changes.price < 0) {
-    return response.error(400, 'VALIDATION_ERROR', 'price debe ser mayor o igual a 0');
-  }
-  if (changes.minStock != null && changes.minStock < 0) {
-    return response.error(400, 'VALIDATION_ERROR', 'minStock debe ser mayor o igual a 0');
+  if (Object.keys(changes).length === 0 && !body.sku) {
+    return response.error(400, ERROR_CODES.VALIDATION_ERROR, 'No hay campos válidos para actualizar');
   }
 
   if (body.sku && body.sku !== existing.sku) {
     let skuExists;
     try { skuExists = await repo.findProductBySku(body.sku); } catch (e) { skuExists = null; }
     if (skuExists) {
-      return response.error(409, 'CONFLICT', `El SKU '${body.sku}' ya existe`);
+      return response.error(409, ERROR_CODES.CONFLICT, `El SKU '${body.sku}' ya existe`);
     }
     changes.sku = body.sku;
   }
@@ -123,11 +144,9 @@ async function updateStock(event) {
   }
 
   const body = event.validatedBody || event.body || {};
-  if (!body.type || !['IN', 'OUT'].includes(body.type)) {
-    return response.error(400, 'VALIDATION_ERROR', 'type debe ser IN o OUT');
-  }
-  if (body.quantity == null || body.quantity <= 0) {
-    return response.error(400, 'VALIDATION_ERROR', 'quantity debe ser mayor a 0');
+  const verr = firstError(STOCK_SCHEMA, body);
+  if (verr) {
+    return response.error(400, ERROR_CODES.VALIDATION_ERROR, verr);
   }
 
   const previous = { ...existing };
@@ -137,7 +156,7 @@ async function updateStock(event) {
   const delta = body.type === 'IN' ? body.quantity : -body.quantity;
   const updated = await repo.adjustProductStock(existing.id, delta);
   if (!updated) {
-    return response.error(400, 'BAD_REQUEST', 'Stock insuficiente para realizar la salida');
+    return response.error(400, ERROR_CODES.INSUFFICIENT_STOCK, 'Stock insuficiente para realizar la salida');
   }
 
   const stockAfter = updated.stock;

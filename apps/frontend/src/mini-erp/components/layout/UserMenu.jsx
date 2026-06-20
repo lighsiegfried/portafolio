@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LogOut, ChevronsUpDown } from 'lucide-react';
 import {
@@ -10,11 +11,13 @@ import {
 } from '@/mini-erp/components/ui/dropdown-menu';
 import { Button } from '@/mini-erp/components/ui/button';
 import { Badge } from '@/mini-erp/components/ui/badge';
+import ConfirmDialog from '../feedback/ConfirmDialog';
 import { useAuth } from '../../hooks/useAuth';
 
 export default function UserMenu() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   if (!user) return null;
 
@@ -28,6 +31,7 @@ export default function UserMenu() {
   }
 
   return (
+    <>
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="h-9 gap-2 px-2">
@@ -48,11 +52,25 @@ export default function UserMenu() {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleLogout} className="text-red-300 focus:text-red-200">
+        <DropdownMenuItem
+          onSelect={(e) => { e.preventDefault(); setConfirmOpen(true); }}
+          className="text-red-300 focus:text-red-200"
+        >
           <LogOut className="size-4" />
           Salir
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
+
+    <ConfirmDialog
+      open={confirmOpen}
+      onOpenChange={setConfirmOpen}
+      title="Cerrar sesión"
+      description="Se cerrará tu sesión y volverás al portafolio."
+      confirmLabel="Cerrar sesión"
+      destructive
+      onConfirm={handleLogout}
+    />
+    </>
   );
 }

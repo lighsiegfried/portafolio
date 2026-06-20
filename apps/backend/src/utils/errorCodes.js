@@ -12,6 +12,11 @@ const ERROR_CODES = {
   FORBIDDEN: 'FORBIDDEN',
   NOT_FOUND: 'NOT_FOUND',
   CONFLICT: 'CONFLICT',
+  // Domain-specific client errors (more precise than the generic ones above).
+  // INVALID_STATE_TRANSITION: a requisition transition not allowed by the state
+  // machine. INSUFFICIENT_STOCK: an outbound movement that would go negative.
+  INVALID_STATE_TRANSITION: 'INVALID_STATE_TRANSITION',
+  INSUFFICIENT_STOCK: 'INSUFFICIENT_STOCK',
   BAD_REQUEST: 'BAD_REQUEST',
   INTERNAL_ERROR: 'INTERNAL_ERROR',
 };

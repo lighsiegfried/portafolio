@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from '@/mini-erp/components/ui/select';
 import StatusBadge from '../StatusBadge';
+import ConfirmDialog from '../feedback/ConfirmDialog';
 import * as api from '../../../services/leadsApi';
 import { LEAD_STAGES, leadCompany, leadContact, sourceLabel } from '../../config/leads';
 import { formatCurrency, formatDate, formatDateTime } from '../../utils/formatters';
@@ -52,6 +53,7 @@ function Row({ label, children }) {
 export default function LeadDetailSheet({ open, onOpenChange, lead, canManage, onEdit, onChanged }) {
   const [status, setStatus] = useState('new');
   const [savingStatus, setSavingStatus] = useState(false);
+  const [confirmLost, setConfirmLost] = useState(false);
   const [noteContent, setNoteContent] = useState('');
   const [savingNote, setSavingNote] = useState(false);
 
@@ -64,8 +66,14 @@ export default function LeadDetailSheet({ open, onOpenChange, lead, canManage, o
 
   const notes = normalizeNotes(lead.notes);
 
-  async function handleStatusUpdate() {
+  function requestStatusUpdate() {
     if (status === lead.status) return;
+    if (status === 'lost') { setConfirmLost(true); return; } // confirm negative outcome
+    doStatusUpdate();
+  }
+
+  async function doStatusUpdate() {
+    setConfirmLost(false);
     setSavingStatus(true);
     try {
       await api.update(lead.id, { status });
@@ -95,6 +103,7 @@ export default function LeadDetailSheet({ open, onOpenChange, lead, canManage, o
   }
 
   return (
+    <>
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="flex w-full flex-col gap-0 overflow-y-auto sm:max-w-md">
         <SheetHeader className="space-y-2">
@@ -137,7 +146,7 @@ export default function LeadDetailSheet({ open, onOpenChange, lead, canManage, o
                     ))}
                   </SelectContent>
                 </Select>
-                <Button onClick={handleStatusUpdate} disabled={savingStatus || status === lead.status}>
+                <Button onClick={requestStatusUpdate} disabled={savingStatus || status === lead.status}>
                   Actualizar
                 </Button>
               </div>
@@ -187,5 +196,17 @@ export default function LeadDetailSheet({ open, onOpenChange, lead, canManage, o
         </div>
       </SheetContent>
     </Sheet>
+
+    <ConfirmDialog
+      open={confirmLost}
+      onOpenChange={(o) => { if (!o) { setConfirmLost(false); setStatus(lead.status); } }}
+      title="Marcar lead como perdido"
+      description={`"${leadCompany(lead)}" se marcará como "Perdido".`}
+      confirmLabel="Marcar como perdido"
+      destructive
+      loading={savingStatus}
+      onConfirm={doStatusUpdate}
+    />
+    </>
   );
 }

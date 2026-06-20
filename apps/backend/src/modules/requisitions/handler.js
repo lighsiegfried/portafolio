@@ -2,8 +2,23 @@ const response = require('../../utils/response');
 const { getRepository } = require('../../db/repositoryFactory');
 const auditService = require('../../services/auditService');
 const idempotency = require('../../services/idempotencyService');
+const { firstError } = require('../../middleware/validate');
+const { ERROR_CODES } = require('../../utils/errorCodes');
 const logger = require('../../middleware/logger');
 const repo = getRepository();
+
+const CREATE_SCHEMA = {
+  title: { required: true, type: 'string', maxLength: 200 },
+  description: { required: true, type: 'string', maxLength: 1000 },
+  items: { required: true, type: 'array', minLength: 1 },
+};
+
+const ITEM_SCHEMA = {
+  productName: { required: true, type: 'string', maxLength: 200 },
+  unit: { required: true, type: 'string', maxLength: 40 },
+  quantity: { required: true, type: 'number', positive: true },
+  estimatedCost: { required: true, type: 'number', min: 0 },
+};
 
 async function list(event) {
   const qs = event.queryStringParameters || {};
@@ -44,23 +59,15 @@ async function list(event) {
 async function create(event) {
   const body = event.validatedBody || event.body || {};
 
-  if (!body.title || !body.description) {
-    return response.error(400, 'VALIDATION_ERROR', 'title y description son requeridos');
-  }
-  if (!body.items || !Array.isArray(body.items) || body.items.length === 0) {
-    return response.error(400, 'VALIDATION_ERROR', 'items es requerido y debe tener al menos un elemento');
+  const verr = firstError(CREATE_SCHEMA, body);
+  if (verr) {
+    return response.error(400, ERROR_CODES.VALIDATION_ERROR, verr);
   }
 
   for (let i = 0; i < body.items.length; i++) {
-    const item = body.items[i];
-    if (!item.productName || !item.unit) {
-      return response.error(400, 'VALIDATION_ERROR', `Cada item requiere productName y unit`);
-    }
-    if (item.quantity == null || item.quantity <= 0) {
-      return response.error(400, 'VALIDATION_ERROR', `quantity debe ser mayor a 0`);
-    }
-    if (item.estimatedCost == null || item.estimatedCost < 0) {
-      return response.error(400, 'VALIDATION_ERROR', `estimatedCost debe ser mayor o igual a 0`);
+    const ierr = firstError(ITEM_SCHEMA, body.items[i]);
+    if (ierr) {
+      return response.error(400, ERROR_CODES.VALIDATION_ERROR, `Ítem ${i + 1}: ${ierr}`);
     }
   }
 
@@ -107,13 +114,13 @@ async function approve(event) {
       return response.error(404, 'NOT_FOUND', 'Requisición no encontrada');
     }
     if (req.status === 'rejected') {
-      return response.error(400, 'CONFLICT', 'No se puede aprobar una requisición rechazada');
+      return response.error(400, ERROR_CODES.INVALID_STATE_TRANSITION, 'No se puede aprobar una requisición rechazada');
     }
     if (req.status === 'completed') {
-      return response.error(400, 'CONFLICT', 'No se puede aprobar una requisición completada');
+      return response.error(400, ERROR_CODES.INVALID_STATE_TRANSITION, 'No se puede aprobar una requisición completada');
     }
     if (req.status !== 'pending') {
-      return response.error(400, 'CONFLICT', `No se puede aprobar una requisición en estado '${req.status}'`);
+      return response.error(400, ERROR_CODES.INVALID_STATE_TRANSITION, `No se puede aprobar una requisición en estado '${req.status}'`);
     }
     const previous = { ...req };
     const updated = await repo.updateRequisition(req.id, { status: 'approved', approvedBy: event.user.userId });
@@ -129,7 +136,7 @@ async function reject(event) {
       return response.error(404, 'NOT_FOUND', 'Requisición no encontrada');
     }
     if (req.status !== 'pending') {
-      return response.error(400, 'CONFLICT', `No se puede rechazar una requisición en estado '${req.status}'`);
+      return response.error(400, ERROR_CODES.INVALID_STATE_TRANSITION, `No se puede rechazar una requisición en estado '${req.status}'`);
     }
     const body = event.body || {};
     if (!body.reason) {
@@ -149,13 +156,13 @@ async function complete(event) {
       return response.error(404, 'NOT_FOUND', 'Requisición no encontrada');
     }
     if (req.status === 'pending') {
-      return response.error(400, 'CONFLICT', 'No se puede completar una requisición pendiente');
+      return response.error(400, ERROR_CODES.INVALID_STATE_TRANSITION, 'No se puede completar una requisición pendiente');
     }
     if (req.status === 'rejected') {
-      return response.error(400, 'CONFLICT', 'No se puede completar una requisición rechazada');
+      return response.error(400, ERROR_CODES.INVALID_STATE_TRANSITION, 'No se puede completar una requisición rechazada');
     }
     if (req.status !== 'approved') {
-      return response.error(400, 'CONFLICT', `No se puede completar una requisición en estado '${req.status}'`);
+      return response.error(400, ERROR_CODES.INVALID_STATE_TRANSITION, `No se puede completar una requisición en estado '${req.status}'`);
     }
     const previous = { ...req };
     const updated = await repo.updateRequisition(req.id, {

@@ -147,7 +147,12 @@ export default function InventoryPage() {
 
         {movements.length === 0 ? (
           <div className="rounded-xl border border-border p-6">
-            <EmptyState message="Aún no hay movimientos registrados" />
+            <EmptyState
+              icon={Activity}
+              title="Sin movimientos"
+              message="Registra una entrada o salida para empezar a controlar el stock."
+              action={canCreate ? { label: 'Registrar movimiento', icon: Plus, onClick: () => setCreateOpen(true) } : undefined}
+            />
           </div>
         ) : (
           <>

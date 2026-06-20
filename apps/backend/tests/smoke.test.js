@@ -841,7 +841,7 @@ describe('Mini ERP Backend — Smoke Tests', () => {
       });
       const body = JSON.parse(result.body);
       assert.strictEqual(result.statusCode, 400);
-      assert.strictEqual(body.error.code, 'CONFLICT');
+      assert.strictEqual(body.error.code, 'INVALID_STATE_TRANSITION');
     });
 
     it('should complete approved requisition as compras', async () => {
@@ -866,7 +866,7 @@ describe('Mini ERP Backend — Smoke Tests', () => {
         });
         const body = JSON.parse(result.body);
         assert.strictEqual(result.statusCode, 400);
-        assert.strictEqual(body.error.code, 'CONFLICT');
+        assert.strictEqual(body.error.code, 'INVALID_STATE_TRANSITION');
       }
     });
 
@@ -987,7 +987,7 @@ describe('Mini ERP Backend — Smoke Tests', () => {
       });
       const body = JSON.parse(result.body);
       assert.strictEqual(result.statusCode, 400);
-      assert.strictEqual(body.error.code, 'BAD_REQUEST');
+      assert.strictEqual(body.error.code, 'INSUFFICIENT_STOCK');
     });
   });
 
@@ -1111,7 +1111,7 @@ describe('Mini ERP Backend — Smoke Tests', () => {
       });
       const blockedBody = JSON.parse(blocked.body);
       assert.strictEqual(blocked.statusCode, 400);
-      assert.strictEqual(blockedBody.error.code, 'BAD_REQUEST');
+      assert.strictEqual(blockedBody.error.code, 'INSUFFICIENT_STOCK');
       assert.strictEqual(repo.findProductById(product.id).stock, 0, 'stock must never be negative');
     });
 
@@ -1145,7 +1145,7 @@ describe('Mini ERP Backend — Smoke Tests', () => {
       });
       const blockedBody = JSON.parse(blocked.body);
       assert.strictEqual(blocked.statusCode, 400);
-      assert.strictEqual(blockedBody.error.code, 'BAD_REQUEST');
+      assert.strictEqual(blockedBody.error.code, 'INSUFFICIENT_STOCK');
       assert.strictEqual(repo.findProductById(product.id).stock, 2);
     });
   });
@@ -1311,6 +1311,82 @@ describe('Mini ERP Backend — Smoke Tests', () => {
       const events = await auditService.listAll({ entityType: 'inventory_movement', action: 'created' });
       assert.ok(events.length >= 1, 'at least one inventory_movement audit event');
       assert.ok(events.some((e) => e.entityId === body.data.id), 'audit event for the new movement');
+    });
+  });
+
+  describe('Phase 4 — Validation schemas & standardized errors', () => {
+    const products = require('../src/modules/products/handler');
+    const inv = require('../src/modules/inventory/handler');
+    const leadsH = require('../src/modules/leads/handler');
+    const reqHandler = require('../src/modules/requisitions/handler');
+    const { ERROR_CODES } = require('../src/utils/errorCodes');
+    const admin = { userId: 'p4-user', role: 'admin' };
+
+    it('error-code taxonomy exposes the domain-specific codes', () => {
+      assert.strictEqual(ERROR_CODES.INVALID_STATE_TRANSITION, 'INVALID_STATE_TRANSITION');
+      assert.strictEqual(ERROR_CODES.INSUFFICIENT_STOCK, 'INSUFFICIENT_STOCK');
+    });
+
+    it('rejects an invalid SKU format on product create', async () => {
+      const res = await products.create({ user: admin, body: { sku: 'bad sku!', name: 'X', category: 'insumo', unit: 'unidad', price: 1, minStock: 1 } });
+      const body = JSON.parse(res.body);
+      assert.strictEqual(res.statusCode, 400);
+      assert.strictEqual(body.error.code, ERROR_CODES.VALIDATION_ERROR);
+    });
+
+    it('rejects a negative price on product create', async () => {
+      const res = await products.create({ user: admin, body: { sku: 'P4-NEG', name: 'X', category: 'insumo', unit: 'unidad', price: -5, minStock: 1 } });
+      const body = JSON.parse(res.body);
+      assert.strictEqual(res.statusCode, 400);
+      assert.strictEqual(body.error.code, ERROR_CODES.VALIDATION_ERROR);
+    });
+
+    it('rejects an invalid movement type (enum) before any lookup', async () => {
+      const res = await inv.createMovement({ user: admin, body: { productId: 'x', type: 'SIDEWAYS', quantity: 1, reference: 'r' } });
+      const body = JSON.parse(res.body);
+      assert.strictEqual(res.statusCode, 400);
+      assert.strictEqual(body.error.code, ERROR_CODES.VALIDATION_ERROR);
+    });
+
+    it('rejects a non-positive movement quantity', async () => {
+      const res = await inv.createMovement({ user: admin, body: { productId: 'x', type: 'IN', quantity: 0, reference: 'r' } });
+      const body = JSON.parse(res.body);
+      assert.strictEqual(res.statusCode, 400);
+      assert.strictEqual(body.error.code, ERROR_CODES.VALIDATION_ERROR);
+    });
+
+    it('rejects a requisition item with non-positive quantity and points to the item', async () => {
+      const res = await reqHandler.create({
+        user: { userId: 'p4', role: 'compras' },
+        body: { title: 'T', description: 'D', items: [{ productName: 'A', unit: 'u', quantity: 0, estimatedCost: 1 }] },
+      });
+      const body = JSON.parse(res.body);
+      assert.strictEqual(res.statusCode, 400);
+      assert.strictEqual(body.error.code, ERROR_CODES.VALIDATION_ERROR);
+      assert.ok(/Ítem 1/.test(body.error.message), 'message identifies the offending item');
+    });
+
+    it('rejects an invalid email on lead create', async () => {
+      const res = await leadsH.create({
+        user: { userId: 'p4', role: 'gerencia' },
+        body: { companyName: 'C', contactName: 'N', email: 'not-an-email', phone: '555', source: 'web' },
+      });
+      const body = JSON.parse(res.body);
+      assert.strictEqual(res.statusCode, 400);
+      assert.strictEqual(body.error.code, ERROR_CODES.VALIDATION_ERROR);
+    });
+
+    it('returns INSUFFICIENT_STOCK for an oversold inventory movement', async () => {
+      await products.create({ user: admin, body: { sku: 'P4-STK', name: 'Stk', category: 'insumo', unit: 'unidad', price: 1, minStock: 1, initialStock: 2 } });
+      const repo = require('../src/db/mockRepository');
+      const product = repo.findProductBySku('P4-STK');
+      const res = await inv.createMovement({
+        user: { userId: 'p4', role: 'bodega' },
+        body: { productId: product.id, type: 'OUT', quantity: 99, reference: 'oversell' },
+      });
+      const body = JSON.parse(res.body);
+      assert.strictEqual(res.statusCode, 400);
+      assert.strictEqual(body.error.code, ERROR_CODES.INSUFFICIENT_STOCK);
     });
   });
 
