@@ -358,6 +358,42 @@ function updateProductStock(id, newStock) {
   return update('products', id, { stock: newStock });
 }
 
+/**
+ * Atomically adjust a product's stock by `delta` (positive for IN, negative for
+ * OUT). The DynamoDB conditional expression guarantees the update only applies
+ * when enough stock exists, so concurrent outbound movements can never oversell
+ * or lose an update (the read-modify-write race in updateProductStock).
+ *
+ * Returns the updated product, or null when the product is missing or the
+ * resulting stock would be negative (ConditionalCheckFailedException).
+ */
+async function adjustProductStock(id, delta) {
+  requireDynamo();
+  const client = getClient();
+  const now = new Date().toISOString();
+  // delta < 0 (OUT): require stock >= -delta so stock + delta >= 0.
+  // delta >= 0 (IN): require stock >= 0 (always true), still guards existence.
+  const minStock = delta < 0 ? -delta : 0;
+  const params = {
+    TableName: tableName('products'),
+    Key: { id },
+    UpdateExpression: 'SET #stock = #stock + :delta, #updatedAt = :now',
+    ConditionExpression: 'attribute_exists(id) AND #stock >= :minStock',
+    ExpressionAttributeNames: { '#stock': 'stock', '#updatedAt': 'updatedAt' },
+    ExpressionAttributeValues: { ':delta': delta, ':now': now, ':minStock': minStock },
+    ReturnValues: 'ALL_NEW',
+  };
+  try {
+    const result = await client.send(new UpdateCommand(params));
+    return result.Attributes || null;
+  } catch (err) {
+    if (err.name === 'ConditionalCheckFailedException') {
+      return null;
+    }
+    throw err;
+  }
+}
+
 function listLowStockProducts(threshold, options = {}) {
   return list('products', { limit: options.limit || 100 }).then((r) => ({
     items: r.items.filter((p) => p.stock <= threshold),
@@ -481,6 +517,7 @@ module.exports = {
   listInventoryMovements,
   createInventoryMovement,
   updateProductStock,
+  adjustProductStock,
   listLowStockProducts,
   listLeads,
   findLeadById,

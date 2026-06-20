@@ -1,6 +1,7 @@
 const response = require('../../utils/response');
 const { getRepository } = require('../../db/repositoryFactory');
 const auditService = require('../../services/auditService');
+const idempotency = require('../../services/idempotencyService');
 const logger = require('../../middleware/logger');
 const repo = getRepository();
 
@@ -63,28 +64,30 @@ async function create(event) {
     }
   }
 
-  const data = await repo.createRequisition({
-    title: body.title,
-    description: body.description,
-    createdBy: event.user.userId,
-  });
-
-  for (const item of body.items) {
-    await repo.createRequisitionItem({
-      requisitionId: data.id,
-      productName: item.productName,
-      quantity: item.quantity,
-      unit: item.unit,
-      estimatedCost: item.estimatedCost,
-      observations: item.observations || null,
+  return idempotency.run(event, 'requisitions.create', async () => {
+    const data = await repo.createRequisition({
+      title: body.title,
+      description: body.description,
+      createdBy: event.user.userId,
     });
-  }
 
-  await auditService.record('requisition', data.id, 'created', event.user.userId, null, data);
+    for (const item of body.items) {
+      await repo.createRequisitionItem({
+        requisitionId: data.id,
+        productName: item.productName,
+        quantity: item.quantity,
+        unit: item.unit,
+        estimatedCost: item.estimatedCost,
+        observations: item.observations || null,
+      });
+    }
 
-  let reqItems = [];
-  try { reqItems = await repo.getRequisitionItems(data.id); } catch (e) { reqItems = []; }
-  return response.success({ ...data, items: reqItems }, 201);
+    await auditService.record('requisition', data.id, 'created', event.user.userId, null, data);
+
+    let reqItems = [];
+    try { reqItems = await repo.getRequisitionItems(data.id); } catch (e) { reqItems = []; }
+    return response.success({ ...data, items: reqItems }, 201);
+  });
 }
 
 async function getById(event) {
@@ -98,65 +101,71 @@ async function getById(event) {
 }
 
 async function approve(event) {
-  const req = await repo.findRequisitionById(event.params.id);
-  if (!req) {
-    return response.error(404, 'NOT_FOUND', 'Requisición no encontrada');
-  }
-  if (req.status === 'rejected') {
-    return response.error(400, 'CONFLICT', 'No se puede aprobar una requisición rechazada');
-  }
-  if (req.status === 'completed') {
-    return response.error(400, 'CONFLICT', 'No se puede aprobar una requisición completada');
-  }
-  if (req.status !== 'pending') {
-    return response.error(400, 'CONFLICT', `No se puede aprobar una requisición en estado '${req.status}'`);
-  }
-  const previous = { ...req };
-  const updated = await repo.updateRequisition(req.id, { status: 'approved', approvedBy: event.user.userId });
-  await auditService.record('requisition', req.id, 'approved', event.user.userId, previous, updated);
-  return response.success(updated);
+  return idempotency.run(event, 'requisitions.approve', async () => {
+    const req = await repo.findRequisitionById(event.params.id);
+    if (!req) {
+      return response.error(404, 'NOT_FOUND', 'Requisición no encontrada');
+    }
+    if (req.status === 'rejected') {
+      return response.error(400, 'CONFLICT', 'No se puede aprobar una requisición rechazada');
+    }
+    if (req.status === 'completed') {
+      return response.error(400, 'CONFLICT', 'No se puede aprobar una requisición completada');
+    }
+    if (req.status !== 'pending') {
+      return response.error(400, 'CONFLICT', `No se puede aprobar una requisición en estado '${req.status}'`);
+    }
+    const previous = { ...req };
+    const updated = await repo.updateRequisition(req.id, { status: 'approved', approvedBy: event.user.userId });
+    await auditService.record('requisition', req.id, 'approved', event.user.userId, previous, updated);
+    return response.success(updated);
+  });
 }
 
 async function reject(event) {
-  const req = await repo.findRequisitionById(event.params.id);
-  if (!req) {
-    return response.error(404, 'NOT_FOUND', 'Requisición no encontrada');
-  }
-  if (req.status !== 'pending') {
-    return response.error(400, 'CONFLICT', `No se puede rechazar una requisición en estado '${req.status}'`);
-  }
-  const body = event.body || {};
-  if (!body.reason) {
-    return response.error(400, 'VALIDATION_ERROR', 'reason es requerido para rechazar una requisición');
-  }
-  const previous = { ...req };
-  const updated = await repo.updateRequisition(req.id, { status: 'rejected', rejectionReason: body.reason });
-  await auditService.record('requisition', req.id, 'rejected', event.user.userId, previous, updated);
-  return response.success(updated);
+  return idempotency.run(event, 'requisitions.reject', async () => {
+    const req = await repo.findRequisitionById(event.params.id);
+    if (!req) {
+      return response.error(404, 'NOT_FOUND', 'Requisición no encontrada');
+    }
+    if (req.status !== 'pending') {
+      return response.error(400, 'CONFLICT', `No se puede rechazar una requisición en estado '${req.status}'`);
+    }
+    const body = event.body || {};
+    if (!body.reason) {
+      return response.error(400, 'VALIDATION_ERROR', 'reason es requerido para rechazar una requisición');
+    }
+    const previous = { ...req };
+    const updated = await repo.updateRequisition(req.id, { status: 'rejected', rejectionReason: body.reason });
+    await auditService.record('requisition', req.id, 'rejected', event.user.userId, previous, updated);
+    return response.success(updated);
+  });
 }
 
 async function complete(event) {
-  const req = await repo.findRequisitionById(event.params.id);
-  if (!req) {
-    return response.error(404, 'NOT_FOUND', 'Requisición no encontrada');
-  }
-  if (req.status === 'pending') {
-    return response.error(400, 'CONFLICT', 'No se puede completar una requisición pendiente');
-  }
-  if (req.status === 'rejected') {
-    return response.error(400, 'CONFLICT', 'No se puede completar una requisición rechazada');
-  }
-  if (req.status !== 'approved') {
-    return response.error(400, 'CONFLICT', `No se puede completar una requisición en estado '${req.status}'`);
-  }
-  const previous = { ...req };
-  const updated = await repo.updateRequisition(req.id, {
-    status: 'completed',
-    completedBy: event.user.userId,
-    completedAt: new Date().toISOString(),
+  return idempotency.run(event, 'requisitions.complete', async () => {
+    const req = await repo.findRequisitionById(event.params.id);
+    if (!req) {
+      return response.error(404, 'NOT_FOUND', 'Requisición no encontrada');
+    }
+    if (req.status === 'pending') {
+      return response.error(400, 'CONFLICT', 'No se puede completar una requisición pendiente');
+    }
+    if (req.status === 'rejected') {
+      return response.error(400, 'CONFLICT', 'No se puede completar una requisición rechazada');
+    }
+    if (req.status !== 'approved') {
+      return response.error(400, 'CONFLICT', `No se puede completar una requisición en estado '${req.status}'`);
+    }
+    const previous = { ...req };
+    const updated = await repo.updateRequisition(req.id, {
+      status: 'completed',
+      completedBy: event.user.userId,
+      completedAt: new Date().toISOString(),
+    });
+    await auditService.record('requisition', req.id, 'completed', event.user.userId, previous, updated);
+    return response.success(updated);
   });
-  await auditService.record('requisition', req.id, 'completed', event.user.userId, previous, updated);
-  return response.success(updated);
 }
 
 module.exports = { list, create, getById, approve, reject, complete };

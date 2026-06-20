@@ -130,27 +130,30 @@ async function updateStock(event) {
     return response.error(400, 'VALIDATION_ERROR', 'quantity debe ser mayor a 0');
   }
 
-  const newStock = body.type === 'IN'
-    ? existing.stock + body.quantity
-    : existing.stock - body.quantity;
+  const previous = { ...existing };
 
-  if (body.type === 'OUT' && newStock < 0) {
+  // Atomic, conditional stock change (same guard as inventory movements): the
+  // OUT is rejected when stock is insufficient, with no read-modify-write race.
+  const delta = body.type === 'IN' ? body.quantity : -body.quantity;
+  const updated = await repo.adjustProductStock(existing.id, delta);
+  if (!updated) {
     return response.error(400, 'BAD_REQUEST', 'Stock insuficiente para realizar la salida');
   }
 
-  const previous = { ...existing };
+  const stockAfter = updated.stock;
+  const stockBefore = stockAfter - delta;
+
   await repo.createInventoryMovement({
     productId: existing.id,
     type: body.type,
     quantity: body.quantity,
-    stockBefore: existing.stock,
-    stockAfter: newStock,
+    stockBefore,
+    stockAfter,
     reference: body.reference || 'Ajuste de stock',
     notes: body.notes || null,
     createdBy: event.user.userId,
   });
 
-  const updated = await repo.updateProductStock(existing.id, newStock);
   await auditService.record('product', existing.id, 'stock_updated', event.user.userId, previous, updated);
   return response.success(updated);
 }

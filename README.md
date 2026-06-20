@@ -10,7 +10,8 @@ Portafolio profesional que combina una SPA 3D interactiva con un sistema de gest
 
 | Capa | Tecnología |
 |------|-----------|
-| Frontend | React 18 + Vite 4 + Three.js + @react-three/fiber + Tailwind CSS |
+| Frontend (portafolio) | React 18 + Vite 4 + Three.js + @react-three/fiber + Tailwind CSS |
+| Frontend (Mini ERP UI) | shadcn/ui + Radix + TanStack Table + sonner + lucide-react sobre un design system reutilizable |
 | 3D | Three.js (desktop_pc, earth, ball, stars) + ErrorBoundary + NaN fix |
 | CDN | CloudFront con OAC |
 | Hosting | S3 (privado con OAC) |
@@ -20,8 +21,36 @@ Portafolio profesional que combina una SPA 3D interactiva con un sistema de gest
 | Auth | JWT + bcryptjs + roles (admin, compras, bodega, gerencia) |
 | IaC | Terraform HCL (4 módulos reutilizables) |
 | CI/CD | GitHub Actions + OIDC (sin claves estáticas) |
+| Observabilidad | CloudWatch logs estructurados + alarmas (Lambda errors/throttles, API 5xx) |
 | Email | Amazon SES (contact form) |
-| Tests | Node `node:test` nativo (223+ tests) |
+| Tests | Node `node:test` nativo (238 tests) |
+
+---
+
+## Mini ERP / CRM Lite — Caso de estudio de modernización
+
+Aplicación de negocio (`/mini-erp/*`) usada como caso de estudio técnico. La fase de modernización rediseñó la UI y endureció el backend e infraestructura sin romper contratos de API ni salir del enfoque Free Tier.
+
+**Frontend — UI premium tipo SaaS con un design system reutilizable (shadcn/ui)**
+- Layout con sidebar/topbar, paleta de comandos y navegación por rol.
+- Dashboard con KPIs y gráficos; tablas con búsqueda/orden/paginación (TanStack Table).
+- **CRM (Leads):** pipeline tipo Kanban + tabla, hoja de detalle, timeline de notas.
+- **Requisiciones:** flujo `pending → approved → completed` (o `rejected`) con indicador de progreso, filtros por estado y diálogos de confirmación.
+- **Inventario:** movimientos de stock, alertas de bajo stock y confirmación obligatoria para salidas.
+- **Reportes:** catálogo de exportaciones CSV (generación server-side).
+- Estados de carga (skeletons), error con reintento, vacíos y toasts (sonner) en todos los módulos.
+
+**Backend — Lambda serverless robusto**
+- Router propio (sin Express), formato `{ ok, data }` / `{ ok, error: { code, message } }`.
+- Repositorio abstracto (`mock` ↔ `dynamodb`), validación, **eventos de auditoría** y **logs estructurados** (requestId, ruta, método, userId, statusCode, latencyMs, coldStart, errorCode).
+- **Seguridad de stock:** ajuste atómico condicional en DynamoDB — el stock nunca queda negativo.
+- **Idempotencia opt-in** (`Idempotency-Key`) en creaciones/transiciones críticas.
+
+**DevOps — IaC y entrega segura**
+- Terraform (4 módulos) + GitHub Actions con **OIDC (sin claves AWS estáticas)** y smoke tests contra producción.
+- Controles de costo Free Tier: DynamoDB PAY_PER_REQUEST, concurrencia reservada en Lambda, retención de logs, alarmas CloudWatch (y budget opcional, desactivado por defecto).
+
+> **WAF:** actualmente activo de forma temporal a nivel de infraestructura. **No fue modificado** en esta fase de modernización (fuera de alcance, por diseño).
 
 ---
 
@@ -36,6 +65,9 @@ Portafolio profesional que combina una SPA 3D interactiva con un sistema de gest
 | `docs/api-reference.md` | Endpoints completos, request/response, códigos de error |
 | `docs/troubleshooting.md` | Problemas comunes y soluciones por capa |
 | `docs/aws-free-tier-notes.md` | Costos, monitoreo, riesgos de salida del Free Tier |
+| `docs/mini-erp-modernization-qa.md` | Revisión de regresión/arquitectura de la modernización |
+| `docs/backend-phase-11-reliability-notes.md` | Logs estructurados, idempotencia, auditoría, seguridad de stock |
+| `docs/terraform-phase-12-observability-notes.md` | Concurrencia reservada, alarmas y budget opcional |
 
 ---
 
@@ -50,7 +82,7 @@ npm run build:frontend   # Build producción (explícito)
 
 # Backend
 npm run build:backend    # Empaquetar Lambda (apps/backend/dist/lambda.zip)
-npm run test:backend     # Tests backend (223+ tests en 56 suites)
+npm run test:backend     # Tests backend (238 tests)
 npm run seed:backend     # Mostrar datos demo (no modifica producción)
 npm run seed:validate    # Validar consistencia de datos demo
 

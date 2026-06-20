@@ -49,6 +49,12 @@ variable "log_retention_days" {
   default     = 14
 }
 
+variable "reserved_concurrent_executions" {
+  description = "Reserved concurrent executions cap (cost protection). -1 = unreserved (account default)."
+  type        = number
+  default     = -1
+}
+
 variable "tags" {
   description = "Common tags"
   type        = map(string)
@@ -75,14 +81,15 @@ resource "aws_iam_role" "lambda" {
 }
 
 resource "aws_lambda_function" "this" {
-  function_name    = var.function_name
-  filename         = var.zip_path
-  handler          = var.handler
-  runtime          = var.runtime
-  role             = aws_iam_role.lambda.arn
-  timeout          = var.timeout
-  memory_size      = var.memory_size
-  source_code_hash = filebase64sha256(var.zip_path)
+  function_name                  = var.function_name
+  filename                       = var.zip_path
+  handler                        = var.handler
+  runtime                        = var.runtime
+  role                           = aws_iam_role.lambda.arn
+  timeout                        = var.timeout
+  memory_size                    = var.memory_size
+  source_code_hash               = filebase64sha256(var.zip_path)
+  reserved_concurrent_executions = var.reserved_concurrent_executions
 
   environment {
     variables = var.environment_variables
@@ -115,4 +122,8 @@ output "role_name" {
 
 output "role_arn" {
   value = aws_iam_role.lambda.arn
+}
+
+output "reserved_concurrent_executions" {
+  value = aws_lambda_function.this.reserved_concurrent_executions
 }

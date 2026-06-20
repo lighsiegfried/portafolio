@@ -60,7 +60,7 @@ function matchRoute(method, path) {
 
   const exactKey = `${method} ${cleanPath}`;
   if (routes[exactKey]) {
-    return { route: routes[exactKey], params: {} };
+    return { route: routes[exactKey], params: {}, routeKey: exactKey };
   }
 
   for (const [key, route] of Object.entries(routes)) {
@@ -78,7 +78,7 @@ function matchRoute(method, path) {
       paramNames.forEach((name, index) => {
         params[name] = match[index + 1];
       });
-      return { route, params };
+      return { route, params, routeKey: key };
     }
   }
 
@@ -93,24 +93,57 @@ function normalizeEvent(event) {
   return event;
 }
 
+// Flipped to false after the first invocation in a warm container.
+let isColdStart = true;
+
+/** Best-effort extraction of an error code from a handler error response body. */
+function errorCodeFromResult(result) {
+  if (!result || result.statusCode < 400 || typeof result.body !== 'string') return undefined;
+  try {
+    const parsed = JSON.parse(result.body);
+    return parsed && parsed.error ? parsed.error.code : undefined;
+  } catch (e) {
+    return undefined;
+  }
+}
+
 async function handler(event) {
   event = normalizeEvent(event);
   const logContext = logger.middleware(event);
+  const coldStart = isColdStart;
+  isColdStart = false;
+
+  const cleanPath = (event.path || '').replace(/^\/api/, '') || '/';
+  let routeKey = `${event.httpMethod} ${cleanPath}`;
+
+  const emit = (result) => {
+    logger.logRequest({
+      requestId: logContext.requestId,
+      route: routeKey,
+      method: event.httpMethod,
+      userId: event.user && event.user.userId,
+      statusCode: result.statusCode || 200,
+      latencyMs: Date.now() - logContext.startTime,
+      coldStart,
+      errorCode: errorCodeFromResult(result),
+    });
+    return result;
+  };
 
   try {
     const corsResult = corsMiddleware.middleware(event);
     if (corsResult.statusCode === 204) {
-      return corsResult;
+      return emit(corsResult);
     }
 
-    const cleanPath = (event.path || '').replace(/^\/api/, '') || '/';
     const matched = matchRoute(event.httpMethod, cleanPath);
 
     if (!matched) {
-      return response.error(404, 'NOT_FOUND', `Ruta no encontrada: ${event.httpMethod} ${event.path}`);
+      return emit(response.error(404, 'NOT_FOUND', `Ruta no encontrada: ${event.httpMethod} ${event.path}`));
     }
 
     const { route, params } = matched;
+    routeKey = matched.routeKey;
     event.params = params;
     event.path = cleanPath;
 
@@ -131,35 +164,23 @@ async function handler(event) {
 
     const result = await route.handler(event);
 
-    const duration = Date.now() - logContext.startTime;
-    logger.logResponse(logContext.requestId, 'http', event.httpMethod, result.statusCode || 200, duration);
-
     const finalHeaders = {
       ...(result.headers || {}),
       ...(corsResult.headers || {}),
     };
 
-    return { ...result, headers: finalHeaders };
+    return emit({ ...result, headers: finalHeaders });
   } catch (err) {
-    const duration = Date.now() - logContext.startTime;
-
     if (err instanceof AppError) {
-      logger.log('WARN', 'http', 'error', err.message, {
-        requestId: logContext.requestId,
-        statusCode: err.statusCode,
-        code: err.code,
-        duration,
-      });
-      return response.error(err.statusCode, err.code, err.message);
+      return emit(response.error(err.statusCode, err.code, err.message));
     }
 
     logger.log('ERROR', 'http', 'unhandled', err.message || 'Error interno del servidor', {
       requestId: logContext.requestId,
       stack: err.stack,
-      duration,
     });
 
-    return response.error(500, 'INTERNAL_ERROR', 'Error interno del servidor');
+    return emit(response.error(500, 'INTERNAL_ERROR', 'Error interno del servidor'));
   }
 }
 

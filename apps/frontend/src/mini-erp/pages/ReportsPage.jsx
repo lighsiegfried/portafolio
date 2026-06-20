@@ -1,31 +1,27 @@
+import { useState, useMemo } from 'react';
+import { toast } from 'sonner';
+import { FileSpreadsheet } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { userCan } from '../utils/permissions';
-import { downloadRequisitions, downloadInventory, downloadLeads } from '../../services/reportsApi';
-
-const REPORTS = [
-  {
-    key: 'requisitions', title: 'Requisiciones', desc: 'Exportar todas las requisiciones a CSV',
-    action: 'downloadRequisitionsCsv', downloadFn: downloadRequisitions,
-    filename: 'requisiciones.csv',
-  },
-  {
-    key: 'inventory', title: 'Inventario', desc: 'Exportar catalogo de productos a CSV',
-    action: 'downloadInventoryCsv', downloadFn: downloadInventory,
-    filename: 'inventario.csv',
-  },
-  {
-    key: 'leads', title: 'Leads', desc: 'Exportar leads y clientes potenciales a CSV',
-    action: 'downloadLeadsCsv', downloadFn: downloadLeads,
-    filename: 'leads.csv',
-  },
-];
+import ReportCard from '../components/data-display/ReportCard';
+import EmptyState from '../components/EmptyState';
+import { REPORTS } from '../config/reports';
 
 export default function ReportsPage() {
   const { user } = useAuth();
+  const [downloadingKey, setDownloadingKey] = useState(null);
+
+  const permittedReports = useMemo(
+    () => REPORTS.map((r) => ({ report: r, permitted: userCan(user, r.permission) })),
+    [user]
+  );
+  const permittedCount = permittedReports.filter((r) => r.permitted).length;
 
   async function handleDownload(report) {
+    setDownloadingKey(report.key);
+    const toastId = toast.loading(`Generando ${report.title}...`);
     try {
-      const blob = await report.downloadFn();
+      const blob = await report.download();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -34,47 +30,50 @@ export default function ReportsPage() {
       a.click();
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
+      toast.success(`${report.title} exportado`, { id: toastId, description: report.filename });
     } catch (err) {
-      alert('Error al descargar: ' + (err.message || 'Desconocido'));
+      toast.error(`Error al exportar ${report.title}`, {
+        id: toastId,
+        description: err.message || 'Intenta nuevamente.',
+      });
+    } finally {
+      setDownloadingKey(null);
     }
   }
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-bold text-white">Reportes</h1>
-        <p className="text-sm text-secondary mt-1">Exportacion de datos a CSV</p>
+        <h1 className="text-2xl font-bold text-foreground">Reportes</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Exporta los datos del ERP a CSV para análisis en Excel, Google Sheets o cualquier herramienta de BI.
+        </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {REPORTS.map((report) => {
-          const permitted = userCan(user, report.action);
-          return (
-            <div
+      {permittedCount === 0 ? (
+        <div className="rounded-xl border border-border p-6">
+          <EmptyState message="No tienes permisos para exportar reportes. Contacta a un administrador." />
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {permittedReports.map(({ report, permitted }) => (
+            <ReportCard
               key={report.key}
-              className={`bg-tertiary/50 backdrop-blur-sm border rounded-xl p-5 ${
-                permitted ? 'border-white/10' : 'border-white/5 opacity-50'
-              }`}
-            >
-              <h3 className="text-white font-semibold text-sm mb-1">{report.title}</h3>
-              <p className="text-xs text-secondary mb-4">{report.desc}</p>
-              {permitted ? (
-                <button
-                  onClick={() => handleDownload(report)}
-                  className="w-full py-2 text-sm rounded-lg bg-violet-500/80 hover:bg-violet-500 text-white transition-colors"
-                >
-                  Descargar CSV
-                </button>
-              ) : (
-                <p className="text-xs text-red-300/60">No tienes permisos para descargar este reporte.</p>
-              )}
-            </div>
-          );
-        })}
-      </div>
+              report={report}
+              permitted={permitted}
+              downloading={downloadingKey === report.key}
+              onDownload={handleDownload}
+            />
+          ))}
+        </div>
+      )}
 
-      <div className="text-xs text-secondary bg-tertiary/30 border border-white/10 rounded-xl p-4">
-        Los reportes se generan con los datos actuales en memoria. Los archivos CSV pueden abrirse en Excel, Google Sheets o cualquier editor de texto.
+      <div className="flex items-start gap-3 rounded-xl border border-border bg-muted/20 p-4 text-sm text-muted-foreground">
+        <FileSpreadsheet className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+        <p>
+          Los reportes se generan en el servidor con los datos actuales del sistema. Cada archivo CSV incluye
+          únicamente las columnas indicadas y puede abrirse directamente en cualquier hoja de cálculo.
+        </p>
       </div>
     </div>
   );

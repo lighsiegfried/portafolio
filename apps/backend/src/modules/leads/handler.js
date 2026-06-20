@@ -1,6 +1,7 @@
 const response = require('../../utils/response');
 const { getRepository } = require('../../db/repositoryFactory');
 const auditService = require('../../services/auditService');
+const idempotency = require('../../services/idempotencyService');
 const logger = require('../../middleware/logger');
 const repo = getRepository();
 
@@ -49,19 +50,21 @@ async function create(event) {
     return response.error(400, 'VALIDATION_ERROR', 'companyName, contactName, email, phone y source son requeridos');
   }
 
-  const data = await repo.createLead({
-    companyName: body.companyName,
-    contactName: body.contactName,
-    email: body.email,
-    phone: body.phone,
-    source: body.source,
-    notes: body.notes || null,
-    nextFollowUp: body.nextFollowUp || null,
-    assignedTo: event.user.userId,
-  });
+  return idempotency.run(event, 'leads.create', async () => {
+    const data = await repo.createLead({
+      companyName: body.companyName,
+      contactName: body.contactName,
+      email: body.email,
+      phone: body.phone,
+      source: body.source,
+      notes: body.notes || null,
+      nextFollowUp: body.nextFollowUp || null,
+      assignedTo: event.user.userId,
+    });
 
-  await auditService.record('lead', data.id, 'created', event.user.userId, null, data);
-  return response.success({ ...data, notes: [] }, 201);
+    await auditService.record('lead', data.id, 'created', event.user.userId, null, data);
+    return response.success({ ...data, notes: [] }, 201);
+  });
 }
 
 async function getById(event) {

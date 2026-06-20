@@ -26,6 +26,42 @@ output "log_group_name" {
 }
 
 # =============================================================================
+# Operations — observability & cost protection (Phase 12)
+# =============================================================================
+
+output "lambda_reserved_concurrency" {
+  description = "Reserved concurrency cap on the API Lambda (-1 = unreserved)."
+  value       = module.api_lambda.reserved_concurrent_executions
+}
+
+output "api_throttling" {
+  description = "API Gateway default-stage throttling limits."
+  value = {
+    burst_limit = var.api_throttling_burst_limit
+    rate_limit  = var.api_throttling_rate_limit
+  }
+}
+
+output "cloudwatch_alarm_names" {
+  description = "Names of the CloudWatch alarms guarding the API."
+  value = {
+    lambda_errors    = aws_cloudwatch_metric_alarm.lambda_errors.alarm_name
+    lambda_throttles = aws_cloudwatch_metric_alarm.lambda_throttles.alarm_name
+    api_5xx          = aws_cloudwatch_metric_alarm.api_5xx.alarm_name
+  }
+}
+
+output "alarm_sns_topic_arn" {
+  description = "ARN of the alarm SNS topic (null when alarm_email is not set)."
+  value       = local.alarm_email_enabled ? aws_sns_topic.alarms[0].arn : null
+}
+
+output "budget_name" {
+  description = "Name of the monthly AWS Budget (null when enable_budget is false)."
+  value       = local.budget_enabled ? aws_budgets_budget.monthly_cost[0].name : null
+}
+
+# =============================================================================
 # Frontend references — existing resources, NOT managed by Terraform
 # =============================================================================
 

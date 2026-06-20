@@ -1,0 +1,64 @@
+/**
+ * Mini ERP / CRM Lite — design-system theme tokens (shadcn/ui).
+ *
+ * Scoping strategy (see docs/mini-erp-design-system-plan.md, risks R1/R2):
+ *  - These CSS variables are defined at :root because Radix portals (dialog,
+ *    dropdown, tooltip, select, command, sonner) render into document.body,
+ *    OUTSIDE any `.mini-erp-root` wrapper, and would otherwise be unstyled.
+ *  - This is portfolio-safe: every token name below is NEW. The portfolio never
+ *    references the background, foreground, card, popover, muted, accent,
+ *    destructive, border, input, ring, sidebar or chart tokens. The shared
+ *    Tailwind keys primary/secondary/tertiary are NOT redefined here.
+ *  - No global `*`/`body` base layer is applied (audit R2). Base background/text
+ *    are scoped to `.mini-erp-root` only.
+ *
+ * Values are a dark, violet-accented palette that matches the existing Mini ERP
+ * look (primary bg ~ #050816, surfaces ~ #151030, violet accent).
+ */
+
+:root {
+  --radius: 0.5rem;
+
+  --background: 240 60% 4%;
+  --foreground: 0 0% 98%;
+
+  --card: 249 34% 13%;
+  --card-foreground: 0 0% 98%;
+
+  --popover: 249 34% 11%;
+  --popover-foreground: 0 0% 98%;
+
+  --muted: 248 25% 18%;
+  --muted-foreground: 252 17% 70%;
+
+  --accent: 258 90% 66%;
+  --accent-foreground: 0 0% 100%;
+
+  --destructive: 0 72% 60%;
+  --destructive-foreground: 0 0% 100%;
+
+  --border: 255 30% 24%;
+  --input: 255 30% 24%;
+  --ring: 258 90% 66%;
+
+  --sidebar-background: 249 38% 10%;
+  --sidebar-foreground: 252 17% 78%;
+  --sidebar-primary: 258 90% 66%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 248 25% 18%;
+  --sidebar-accent-foreground: 0 0% 98%;
+  --sidebar-border: 255 30% 22%;
+  --sidebar-ring: 258 90% 66%;
+
+  --chart-1: 258 90% 66%;
+  --chart-2: 199 89% 60%;
+  --chart-3: 150 60% 50%;
+  --chart-4: 43 90% 60%;
+  --chart-5: 340 75% 62%;
+}
+
+/* Base surface scoped to the Mini ERP shell only — never global. */
+.mini-erp-root {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+}

@@ -18,6 +18,18 @@ variable "allowed_origins" {
   type        = list(string)
 }
 
+variable "throttling_burst_limit" {
+  description = "Default stage throttling burst limit (cost/abuse protection)"
+  type        = number
+  default     = 100
+}
+
+variable "throttling_rate_limit" {
+  description = "Default stage throttling steady-state rate limit (req/s)"
+  type        = number
+  default     = 50
+}
+
 variable "tags" {
   description = "Common tags"
   type        = map(string)
@@ -86,8 +98,8 @@ resource "aws_apigatewayv2_stage" "default" {
   deployment_id = aws_apigatewayv2_deployment.this.id
 
   default_route_settings {
-    throttling_burst_limit = 100
-    throttling_rate_limit  = 50
+    throttling_burst_limit = var.throttling_burst_limit
+    throttling_rate_limit  = var.throttling_rate_limit
   }
 
   tags = var.tags
@@ -103,4 +115,8 @@ output "api_id" {
 
 output "execution_arn" {
   value = aws_apigatewayv2_api.this.execution_arn
+}
+
+output "stage_name" {
+  value = aws_apigatewayv2_stage.default.name
 }

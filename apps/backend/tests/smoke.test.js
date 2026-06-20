@@ -1058,6 +1058,262 @@ describe('Mini ERP Backend — Smoke Tests', () => {
     });
   });
 
+  describe('Phase 9 — Inventory Stock Safety (atomic adjust)', () => {
+    function freshProduct(sku, initialStock) {
+      const products = require('../src/modules/products/handler');
+      return products.create({
+        user: { userId: 'test-user', role: 'admin' },
+        body: { sku, name: sku, category: 'insumo', unit: 'unidad', price: 1, minStock: 1, initialStock },
+      });
+    }
+
+    it('adjustProductStock decrements and guards against negative stock', async () => {
+      const repo = require('../src/db/mockRepository');
+      await freshProduct('ADJ-001', 10);
+      const product = repo.findProductBySku('ADJ-001');
+
+      const dec = repo.adjustProductStock(product.id, -3);
+      assert.ok(dec, 'decrement should succeed');
+      assert.strictEqual(dec.stock, 7);
+
+      const blocked = repo.adjustProductStock(product.id, -100);
+      assert.strictEqual(blocked, null, 'insufficient stock must return null');
+      assert.strictEqual(repo.findProductById(product.id).stock, 7, 'stock unchanged on rejection');
+
+      const inc = repo.adjustProductStock(product.id, 5);
+      assert.strictEqual(inc.stock, 12);
+    });
+
+    it('adjustProductStock returns null for a missing product', () => {
+      const repo = require('../src/db/mockRepository');
+      assert.strictEqual(repo.adjustProductStock('does-not-exist', -1), null);
+    });
+
+    it('rejects an OUT movement that would oversell and never goes negative', async () => {
+      const repo = require('../src/db/mockRepository');
+      const inv = require('../src/modules/inventory/handler');
+      await freshProduct('ADJ-OVERSELL', 5);
+      const product = repo.findProductBySku('ADJ-OVERSELL');
+
+      const ok = await inv.createMovement({
+        user: { userId: 'test-user', role: 'bodega' },
+        body: { productId: product.id, type: 'OUT', quantity: 5, reference: 'Vaciar stock' },
+      });
+      assert.strictEqual(ok.statusCode, 201);
+      const okBody = JSON.parse(ok.body);
+      assert.strictEqual(okBody.data.stockBefore, 5);
+      assert.strictEqual(okBody.data.stockAfter, 0);
+      assert.strictEqual(repo.findProductById(product.id).stock, 0);
+
+      const blocked = await inv.createMovement({
+        user: { userId: 'test-user', role: 'bodega' },
+        body: { productId: product.id, type: 'OUT', quantity: 1, reference: 'Sobre-venta' },
+      });
+      const blockedBody = JSON.parse(blocked.body);
+      assert.strictEqual(blocked.statusCode, 400);
+      assert.strictEqual(blockedBody.error.code, 'BAD_REQUEST');
+      assert.strictEqual(repo.findProductById(product.id).stock, 0, 'stock must never be negative');
+    });
+
+    it('records accurate stockBefore/stockAfter for an IN movement', async () => {
+      const repo = require('../src/db/mockRepository');
+      const inv = require('../src/modules/inventory/handler');
+      await freshProduct('ADJ-IN', 4);
+      const product = repo.findProductBySku('ADJ-IN');
+
+      const res = await inv.createMovement({
+        user: { userId: 'test-user', role: 'bodega' },
+        body: { productId: product.id, type: 'IN', quantity: 6, reference: 'Entrada' },
+      });
+      const body = JSON.parse(res.body);
+      assert.strictEqual(res.statusCode, 201);
+      assert.strictEqual(body.data.stockBefore, 4);
+      assert.strictEqual(body.data.stockAfter, 10);
+      assert.strictEqual(repo.findProductById(product.id).stock, 10);
+    });
+
+    it('products.updateStock uses the same atomic guard (no oversell)', async () => {
+      const repo = require('../src/db/mockRepository');
+      const products = require('../src/modules/products/handler');
+      await freshProduct('ADJ-PROD', 2);
+      const product = repo.findProductBySku('ADJ-PROD');
+
+      const blocked = await products.updateStock({
+        params: { id: product.id },
+        user: { userId: 'test-user', role: 'bodega' },
+        body: { type: 'OUT', quantity: 9999, reference: 'Test OUT' },
+      });
+      const blockedBody = JSON.parse(blocked.body);
+      assert.strictEqual(blocked.statusCode, 400);
+      assert.strictEqual(blockedBody.error.code, 'BAD_REQUEST');
+      assert.strictEqual(repo.findProductById(product.id).stock, 2);
+    });
+  });
+
+  describe('Phase 11 — Structured request logging', () => {
+    it('matchRoute returns the route key template for exact routes', () => {
+      const { matchRoute } = require('../src/index');
+      const result = matchRoute('GET', '/health');
+      assert.ok(result);
+      assert.strictEqual(result.routeKey, 'GET /health');
+    });
+
+    it('matchRoute returns the parameterized route key (not the raw path)', () => {
+      const { matchRoute } = require('../src/index');
+      const result = matchRoute('PATCH', '/requisitions/abc-123/approve');
+      assert.ok(result);
+      assert.strictEqual(result.routeKey, 'PATCH /requisitions/{id}/approve');
+      assert.strictEqual(result.params.id, 'abc-123');
+    });
+
+    it('buildRequestLog includes the required structured fields', () => {
+      const logger = require('../src/middleware/logger');
+      const entry = logger.buildRequestLog({
+        requestId: 'r1',
+        route: 'POST /requisitions',
+        method: 'POST',
+        userId: 'u1',
+        statusCode: 201,
+        latencyMs: 12,
+        coldStart: true,
+        errorCode: undefined,
+      });
+      assert.strictEqual(entry.action, 'request');
+      assert.strictEqual(entry.requestId, 'r1');
+      assert.strictEqual(entry.route, 'POST /requisitions');
+      assert.strictEqual(entry.method, 'POST');
+      assert.strictEqual(entry.userId, 'u1');
+      assert.strictEqual(entry.statusCode, 201);
+      assert.strictEqual(entry.latencyMs, 12);
+      assert.strictEqual(entry.coldStart, true);
+      assert.ok(!('errorCode' in entry), 'errorCode omitted when absent');
+    });
+
+    it('buildRequestLog omits userId when not authenticated and includes errorCode on errors', () => {
+      const logger = require('../src/middleware/logger');
+      const entry = logger.buildRequestLog({
+        requestId: 'r2',
+        route: 'GET /requisitions',
+        method: 'GET',
+        userId: undefined,
+        statusCode: 401,
+        latencyMs: 3,
+        coldStart: false,
+        errorCode: 'UNAUTHORIZED',
+      });
+      assert.ok(!('userId' in entry));
+      assert.strictEqual(entry.errorCode, 'UNAUTHORIZED');
+      assert.strictEqual(entry.coldStart, false);
+    });
+
+    it('handler emits ok response for /health and marks first call as cold start internally', async () => {
+      const { handler } = require('../src/index');
+      const result = await handler({ httpMethod: 'GET', path: '/health', headers: {} });
+      const body = JSON.parse(result.body);
+      assert.strictEqual(result.statusCode, 200);
+      assert.strictEqual(body.ok, true);
+    });
+  });
+
+  describe('Phase 11 — Idempotency for critical mutations', () => {
+    const idempotency = require('../src/services/idempotencyService');
+
+    function reqEvent(key) {
+      return {
+        user: { userId: 'idem-user', role: 'compras' },
+        headers: key ? { 'Idempotency-Key': key } : undefined,
+        body: {
+          title: 'Idempotent requisition',
+          description: 'desc',
+          items: [{ productName: 'Widget', quantity: 1, unit: 'unidad', estimatedCost: 5 }],
+        },
+      };
+    }
+
+    it('replays the same requisition for a repeated Idempotency-Key', async () => {
+      idempotency._reset();
+      const reqHandler = require('../src/modules/requisitions/handler');
+      const repo = require('../src/db/mockRepository');
+
+      const before = repo.listRequisitions().length;
+      const event = reqEvent('req-key-1');
+      const r1 = await reqHandler.create(event);
+      const r2 = await reqHandler.create(event);
+      const after = repo.listRequisitions().length;
+
+      const b1 = JSON.parse(r1.body);
+      const b2 = JSON.parse(r2.body);
+      assert.strictEqual(r1.statusCode, 201);
+      assert.strictEqual(r2.statusCode, 201);
+      assert.strictEqual(b1.data.id, b2.data.id, 'same requisition replayed');
+      assert.strictEqual(r2.headers['Idempotent-Replay'], 'true');
+      assert.strictEqual(after - before, 1, 'only one requisition created');
+    });
+
+    it('creates distinct requisitions without an Idempotency-Key', async () => {
+      const reqHandler = require('../src/modules/requisitions/handler');
+      const r1 = await reqHandler.create(reqEvent());
+      const r2 = await reqHandler.create(reqEvent());
+      const b1 = JSON.parse(r1.body);
+      const b2 = JSON.parse(r2.body);
+      assert.notStrictEqual(b1.data.id, b2.data.id);
+    });
+
+    it('applies an inventory movement only once for a repeated key', async () => {
+      idempotency._reset();
+      const products = require('../src/modules/products/handler');
+      const inv = require('../src/modules/inventory/handler');
+      const repo = require('../src/db/mockRepository');
+
+      await products.create({
+        user: { userId: 'test-user', role: 'admin' },
+        body: { sku: 'IDEM-INV', name: 'Idem Inv', category: 'insumo', unit: 'unidad', price: 1, minStock: 1, initialStock: 10 },
+      });
+      const product = repo.findProductBySku('IDEM-INV');
+
+      const movEvent = {
+        user: { userId: 'test-user', role: 'bodega' },
+        headers: { 'Idempotency-Key': 'mov-key-1' },
+        body: { productId: product.id, type: 'OUT', quantity: 3, reference: 'Salida idempotente' },
+      };
+      const r1 = await inv.createMovement(movEvent);
+      const r2 = await inv.createMovement(movEvent);
+      const b1 = JSON.parse(r1.body);
+      const b2 = JSON.parse(r2.body);
+
+      assert.strictEqual(r1.statusCode, 201);
+      assert.strictEqual(b1.data.id, b2.data.id, 'same movement replayed');
+      assert.strictEqual(r2.headers['Idempotent-Replay'], 'true');
+      assert.strictEqual(repo.findProductById(product.id).stock, 7, 'stock decremented only once');
+    });
+  });
+
+  describe('Phase 11 — Audit consistency for inventory movements', () => {
+    it('records an audit event when an inventory movement is created', async () => {
+      const products = require('../src/modules/products/handler');
+      const inv = require('../src/modules/inventory/handler');
+      const repo = require('../src/db/mockRepository');
+      const auditService = require('../src/services/auditService');
+
+      await products.create({
+        user: { userId: 'test-user', role: 'admin' },
+        body: { sku: 'AUDIT-INV', name: 'Audit Inv', category: 'insumo', unit: 'unidad', price: 1, minStock: 1, initialStock: 5 },
+      });
+      const product = repo.findProductBySku('AUDIT-INV');
+
+      const res = await inv.createMovement({
+        user: { userId: 'test-user', role: 'bodega' },
+        body: { productId: product.id, type: 'IN', quantity: 2, reference: 'Entrada auditada' },
+      });
+      const body = JSON.parse(res.body);
+      assert.strictEqual(res.statusCode, 201);
+
+      const events = await auditService.listAll({ entityType: 'inventory_movement', action: 'created' });
+      assert.ok(events.length >= 1, 'at least one inventory_movement audit event');
+      assert.ok(events.some((e) => e.entityId === body.data.id), 'audit event for the new movement');
+    });
+  });
+
   describe('Phase 2 — CRM Leads', () => {
     let createdLeadId;
 
@@ -1659,13 +1915,17 @@ describe('Mini ERP Backend — Smoke Tests', () => {
       const contact = require('../src/modules/contact/handler');
       const repo = require('../src/db/repositoryFactory').getRepository();
       const listBefore = repo.list('contactMessages');
+      const beforeIds = new Set(listBefore.items.map((m) => m.id));
 
       await contact.submit({ body: { ...validPayload } });
 
       const listAfter = repo.list('contactMessages');
       assert.ok(listAfter.items.length > listBefore.items.length);
 
-      const saved = listAfter.items[0];
+      // Locate the record we just created (deterministic regardless of
+      // createdAt ordering / millisecond ties).
+      const saved = listAfter.items.find((m) => !beforeIds.has(m.id));
+      assert.ok(saved, 'new contact message should exist');
       assert.strictEqual(saved.name, 'Juan Pérez');
       assert.strictEqual(saved.email, 'juan@example.com');
       assert.strictEqual(saved.status, 'email_sent');
@@ -1680,6 +1940,7 @@ describe('Mini ERP Backend — Smoke Tests', () => {
       const contact = require('../src/modules/contact/handler');
       const repo = require('../src/db/repositoryFactory').getRepository();
       const listBefore = repo.list('contactMessages');
+      const beforeIds = new Set(listBefore.items.map((m) => m.id));
 
       const result = await contact.submit({ body: { ...validPayload } });
 
@@ -1691,7 +1952,8 @@ describe('Mini ERP Backend — Smoke Tests', () => {
       const listAfter = repo.list('contactMessages');
       assert.ok(listAfter.items.length > listBefore.items.length);
 
-      const saved = listAfter.items[0];
+      const saved = listAfter.items.find((m) => !beforeIds.has(m.id));
+      assert.ok(saved, 'new contact message should exist');
       assert.strictEqual(saved.status, 'email_failed');
       assert.ok(saved.id, 'Contact should still have an ID even if SES failed');
     });
@@ -1705,6 +1967,8 @@ describe('Mini ERP Backend — Smoke Tests', () => {
       delete process.env.SEND_CONTACT_CONFIRMATION;
 
       const contact = require('../src/modules/contact/handler');
+      const repo = require('../src/db/repositoryFactory').getRepository();
+      const beforeIds = new Set(repo.list('contactMessages').items.map((m) => m.id));
       const result = await contact.submit({ body: { ...validPayload } });
 
       process.env.SEND_CONTACT_CONFIRMATION = originalEnv;
@@ -1713,9 +1977,8 @@ describe('Mini ERP Backend — Smoke Tests', () => {
       assert.strictEqual(result.statusCode, 200);
       assert.strictEqual(body.ok, true);
 
-      const repo = require('../src/db/repositoryFactory').getRepository();
-      const list = repo.list('contactMessages');
-      const saved = list.items[0];
+      const saved = repo.list('contactMessages').items.find((m) => !beforeIds.has(m.id));
+      assert.ok(saved, 'new contact message should exist');
       assert.strictEqual(saved.confirmationSent, false, 'confirmationSent must be false');
       assert.strictEqual(saved.status, 'email_sent');
     });

@@ -49,4 +49,33 @@ function logResponse(requestId, module, action, statusCode, duration, extra = {}
   });
 }
 
-module.exports = { middleware, logResponse, log };
+/**
+ * Build the structured per-request log entry. Pure (no I/O) so it can be unit
+ * tested. Fields are omitted when not applicable (e.g. userId, errorCode).
+ */
+function buildRequestLog({ requestId, route, method, userId, statusCode, latencyMs, coldStart, errorCode }) {
+  const entry = {
+    action: 'request',
+    requestId,
+    route,
+    method,
+    statusCode,
+    latencyMs,
+    coldStart: !!coldStart,
+  };
+  if (userId) entry.userId = userId;
+  if (errorCode) entry.errorCode = errorCode;
+  return entry;
+}
+
+/**
+ * Emit a single structured log line summarizing a completed request.
+ * Severity follows the status code (5xx -> ERROR, 4xx -> WARN, else INFO).
+ */
+function logRequest(fields) {
+  const entry = buildRequestLog(fields);
+  const level = entry.statusCode >= 500 ? 'ERROR' : entry.statusCode >= 400 ? 'WARN' : 'INFO';
+  log(level, 'http', 'request', `${entry.route} -> ${entry.statusCode}`, entry);
+}
+
+module.exports = { middleware, logResponse, log, logRequest, buildRequestLog };

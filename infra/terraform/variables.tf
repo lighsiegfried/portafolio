@@ -148,6 +148,70 @@ variable "ses_region" {
   default     = "us-east-1"
 }
 
+# -----------------------------------------------------------------------------
+# Phase 12 — Observability & cost protection (all optional, safe defaults)
+# -----------------------------------------------------------------------------
+
+variable "lambda_reserved_concurrency" {
+  description = "Reserved concurrency cap for the API Lambda (cost protection). -1 disables the cap (account default pool)."
+  type        = number
+  default     = 10
+}
+
+variable "api_throttling_burst_limit" {
+  description = "API Gateway default-stage throttling burst limit."
+  type        = number
+  default     = 100
+}
+
+variable "api_throttling_rate_limit" {
+  description = "API Gateway default-stage throttling steady-state rate (req/s)."
+  type        = number
+  default     = 50
+}
+
+variable "alarm_email" {
+  description = "Optional email for CloudWatch alarm notifications. When empty, alarms are created without an SNS action (no email, no confirmation needed)."
+  type        = string
+  default     = ""
+}
+
+variable "lambda_error_alarm_threshold" {
+  description = "Lambda Errors (Sum, 5 min) at or above which the alarm fires."
+  type        = number
+  default     = 5
+}
+
+variable "lambda_throttle_alarm_threshold" {
+  description = "Lambda Throttles (Sum, 5 min) at or above which the alarm fires."
+  type        = number
+  default     = 1
+}
+
+variable "api_5xx_alarm_threshold" {
+  description = "API Gateway 5xx responses (Sum, 5 min) at or above which the alarm fires."
+  type        = number
+  default     = 5
+}
+
+variable "enable_budget" {
+  description = "Whether to create an AWS Budget. Disabled by default to avoid any account-level surprise; enable explicitly when desired."
+  type        = bool
+  default     = false
+}
+
+variable "budget_limit_usd" {
+  description = "Monthly cost budget limit in USD (only used when enable_budget = true)."
+  type        = string
+  default     = "5"
+}
+
+variable "budget_notification_email" {
+  description = "Email for AWS Budget alerts (required when enable_budget = true)."
+  type        = string
+  default     = ""
+}
+
 variable "common_tags" {
   description = "Common tags applied to all resources"
   type        = map(string)

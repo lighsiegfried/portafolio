@@ -173,6 +173,22 @@ function updateProductStock(id, newStock) {
   return mockDb.products[idx];
 }
 
+/**
+ * Atomically adjust stock by `delta` (positive IN, negative OUT). Mirrors the
+ * DynamoDB conditional update: rejects (returns null) when the product is
+ * missing or the resulting stock would be negative. Node's single-threaded
+ * execution makes this read-check-write atomic per call, matching the dynamo
+ * guard so both repositories behave identically.
+ */
+function adjustProductStock(id, delta) {
+  const idx = mockDb.products.findIndex((p) => p.id === id);
+  if (idx === -1) return null;
+  const next = mockDb.products[idx].stock + delta;
+  if (next < 0) return null;
+  mockDb.products[idx] = { ...mockDb.products[idx], stock: next, updatedAt: new Date().toISOString() };
+  return mockDb.products[idx];
+}
+
 function createLead(data) {
   const now = new Date().toISOString();
   const lead = {
@@ -359,6 +375,7 @@ module.exports = {
   listInventoryMovements,
   createInventoryMovement,
   updateProductStock,
+  adjustProductStock,
   listLowStockProducts,
   listLeads,
   findLeadById,

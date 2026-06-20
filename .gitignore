@@ -55,10 +55,16 @@ terraform.tfvars.json
 .vscode
 
 .opencode
-docs
+.claude
+# Docs are local-only by default, except the modernization deliverables below
+docs/*
+!docs/mini-erp-modernization-qa.md
+!docs/backend-phase-11-reliability-notes.md
+!docs/terraform-phase-12-observability-notes.md
 AGENTS.md
 ARCHITECTURE.md
 PROJECT_CONTEXT.md
 apps/frontend/.playwright-mcp
 apps/frontend/e2e
 .playwright-mcp
+skills-lock.json

@@ -1,0 +1,21 @@
+{
+  "$schema": "https://ui.shadcn.com/schema.json",
+  "style": "new-york",
+  "rsc": false,
+  "tsx": false,
+  "tailwind": {
+    "config": "tailwind.config.cjs",
+    "css": "src/mini-erp/styles/mini-erp-theme.css",
+    "baseColor": "slate",
+    "cssVariables": true,
+    "prefix": ""
+  },
+  "iconLibrary": "lucide",
+  "aliases": {
+    "components": "@/mini-erp/components",
+    "utils": "@/mini-erp/lib/utils",
+    "ui": "@/mini-erp/components/ui",
+    "lib": "@/mini-erp/lib",
+    "hooks": "@/mini-erp/hooks"
+  }
+}
