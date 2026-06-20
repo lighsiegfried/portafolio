@@ -38,7 +38,7 @@ export default function UserMenu() {
           <ChevronsUpDown className="hidden size-4 text-muted-foreground sm:block" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-60 p-1.5 shadow-2xl">
+      <DropdownMenuContent align="end" sideOffset={8} className="erp-glass-menu w-64 rounded-2xl p-2">
         <DropdownMenuLabel className="font-normal px-2 py-2">
           <div className="flex flex-col gap-1.5">
             <span className="text-sm font-medium text-foreground">{name}</span>

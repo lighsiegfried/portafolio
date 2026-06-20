@@ -81,3 +81,66 @@
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
 }
+
+/* =====================================================================
+ * Premium tinted-glass surfaces for floating UI (shared, centralized).
+ *
+ * Translucent (≈92–96% solid) + soft blur + a subtle indigo tint + an inset
+ * top highlight + a strong drop shadow, so floating panels read as elevated
+ * glass — readable over busy pages, never a transparent window. Applied by the
+ * shadcn primitives (dialog, sheet, dropdown, select, command, user menu); the
+ * conflicting bg/border/shadow utilities are removed from those primitives so
+ * these classes fully own the surface treatment.
+ *
+ * Source order matters (equal specificity): `command` is defined after `modal`
+ * and `menu` after `popover` so the more specific surfaces win when layered.
+ * Tint constants are intentionally raw rgba (alpha is required for glass); a
+ * future light theme can override these four classes under a `.light` scope.
+ * ===================================================================== */
+.erp-glass-popover {
+  background:
+    radial-gradient(130% 130% at 0% 0%, rgba(109, 107, 255, 0.1), transparent 48%),
+    linear-gradient(180deg, rgba(32, 38, 51, 0.94), rgba(23, 27, 39, 0.93));
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow:
+    0 18px 50px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+}
+
+.erp-glass-modal {
+  background:
+    radial-gradient(circle at top left, rgba(109, 107, 255, 0.1), transparent 35%),
+    linear-gradient(135deg, rgba(32, 38, 51, 0.96), rgba(22, 26, 36, 0.95));
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow:
+    0 30px 90px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+}
+
+.erp-glass-command {
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgba(109, 107, 255, 0.12), transparent 46%),
+    linear-gradient(135deg, rgba(32, 38, 51, 0.96), rgba(18, 22, 31, 0.95));
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 30px 90px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+}
+
+.erp-glass-menu {
+  background:
+    radial-gradient(130% 130% at 0% 0%, rgba(109, 107, 255, 0.12), transparent 52%),
+    linear-gradient(180deg, rgba(30, 34, 47, 0.95), rgba(24, 28, 40, 0.94));
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 24px 80px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
+}
