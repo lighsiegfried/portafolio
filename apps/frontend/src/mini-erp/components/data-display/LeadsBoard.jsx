@@ -21,7 +21,7 @@ export default function LeadsBoard({ leads, canManage, onOpen, onMove }) {
         const total = items.reduce((sum, l) => sum + (l.estimatedValue || 0), 0);
         return (
           <div key={stage.status} className="flex w-72 shrink-0 flex-col">
-            <div className="mb-2 flex items-center justify-between rounded-lg border border-border bg-muted/30 px-3 py-2">
+            <div className="mb-2 flex items-center justify-between rounded-lg border border-white/[0.06] bg-muted/40 px-3 py-2">
               <div className="flex items-center gap-2">
                 <span className={`size-2.5 rounded-full ${stage.dot}`} />
                 <span className="text-sm font-medium text-foreground">{stage.label}</span>
@@ -32,7 +32,7 @@ export default function LeadsBoard({ leads, canManage, onOpen, onMove }) {
 
             <div className="flex flex-1 flex-col gap-2">
               {items.length === 0 ? (
-                <div className="rounded-lg border border-dashed border-border px-3 py-8 text-center text-xs text-muted-foreground">
+                <div className="rounded-lg border border-dashed border-white/[0.08] bg-white/[0.015] px-3 py-8 text-center text-xs text-muted-foreground">
                   Sin leads en esta etapa
                 </div>
               ) : (

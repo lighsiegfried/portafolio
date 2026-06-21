@@ -5,7 +5,7 @@ import { cn } from "@/mini-erp/lib/utils"
 const Card = React.forwardRef(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("rounded-xl border border-border bg-card text-card-foreground shadow-sm", className)}
+    className={cn("erp-surface-card rounded-xl text-card-foreground", className)}
     {...props} />
 ))
 Card.displayName = "Card"

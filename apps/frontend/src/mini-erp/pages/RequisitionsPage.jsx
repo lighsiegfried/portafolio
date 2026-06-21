@@ -156,7 +156,7 @@ export default function RequisitionsPage() {
           </Tabs>
 
           {requisitions.length === 0 ? (
-            <div className="rounded-xl border border-border p-6">
+            <div className="erp-surface-card rounded-xl p-6">
               <EmptyState
                 icon={FileText}
                 title="Sin requisiciones"

@@ -51,7 +51,7 @@ export default function ReportsPage() {
       </div>
 
       {permittedCount === 0 ? (
-        <div className="rounded-xl border border-border p-6">
+        <div className="erp-surface-card rounded-xl p-6">
           <EmptyState message="No tienes permisos para exportar reportes. Contacta a un administrador." />
         </div>
       ) : (
@@ -68,7 +68,7 @@ export default function ReportsPage() {
         </div>
       )}
 
-      <div className="flex items-start gap-3 rounded-xl border border-border bg-muted/20 p-4 text-sm text-muted-foreground">
+      <div className="flex items-start gap-3 rounded-xl border border-white/[0.06] bg-muted/30 p-4 text-sm text-muted-foreground">
         <FileSpreadsheet className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
         <p>
           Los reportes se generan en el servidor con los datos actuales del sistema. Cada archivo CSV incluye

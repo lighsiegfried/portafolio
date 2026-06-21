@@ -170,7 +170,7 @@ export default function LeadsPage() {
           </Select>
         </div>
 
-        <div className="flex items-center gap-1 rounded-lg border border-border p-1">
+        <div className="flex items-center gap-1 rounded-lg border border-white/[0.06] bg-muted/40 p-1">
           <Button
             variant={view === 'kanban' ? 'secondary' : 'ghost'}
             size="sm"
@@ -193,7 +193,7 @@ export default function LeadsPage() {
       </div>
 
       {leads.length === 0 ? (
-        <div className="rounded-xl border border-border p-6">
+        <div className="erp-surface-card rounded-xl p-6">
           <EmptyState
             icon={Users}
             title="Sin leads todavía"

@@ -18,7 +18,7 @@ export default function AppHeader() {
   const { title } = getPageMeta(location.pathname);
 
   return (
-    <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/85">
+    <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-white/[0.06] bg-[hsl(var(--card)/0.72)] px-4 backdrop-blur-md supports-[backdrop-filter]:bg-[hsl(var(--card)/0.6)]">
       <SidebarTrigger className="-ml-1" />
       <Separator orientation="vertical" className="mr-1 h-4" />
       <Breadcrumb>

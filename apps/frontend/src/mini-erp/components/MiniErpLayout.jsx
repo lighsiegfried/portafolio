@@ -23,7 +23,7 @@ export default function MiniErpLayout({ children }) {
   return (
     <SidebarProvider className="mini-erp-root">
       <AppSidebar />
-      <SidebarInset>
+      <SidebarInset className="bg-transparent">
         <AppHeader />
         <div className="flex-1 overflow-y-auto p-4 lg:p-6">
           {children}

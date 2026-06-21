@@ -61,7 +61,7 @@ export default function ReportCard({ report, permitted, downloading, onDownload 
               )}
             </Button>
           ) : (
-            <div className="flex items-center justify-center gap-2 rounded-lg border border-border bg-muted/30 py-2 text-xs text-muted-foreground">
+            <div className="flex items-center justify-center gap-2 rounded-lg border border-white/[0.06] bg-muted/30 py-2 text-xs text-muted-foreground">
               <Lock className="size-3.5" />
               Sin permiso para este reporte
             </div>

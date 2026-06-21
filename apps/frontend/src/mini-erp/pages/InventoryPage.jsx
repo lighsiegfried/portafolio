@@ -127,7 +127,7 @@ export default function InventoryPage() {
           </div>
           <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
             {lowStock.map((p) => (
-              <li key={p.id} className="flex items-center justify-between rounded-lg border border-border bg-background/40 px-3 py-2 text-sm">
+              <li key={p.id} className="flex items-center justify-between rounded-lg border border-white/[0.06] bg-black/20 px-3 py-2 text-sm">
                 <div className="min-w-0">
                   <p className="truncate text-foreground">{p.name}</p>
                   <p className="font-mono text-xs text-violet-300">{p.sku}</p>
@@ -146,7 +146,7 @@ export default function InventoryPage() {
         <h2 className="text-sm font-semibold text-foreground">Movimientos recientes</h2>
 
         {movements.length === 0 ? (
-          <div className="rounded-xl border border-border p-6">
+          <div className="erp-surface-card rounded-xl p-6">
             <EmptyState
               icon={Activity}
               title="Sin movimientos"

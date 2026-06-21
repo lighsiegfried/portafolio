@@ -49,7 +49,7 @@ export default function DataTable({ columns, data, renderToolbar, pageSize = 10,
     <div className="space-y-3">
       {renderToolbar && renderToolbar(table)}
 
-      <div className="overflow-hidden rounded-xl border border-border">
+      <div className="erp-surface-card overflow-hidden rounded-xl">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((hg) => (

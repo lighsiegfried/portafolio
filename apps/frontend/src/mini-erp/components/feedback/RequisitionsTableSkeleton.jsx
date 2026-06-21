@@ -7,7 +7,7 @@ export default function RequisitionsTableSkeleton() {
       <div className="flex items-center gap-2">
         <Skeleton className="h-9 w-full max-w-xs rounded-md" />
       </div>
-      <div className="overflow-hidden rounded-xl border border-border">
+      <div className="erp-surface-card overflow-hidden rounded-xl">
         <Skeleton className="h-10 w-full rounded-none" />
         {[0, 1, 2, 3, 4, 5].map((r) => (
           <Skeleton key={r} className="mt-px h-12 w-full rounded-none" />
