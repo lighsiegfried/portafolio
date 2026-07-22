@@ -127,7 +127,13 @@ const SectionGlow = ({ position, size, color }) => (
 
 const BackgroundDecor = ({ variant = "default" }) => {
   return (
-    <div className="absolute inset-0 overflow-hidden" aria-hidden="true">
+    // pointer-events-none: this decorative, aria-hidden layer must never become
+    // a hit target. Without it, the wrapper (default pointer-events: auto) can
+    // repaint over card content once each card's Framer Motion / Tilt stacking
+    // context collapses at rest, intermittently swallowing hover/click on the
+    // card action buttons. Every child layer already opts out of pointer events;
+    // the wrapper must too.
+    <div className="absolute inset-0 overflow-hidden pointer-events-none z-0" aria-hidden="true">
       <GridPattern />
       <NoiseOverlay />
       <AbstractLines />
