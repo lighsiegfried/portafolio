@@ -1,13 +1,13 @@
 # Graph Report - C:/Apps/dev/portafolio  (2026-07-21)
 
 ## Corpus Check
-- 5 files · ~815,132 words
+- 2 files · ~815,154 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1246 nodes · 2205 edges · 116 communities (70 shown, 46 thin omitted)
+- 1246 nodes · 2203 edges · 116 communities (70 shown, 46 thin omitted)
 - Extraction: 94% EXTRACTED · 6% INFERRED · 0% AMBIGUOUS · INFERRED: 137 edges (avg confidence: 0.83)
-- Token cost: 45,215 input · 0 output
+- Token cost: 0 input · 0 output
 
 ## Community Hubs (Navigation)
 - [[_COMMUNITY_UI Components 3D Canvas|UI Components 3D Canvas]]
@@ -144,10 +144,6 @@
 
 ## Import Cycles
 - 1-file cycle: `apps/frontend/src/mini-erp/components/ui/sonner.jsx -> apps/frontend/src/mini-erp/components/ui/sonner.jsx`
-
-## Hyperedges (group relationships)
-- **Resumen Screen Aggregates Finance Metrics** — apps_frontend_src_assets_androidapp_resumen_dashboard, apps_frontend_src_assets_androidapp_ingresos_gastos_balance, apps_frontend_src_assets_androidapp_presupuesto, apps_frontend_src_assets_androidapp_cuentas_saldos [INFERRED 0.85]
-- **agent-automaton Local-First Assistant Stack** — apps_frontend_src_assets_iaasisten_local_llm_ollama, apps_frontend_src_assets_iaasisten_voice_io, apps_frontend_src_assets_iaasisten_fastapi, apps_frontend_src_assets_iaasisten_local_memory, apps_frontend_src_assets_iaasisten_gpu_execution [INFERRED 0.75]
 
 ## Communities (116 total, 46 thin omitted)
 
@@ -416,7 +412,7 @@ _Questions this graph is uniquely positioned to answer:_
 - **What connects `name`, `version`, `description` to the rest of the system?**
   _499 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `UI Components 3D Canvas` be split into smaller, more focused modules?**
-  _Cohesion score 0.052503052503052504 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.05201465201465202 - nodes in this community are weakly interconnected._
 - **Should `Docs Phase` be split into smaller, more focused modules?**
   _Cohesion score 0.05989110707803993 - nodes in this community are weakly interconnected._
 - **Should `DB DynamoDB Repo` be split into smaller, more focused modules?**

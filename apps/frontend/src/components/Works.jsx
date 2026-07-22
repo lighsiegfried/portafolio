@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import Tilt from "react-parallax-tilt";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
@@ -8,6 +8,7 @@ import { github } from "../assets";
 import { SectionWrapper } from "../hoc";
 import { projects } from "../constants";
 import { fadeIn, textVariant } from "../utils/motion";
+import { ProjectActionBar, ProjectCaseStudyDialog } from "./project-details";
 
 const ProjectCard = ({
   index,
@@ -23,8 +24,10 @@ const ProjectCard = ({
   download_link,
   download_label,
   download_description,
+  caseStudy,
 }) => {
   const navigate = useNavigate();
+  const [caseStudyOpen, setCaseStudyOpen] = useState(false);
   const imageObjectClass =
     image_fit === "contain"
       ? "object-contain object-center"
@@ -49,29 +52,35 @@ const ProjectCard = ({
             className={`w-full h-full ${imageObjectClass} rounded-2xl`}
           />
 
-          <div className='absolute inset-0 flex justify-end m-3 card-img_hover gap-2'>
-            {source_code_link && (
-              <div
-                onClick={() => window.open(source_code_link, "_blank")}
-                className='black-gradient w-10 h-10 rounded-full flex justify-center items-center cursor-pointer'
-              >
-                <img
-                  src={github}
-                  alt='source code'
-                  className='w-1/2 h-1/2 object-contain'
-                />
-              </div>
-            )}
-            {demo_link && (
-              <div
-                onClick={() => navigate(demo_link)}
-                className='violet-gradient w-10 h-10 rounded-full flex justify-center items-center cursor-pointer'
-                title="Ver demo"
-              >
-                <span className='text-white text-xs font-bold'>&#9654;</span>
-              </div>
-            )}
-          </div>
+          {/* Floating icon overlay is kept for cards without a labeled action
+              bar. When a project has a caseStudy, its labeled ProjectActionBar
+              (rendered below the tags) replaces these icons to avoid a
+              duplicate GitHub action. */}
+          {!caseStudy && (
+            <div className='absolute inset-0 flex justify-end m-3 card-img_hover gap-2'>
+              {source_code_link && (
+                <div
+                  onClick={() => window.open(source_code_link, "_blank")}
+                  className='black-gradient w-10 h-10 rounded-full flex justify-center items-center cursor-pointer'
+                >
+                  <img
+                    src={github}
+                    alt='source code'
+                    className='w-1/2 h-1/2 object-contain'
+                  />
+                </div>
+              )}
+              {demo_link && (
+                <div
+                  onClick={() => navigate(demo_link)}
+                  className='violet-gradient w-10 h-10 rounded-full flex justify-center items-center cursor-pointer'
+                  title="Ver demo"
+                >
+                  <span className='text-white text-xs font-bold'>&#9654;</span>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <div className='mt-5'>
@@ -143,6 +152,23 @@ const ProjectCard = ({
               </span>
             )}
           </div>
+        )}
+
+        {caseStudy && (
+          <>
+            <ProjectActionBar
+              name={name}
+              caseStudy={caseStudy}
+              sourceCodeLink={source_code_link}
+              demoLink={demo_link}
+              onOpenCaseStudy={() => setCaseStudyOpen(true)}
+            />
+            <ProjectCaseStudyDialog
+              caseStudy={caseStudy}
+              open={caseStudyOpen}
+              onOpenChange={setCaseStudyOpen}
+            />
+          </>
         )}
       </Tilt>
     </motion.div>

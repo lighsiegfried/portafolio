@@ -178,6 +178,133 @@ const projects = [
         ],
         image: portafolio,
         source_code_link: "https://github.com/lighsiegfried/portafolio",
+        caseStudy: {
+          id: "portfolio-cloud-native",
+          eyebrow: "Caso de estudio cloud-native",
+          title: "Portafolio Cloud-Native + Mini ERP/CRM Lite",
+          status: "En producción",
+          role: "Arquitectura, frontend, backend y DevOps",
+          summary:
+            "Portafolio profesional que combina una experiencia 3D desarrollada con React y Three.js con un Mini ERP/CRM Lite funcional. El sistema fue construido como un caso de estudio para demostrar arquitectura serverless en AWS, desarrollo full-stack, lógica empresarial, infraestructura como código, seguridad, pruebas automatizadas y entrega continua.",
+          problem:
+            "Un portafolio tradicional puede enumerar tecnologías, pero no necesariamente demuestra cómo se diseñan y conectan sistemas reales. El objetivo fue convertir el propio portafolio en una solución funcional que incluyera procesos empresariales, persistencia, autenticación, infraestructura cloud, automatización de despliegues y observabilidad.",
+          solution:
+            "Se construyó una SPA 3D con React, Vite y Three.js que integra un Mini ERP/CRM Lite bajo la ruta `/mini-erp/*`. El frontend se entrega mediante CloudFront y un bucket S3 privado, mientras que el backend utiliza API Gateway, una función Lambda con router propio y DynamoDB. Terraform administra la infraestructura y GitHub Actions automatiza validación y despliegue mediante OIDC.",
+          metrics: [
+            { value: "238", label: "pruebas backend" },
+            { value: "9", label: "tablas DynamoDB" },
+            { value: "8", label: "módulos de negocio" },
+            { value: "4", label: "módulos Terraform" },
+          ],
+          architecture: {
+            flows: [
+              {
+                label: "Entrega del frontend",
+                nodes: [
+                  "Browser",
+                  "CloudFront CDN",
+                  "S3 privado con OAC",
+                  "React / Vite / Three.js",
+                ],
+              },
+              {
+                label: "Backend serverless",
+                nodes: [
+                  "Browser",
+                  "API Gateway HTTP API",
+                  "AWS Lambda con Node.js",
+                  "DynamoDB",
+                ],
+              },
+            ],
+            integrations: [
+              "Amazon SES para el formulario de contacto.",
+              "CloudWatch para logs estructurados y alarmas.",
+              "GitHub Actions + OIDC para CI/CD.",
+              "Terraform para infraestructura como código.",
+            ],
+          },
+          capabilities: [
+            "Autenticación JWT y autorización por roles.",
+            "Dashboard con KPIs y visualizaciones.",
+            "Requisiciones con flujo de estados.",
+            "Productos y control de inventario.",
+            "CRM Lite con pipeline de leads y notas.",
+            "Reportes CSV generados desde el backend.",
+            "Formulario de contacto integrado con Amazon SES.",
+            "Estados de carga, error, vacío y confirmaciones en la interfaz.",
+          ],
+          decisions: [
+            {
+              title: "Router propio en Lambda, sin Express",
+              reason:
+                "Menor cantidad de dependencias, paquete más pequeño y control directo del ciclo de ejecución serverless.",
+            },
+            {
+              title: "Repositorio intercambiable mock / DynamoDB",
+              reason:
+                "Permite desarrollo y pruebas locales sin depender de una cuenta de AWS.",
+            },
+            {
+              title: "DynamoDB multi-tabla",
+              reason:
+                "Mantiene modelos y patrones de acceso explícitos para un caso de estudio empresarial.",
+            },
+            {
+              title: "S3 privado con CloudFront OAC",
+              reason:
+                "El frontend no requiere exposición pública directa del bucket.",
+            },
+            {
+              title: "Escritura atómica condicional para inventario",
+              reason:
+                "Evita stock negativo y condiciones de carrera bajo concurrencia.",
+            },
+            {
+              title: "GitHub Actions con OIDC",
+              reason:
+                "El pipeline accede a AWS sin almacenar claves estáticas de larga duración.",
+            },
+            {
+              title: "`node:test` nativo",
+              reason:
+                "Reduce dependencias de testing y utiliza capacidades incluidas en Node.js.",
+            },
+          ],
+          security: [
+            "S3 privado protegido mediante Origin Access Control.",
+            "Autenticación JWT.",
+            "Autorización por roles para rutas empresariales.",
+            "Ajustes atómicos para evitar inventario negativo.",
+            "Idempotencia opcional en operaciones críticas.",
+            "Logs estructurados por solicitud.",
+            "Alarmas para errores y throttling.",
+            "Concurrencia Lambda controlada para proteger costos.",
+            "AWS OIDC en CI/CD, sin claves estáticas.",
+            "WAF activo en la infraestructura actual, indicando que no formó parte de la modernización reciente.",
+          ],
+          quality: [
+            "238 pruebas backend.",
+            "Validación de datos demo.",
+            "Build independiente para frontend y backend.",
+            "Terraform plan y apply desde GitHub Actions.",
+            "Smoke tests contra producción.",
+            "Despliegue del frontend a S3 y distribución mediante CloudFront.",
+            "Observabilidad mediante CloudWatch.",
+            "Controles orientados a mantener el proyecto dentro de AWS Free Tier.",
+          ],
+          limitations: [
+            "Refresh tokens aún no implementados.",
+            "Cobertura E2E automatizada del frontend todavía parcial.",
+            "El catálogo de reportes puede ampliarse.",
+            "La idempotencia actual es local a cada contenedor Lambda.",
+            "El modelo multi-tabla se eligió por claridad; una estrategia single-table podría explorarse en otra fase.",
+          ],
+          links: {
+            demo: "/mini-erp/login",
+            github: "https://github.com/lighsiegfried/portafolio",
+          },
+        },
       },
       {
         name: "Mini ERP Cloud-Native para PyME",
