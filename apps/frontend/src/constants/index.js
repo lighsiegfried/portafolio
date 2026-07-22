@@ -25,6 +25,7 @@ import {
   portafolio,
   erp,
   erp2,
+  androidapp,
 } from "../assets";
 
 export const navLinks = [
@@ -208,6 +209,23 @@ const projects = [
         ],
         image: erp2,
         source_code_link: "",
+      },
+      {
+        name: "Mis Finanzas",
+        description:
+          "Comenzó como una herramienta muy personal para organizar mis finanzas y evolucionó hasta convertirse en una aplicación Android nativa de nivel profesional. Permite administrar ingresos, gastos, presupuestos, deudas, cuotas y movimientos desde una experiencia local-first, con persistencia en el dispositivo, arquitectura modular, integración mediante API y distribución del APK desde AWS.",
+        tags: [
+          { name: "Android", color: "blue-text-gradient" },
+          { name: "AppNativa", color: "green-text-gradient" },
+          { name: "APIREST", color: "pink-text-gradient" },
+          { name: "LocalFirst", color: "blue-text-gradient" },
+          { name: "AWSS3", color: "green-text-gradient" },
+        ],
+        image: androidapp,
+        image_alt: "Vista previa de la aplicación Android Mis Finanzas",
+        source_code_link: "https://github.com/lighsiegfried/Finanzas",
+        download_link: import.meta.env.VITE_FINANZAS_APK_URL,
+        download_label: "Descargar app para Android",
       },
     ],
   },

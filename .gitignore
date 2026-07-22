@@ -68,3 +68,51 @@ apps/frontend/.playwright-mcp
 apps/frontend/e2e
 .playwright-mcp
 skills-lock.json
+
+# ───────────────────────────────────────────────────────────────
+# AI navigation layer & secret-safety (added 2026-06-28)
+# ───────────────────────────────────────────────────────────────
+
+# MCP server config — may contain tokens/endpoints, never commit
+.mcp.json
+
+# Secret / credential file-name patterns.
+# NOTE: *password* is intentionally OMITTED — it would hide legitimate
+# source files such as apps/backend/scripts/verify-passwords.js and
+# verify-demo-user-passwords.js. Do not add it.
+*credential*
+*credentials*
+*secret*
+*token*
+*.pem
+*.key
+*.p12
+*.crt
+*.pfx
+
+# Generated test / coverage / report artifacts (regenerable)
+coverage/
+**/coverage/
+playwright-report/
+**/playwright-report/
+test-results/
+**/test-results/
+
+# Graphify generated outputs (regenerable). Only GRAPH_REPORT.md is trackable.
+# graph.json / graph.html / manifest.json / cache are large or regenerable.
+graphify-out/*
+!graphify-out/GRAPH_REPORT.md
+graphify-out/cache/
+
+# codebase-memory-mcp local index (regenerable)
+.codebase-memory/
+codebase-memory.db
+*.codebase-memory
+
+# AI context layer kept local-only, consistent with AGENTS.md / PROJECT_CONTEXT.md.
+# To publish it with the repo instead, delete the lines below (see
+# docs/AI_CONTEXT/00_READ_ME_FIRST.md → "Tracking policy").
+CONTEXTO.md
+CLAUDE.md
+PHASE_AI_NAVIGATION_LAYER.md
+PHASE_AI_NAVIGATION_TOOLS_COMPLETED.md

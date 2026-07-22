@@ -15,8 +15,11 @@ const ProjectCard = ({
   description,
   tags,
   image,
+  image_alt,
   source_code_link,
   demo_link,
+  download_link,
+  download_label,
 }) => {
   const navigate = useNavigate();
   return (
@@ -31,7 +34,7 @@ const ProjectCard = ({
         <div className='relative w-full h-[180px] sm:h-[230px] bg-black-200 rounded-2xl overflow-hidden'>
           <img
             src={image}
-            alt='project_image'
+            alt={image_alt || "project_image"}
             className='w-full h-full object-cover object-top rounded-2xl'
           />
 
@@ -75,6 +78,48 @@ const ProjectCard = ({
             </p>
           ))}
         </div>
+
+        {download_label && (
+          <div className='mt-5'>
+            {download_link ? (
+              <a
+                href={download_link}
+                target='_blank'
+                rel='noopener noreferrer'
+                onClick={(e) => e.stopPropagation()}
+                aria-label={`${download_label} (se abre en una pestaña nueva)`}
+                className='group inline-flex items-center gap-2 text-[14px] font-medium text-[#915EFF] rounded-sm transition-colors duration-200 hover:text-[#b18cff] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#915EFF] focus-visible:ring-offset-2 focus-visible:ring-offset-tertiary'
+              >
+                <svg
+                  aria-hidden='true'
+                  focusable='false'
+                  viewBox='0 0 24 24'
+                  className='w-4 h-4 fill-current shrink-0'
+                >
+                  <path d='M12 3a1 1 0 0 1 1 1v9.586l2.293-2.293a1 1 0 1 1 1.414 1.414l-4 4a1 1 0 0 1-1.414 0l-4-4a1 1 0 1 1 1.414-1.414L11 13.586V4a1 1 0 0 1 1-1Zm-7 14a1 1 0 0 1 1 1v1h12v-1a1 1 0 1 1 2 0v2a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1Z' />
+                </svg>
+                <span className='relative after:absolute after:left-0 after:-bottom-0.5 after:h-px after:w-0 after:bg-current after:transition-all after:duration-300 group-hover:after:w-full'>
+                  {download_label}
+                </span>
+              </a>
+            ) : (
+              <span
+                aria-disabled='true'
+                className='inline-flex items-center gap-2 text-[14px] text-secondary opacity-60 cursor-not-allowed select-none'
+              >
+                <svg
+                  aria-hidden='true'
+                  focusable='false'
+                  viewBox='0 0 24 24'
+                  className='w-4 h-4 fill-current shrink-0'
+                >
+                  <path d='M12 3a1 1 0 0 1 1 1v9.586l2.293-2.293a1 1 0 1 1 1.414 1.414l-4 4a1 1 0 0 1-1.414 0l-4-4a1 1 0 1 1 1.414-1.414L11 13.586V4a1 1 0 0 1 1-1Zm-7 14a1 1 0 0 1 1 1v1h12v-1a1 1 0 1 1 2 0v2a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1Z' />
+                </svg>
+                Descarga temporalmente no disponible
+              </span>
+            )}
+          </div>
+        )}
       </Tilt>
     </motion.div>
   );

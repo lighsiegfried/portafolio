@@ -37,6 +37,7 @@ import tresdmodel from "./tresdmodel.png";
 import portafolio from "./portafolio.png";
 import erp from "./erp.png";
 import erp2 from "./erp2.png";
+import androidapp from "./androidapp.png";
 
 export {
   logo,
@@ -74,4 +75,5 @@ export {
   portafolio,
   erp,
   erp2,
+  androidapp,
 };
