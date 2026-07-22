@@ -9,6 +9,7 @@ import { SectionWrapper } from "../hoc";
 import { projects } from "../constants";
 import { fadeIn, textVariant } from "../utils/motion";
 import { ProjectActionBar, ProjectCaseStudyDialog } from "./project-details";
+import useTiltEnabled from "../hooks/useTiltEnabled";
 
 const ProjectCard = ({
   index,
@@ -25,6 +26,7 @@ const ProjectCard = ({
   download_label,
   download_description,
   caseStudy,
+  tiltEnabled,
 }) => {
   const navigate = useNavigate();
   const [caseStudyOpen, setCaseStudyOpen] = useState(false);
@@ -34,12 +36,21 @@ const ProjectCard = ({
       : "object-cover object-top";
   return (
     <motion.div variants={fadeIn("up", "spring", index * 0.3, 0.75)}>
+      {/* Subtle premium tilt only. Angles reduced ~90% (45 -> 4.5), no glare,
+          no gyroscope, no window tracking; disabled entirely on coarse
+          pointers and when the OS requests reduced motion. */}
       <Tilt
-        tiltMaxAngleX={45}
-        tiltMaxAngleY={45}
+        tiltEnable={tiltEnabled}
+        tiltMaxAngleX={4.5}
+        tiltMaxAngleY={4.5}
         scale={1}
-        transitionSpeed={450}
-        className='bg-tertiary p-4 sm:p-5 rounded-2xl sm:w-[360px] w-full'
+        transitionSpeed={800}
+        perspective={1400}
+        glareEnable={false}
+        gyroscope={false}
+        trackOnWindow={false}
+        reset={true}
+        className='project-card-tilt bg-tertiary p-4 sm:p-5 rounded-2xl sm:w-[360px] w-full'
       >
         <div
           className={`relative w-full h-[180px] sm:h-[230px] rounded-2xl overflow-hidden ${
@@ -99,7 +110,10 @@ const ProjectCard = ({
           ))}
         </div>
 
-        {download_label && (
+        {/* Standalone APK CTA is only used by cards WITHOUT a case study. When a
+            card has a caseStudy (e.g. Mis Finanzas), the download moves into the
+            shared ProjectActionBar to avoid a duplicate download action. */}
+        {download_label && !caseStudy && (
           <div className='mt-5'>
             {download_link ? (
               <a
@@ -162,11 +176,14 @@ const ProjectCard = ({
               sourceCodeLink={source_code_link}
               demoLink={demo_link}
               onOpenCaseStudy={() => setCaseStudyOpen(true)}
+              showDownload={Boolean(caseStudy.links && caseStudy.links.download)}
+              downloadLink={download_link}
             />
             <ProjectCaseStudyDialog
               caseStudy={caseStudy}
               open={caseStudyOpen}
               onOpenChange={setCaseStudyOpen}
+              downloadLink={download_link}
             />
           </>
         )}
@@ -176,6 +193,7 @@ const ProjectCard = ({
 };
 
 const Works = () => {
+  const tiltEnabled = useTiltEnabled();
   return (
     <>
       <motion.div variants={textVariant()}>
@@ -202,6 +220,7 @@ const Works = () => {
               <ProjectCard
                 key={`project-${groupIndex}-${projectIndex}`}
                 index={projectIndex}
+                tiltEnabled={tiltEnabled}
                 {...project}
               />
             ))}

@@ -255,3 +255,14 @@ html {
       -2.6em 0em 0 0em rgba(255, 255, 255, 0.7), -1.8em -1.8em 0 0em #ffffff;
   }
 }
+
+/* Accessibility safeguard: for users who ask the OS for reduced motion, keep
+   the project cards completely flat and static even if the tilt library is
+   mid-transition. The JS hook (useTiltEnabled) already disables the effect;
+   this is a defensive backstop so no residual transform is applied. */
+@media (prefers-reduced-motion: reduce) {
+  .project-card-tilt {
+    transform: none !important;
+    transition: none !important;
+  }
+}

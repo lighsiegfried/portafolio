@@ -47,6 +47,24 @@ const IconExternal = (props) => (
   </svg>
 );
 
+const IconDownload = (props) => (
+  <svg
+    viewBox='0 0 24 24'
+    fill='none'
+    stroke='currentColor'
+    strokeWidth='2'
+    strokeLinecap='round'
+    strokeLinejoin='round'
+    aria-hidden='true'
+    focusable='false'
+    {...props}
+  >
+    <path d='M12 3v12' />
+    <path d='m7 10 5 5 5-5' />
+    <path d='M5 21h14' />
+  </svg>
+);
+
 const stop = (e) => e.stopPropagation();
 
 const ProjectActionBar = ({
@@ -55,6 +73,9 @@ const ProjectActionBar = ({
   sourceCodeLink,
   demoLink,
   onOpenCaseStudy,
+  showDownload = false,
+  downloadLink,
+  downloadLabel = "Descargar app",
 }) => {
   const isInternalDemo = typeof demoLink === "string" && demoLink.startsWith("/");
 
@@ -74,6 +95,28 @@ const ProjectActionBar = ({
           <IconArrowRight className='h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5' />
         </button>
       )}
+
+      {showDownload &&
+        (downloadLink ? (
+          <a
+            href={downloadLink}
+            target='_blank'
+            rel='noopener noreferrer'
+            onClick={stop}
+            aria-label={`${downloadLabel} de ${name}, se abre en una nueva pestaña`}
+            className='inline-flex items-center gap-2 rounded-xl border border-[#915EFF]/40 bg-[#915EFF]/10 px-4 py-2.5 text-[14px] font-semibold text-[#b18cff] transition-colors hover:border-[#915EFF] hover:bg-[#915EFF]/20 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#915EFF] focus-visible:ring-offset-2 focus-visible:ring-offset-tertiary'
+          >
+            <IconDownload className='h-4 w-4' />
+            {downloadLabel}
+          </a>
+        ) : (
+          <span
+            aria-disabled='true'
+            className='inline-flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2.5 text-[14px] font-semibold text-secondary opacity-60'
+          >
+            Descarga no disponible
+          </span>
+        ))}
 
       {sourceCodeLink && (
         <a
