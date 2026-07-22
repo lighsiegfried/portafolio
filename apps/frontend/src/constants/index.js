@@ -26,6 +26,7 @@ import {
   erp,
   erp2,
   androidapp,
+  iaasisten,
 } from "../assets";
 
 export const navLinks = [
@@ -225,7 +226,24 @@ const projects = [
         image_alt: "Vista previa de la aplicación Android Mis Finanzas",
         source_code_link: "https://github.com/lighsiegfried/Finanzas",
         download_link: import.meta.env.VITE_FINANZAS_APK_URL,
-        download_label: "Descargar app para Android",
+        download_label: "Descargar Mis Finanzas para Android",
+        download_description: "APK oficial · descarga directa",
+      },
+      {
+        name: "agent-automaton",
+        description:
+          "Fifi es un asistente personal local para Windows que recibe comandos por voz o texto, interpreta instrucciones con modelos ejecutados mediante Ollama y realiza acciones seguras y controladas en el equipo. Integra FastAPI, reconocimiento y síntesis de voz, memoria local y una capa de seguridad con confirmaciones. Fue diseñado para funcionar sin depender de APIs en la nube y aprovechar una GPU NVIDIA, con una RTX 5060 Ti de 16 GB de VRAM como requisito mínimo del proyecto.",
+        tags: [
+          { name: "Python", color: "blue-text-gradient" },
+          { name: "FastAPI", color: "green-text-gradient" },
+          { name: "Ollama", color: "pink-text-gradient" },
+          { name: "VoiceAI", color: "blue-text-gradient" },
+          { name: "Windows", color: "green-text-gradient" },
+        ],
+        image: iaasisten,
+        image_alt:
+          "Vista previa de agent-automaton, asistente personal local Fifi para Windows",
+        source_code_link: "https://github.com/lighsiegfried/agent-automaton",
       },
     ],
   },

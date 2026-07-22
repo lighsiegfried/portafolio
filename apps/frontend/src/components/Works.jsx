@@ -20,6 +20,7 @@ const ProjectCard = ({
   demo_link,
   download_link,
   download_label,
+  download_description,
 }) => {
   const navigate = useNavigate();
   return (
@@ -87,19 +88,32 @@ const ProjectCard = ({
                 target='_blank'
                 rel='noopener noreferrer'
                 onClick={(e) => e.stopPropagation()}
-                aria-label={`${download_label} (se abre en una pestaña nueva)`}
-                className='group inline-flex items-center gap-2 text-[14px] font-medium text-[#915EFF] rounded-sm transition-colors duration-200 hover:text-[#b18cff] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#915EFF] focus-visible:ring-offset-2 focus-visible:ring-offset-tertiary'
+                aria-label={`${download_label}, APK oficial, se abre en una nueva pestaña`}
+                className='group inline-flex w-fit max-w-full items-center gap-3 rounded-xl border border-[#915EFF]/40 bg-[#915EFF]/10 px-4 py-3 transition-all duration-300 hover:border-[#915EFF] hover:bg-[#915EFF]/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#915EFF] focus-visible:ring-offset-2 focus-visible:ring-offset-tertiary'
               >
                 <svg
                   aria-hidden='true'
                   focusable='false'
                   viewBox='0 0 24 24'
-                  className='w-4 h-4 fill-current shrink-0'
+                  fill='none'
+                  stroke='currentColor'
+                  strokeWidth='2'
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  className='w-[22px] h-[22px] shrink-0 text-[#b18cff] transition-transform duration-300 group-hover:translate-y-0.5'
                 >
-                  <path d='M12 3a1 1 0 0 1 1 1v9.586l2.293-2.293a1 1 0 1 1 1.414 1.414l-4 4a1 1 0 0 1-1.414 0l-4-4a1 1 0 1 1 1.414-1.414L11 13.586V4a1 1 0 0 1 1-1Zm-7 14a1 1 0 0 1 1 1v1h12v-1a1 1 0 1 1 2 0v2a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1Z' />
+                  <path d='M12 3v12' />
+                  <path d='m7 10 5 5 5-5' />
+                  <path d='M5 21h14' />
                 </svg>
-                <span className='relative after:absolute after:left-0 after:-bottom-0.5 after:h-px after:w-0 after:bg-current after:transition-all after:duration-300 group-hover:after:w-full'>
-                  {download_label}
+
+                <span className='flex flex-col items-start min-w-0'>
+                  <span className='font-semibold text-[14px] text-[#b18cff] underline decoration-[#915EFF] underline-offset-4 transition-colors group-hover:text-white'>
+                    {download_label}
+                  </span>
+                  <span className='mt-1 text-[12px] font-normal text-secondary transition-colors group-hover:text-gray-300'>
+                    {download_description || "APK oficial · descarga directa"}
+                  </span>
                 </span>
               </a>
             ) : (

@@ -18,6 +18,8 @@ dist-ssr
 .env
 .env.*
 !.env.example
+# Public, non-secret frontend production config (stable public APK URL only — no credentials)
+!apps/frontend/.env.production
 .terraform/
 infra/terraform/.terraform/
 *.tfstate

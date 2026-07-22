@@ -38,6 +38,7 @@ import portafolio from "./portafolio.png";
 import erp from "./erp.png";
 import erp2 from "./erp2.png";
 import androidapp from "./androidapp.png";
+import iaasisten from "./iaasisten.png";
 
 export {
   logo,
@@ -76,4 +77,5 @@ export {
   erp,
   erp2,
   androidapp,
+  iaasisten,
 };
