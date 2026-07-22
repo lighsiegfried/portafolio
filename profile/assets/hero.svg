@@ -1,0 +1,26 @@
+<svg width="1000" height="230" viewBox="0 0 1000 230" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Wilson Vasquez - Full-Stack and Cloud-Native Engineer">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1000" y2="230" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0B0B1A"/>
+      <stop offset="0.55" stop-color="#151030"/>
+      <stop offset="1" stop-color="#2A1A4A"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#915EFF"/>
+      <stop offset="1" stop-color="#06B6D4"/>
+    </linearGradient>
+  </defs>
+  <rect width="1000" height="230" rx="18" fill="url(#bg)"/>
+  <circle cx="880" cy="30" r="180" fill="#915EFF" opacity="0.10"/>
+  <circle cx="120" cy="220" r="150" fill="#06B6D4" opacity="0.07"/>
+  <rect x="60" y="66" width="6" height="98" rx="3" fill="url(#accent)"/>
+  <text x="86" y="98" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="40" font-weight="700" fill="#FFFFFF">Wilson Vasquez</text>
+  <text x="88" y="132" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="19" font-weight="500" fill="#B7B1D8">Full-Stack &amp; Cloud-Native Engineer</text>
+  <text x="88" y="160" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="14.5" fill="#8E88B3">AWS Serverless  &#183;  React / Three.js  &#183;  Android nativo  &#183;  IA local  &#183;  DevOps</text>
+  <g font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="12.5">
+    <rect x="88" y="182" width="94" height="26" rx="13" fill="#915EFF" opacity="0.18"/>
+    <text x="135" y="199" text-anchor="middle" fill="#E6E1FF">Guatemala</text>
+    <rect x="192" y="182" width="164" height="26" rx="13" fill="#06B6D4" opacity="0.16"/>
+    <text x="274" y="199" text-anchor="middle" fill="#DBF6FB">Open to opportunities</text>
+  </g>
+</svg>
