@@ -243,6 +243,8 @@ const projects = [
         image: iaasisten,
         image_alt:
           "Vista previa de agent-automaton, asistente personal local Fifi para Windows",
+        image_fit: "contain",
+        image_background: "bg-white",
         source_code_link: "https://github.com/lighsiegfried/agent-automaton",
       },
     ],

@@ -16,6 +16,8 @@ const ProjectCard = ({
   tags,
   image,
   image_alt,
+  image_fit,
+  image_background,
   source_code_link,
   demo_link,
   download_link,
@@ -23,6 +25,10 @@ const ProjectCard = ({
   download_description,
 }) => {
   const navigate = useNavigate();
+  const imageObjectClass =
+    image_fit === "contain"
+      ? "object-contain object-center"
+      : "object-cover object-top";
   return (
     <motion.div variants={fadeIn("up", "spring", index * 0.3, 0.75)}>
       <Tilt
@@ -32,11 +38,15 @@ const ProjectCard = ({
         transitionSpeed={450}
         className='bg-tertiary p-4 sm:p-5 rounded-2xl sm:w-[360px] w-full'
       >
-        <div className='relative w-full h-[180px] sm:h-[230px] bg-black-200 rounded-2xl overflow-hidden'>
+        <div
+          className={`relative w-full h-[180px] sm:h-[230px] rounded-2xl overflow-hidden ${
+            image_background || "bg-black-200"
+          }`}
+        >
           <img
             src={image}
             alt={image_alt || "project_image"}
-            className='w-full h-full object-cover object-top rounded-2xl'
+            className={`w-full h-full ${imageObjectClass} rounded-2xl`}
           />
 
           <div className='absolute inset-0 flex justify-end m-3 card-img_hover gap-2'>
