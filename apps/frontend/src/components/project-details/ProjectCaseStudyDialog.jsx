@@ -400,6 +400,7 @@ const ProjectCaseStudyDialog = ({
     role,
     platform,
     hardware,
+    scope,
     locale,
     badges = [],
     summary,
@@ -421,7 +422,7 @@ const ProjectCaseStudyDialog = ({
   const githubHref = links.github;
   const wantsDownload = Boolean(links.download);
   const isInternalDemo = typeof demoHref === "string" && demoHref.startsWith("/");
-  const metaLine = [platform, hardware, locale].filter(Boolean).join(" · ");
+  const metaLine = [platform, hardware, scope, locale].filter(Boolean).join(" · ");
   const primaryBtn =
     "inline-flex items-center justify-center gap-2 rounded-xl bg-[#915EFF] px-5 py-3 text-[14px] font-semibold text-white transition-colors hover:bg-[#7d43e0] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#915EFF] focus-visible:ring-offset-2 focus-visible:ring-offset-tertiary";
   const secondaryBtn =
