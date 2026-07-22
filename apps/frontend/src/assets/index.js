@@ -24,7 +24,7 @@ import threejs from "./threejs.png";
 
 import meta from "./company/meta.png";
 import indiana from "./company/indiana.png";
-import Polyproductos from "./company/Polyproductos.png";
+import Polyproductos from "./company/polyproductos.png";
 import envaseal from "./company/envaseal.png";
 import alorica from "./company/alorica.png";
 import kratt from "./company/kratt.png";
