@@ -120,15 +120,28 @@ export function formatDateTime(iso, language) {
 
 /**
  * Currency is intentionally NOT translated: the data is in MXN in both languages.
+ *
+ * `currencyDisplay: 'narrowSymbol'` is load-bearing. The default (`'symbol'`)
+ * disambiguates the currency against the locale, so `en-US` + `MXN` renders
+ * `MX$82,500.00` while `es-MX` + `MXN` renders `$82,500.00` — the amount would
+ * change shape purely by switching the UI language. `'narrowSymbol'` pins both
+ * to a bare `$` with comma separators and two decimals.
+ *
  * @param {number | null | undefined} n
  * @param {string} [language]
  */
 export function formatCurrency(n, language) {
   const { locale, currency, emptyValue: dash } = formatsFor(language);
   if (n == null) return dash;
-  return new Intl.NumberFormat(locale, {
-    style: 'currency', currency,
-  }).format(n);
+
+  const options = { style: 'currency', currency, currencyDisplay: 'narrowSymbol' };
+  try {
+    return new Intl.NumberFormat(locale, options).format(n);
+  } catch {
+    // `narrowSymbol` is ES2020; fall back rather than break every amount on an
+    // engine that does not implement it.
+    return new Intl.NumberFormat(locale, { style: 'currency', currency }).format(n);
+  }
 }
 
 /**

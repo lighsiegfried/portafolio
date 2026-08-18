@@ -127,6 +127,11 @@
  * @property {string} title
  * @property {string} subtitle
  * @property {string} filterAll
+ * @property {string} catCloud
+ * @property {string} catSecurity
+ * @property {string} catNetworking
+ * @property {string} catDataIot
+ * @property {string} emptyCategory
  * @property {string} filterLabel aria-label for the category chip group
  * @property {string} verifyBadge
  * @property {string} viewCredlyHub
@@ -439,6 +444,11 @@ export const translations = {
       subtitle:
         "Validaciones técnicas oficiales emitidas por organizaciones líderes de la industria tecnológica.",
       filterAll: "Todas",
+      catCloud: "Cloud",
+      catSecurity: "Seguridad",
+      catNetworking: "Redes",
+      catDataIot: "Datos e IoT",
+      emptyCategory: "No hay certificaciones en esta categoría.",
       filterLabel: "Filtrar certificaciones por categoría",
       verifyBadge: "Verificar en Credly",
       viewCredlyHub: "Ver Cartera de Insignias en Credly",
@@ -733,6 +743,11 @@ export const translations = {
       subtitle:
         "Official industry credentials validating cloud engineering, cybersecurity, networking, and data architecture expertise.",
       filterAll: "All",
+      catCloud: "Cloud",
+      catSecurity: "Security",
+      catNetworking: "Networking",
+      catDataIot: "Data & IoT",
+      emptyCategory: "No certifications in this category yet.",
       filterLabel: "Filter certifications by category",
       verifyBadge: "Verify on Credly",
       viewCredlyHub: "View Credly Badge Center",

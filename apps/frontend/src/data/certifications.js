@@ -7,7 +7,8 @@ import ciscoIotImg from "../assets/Intro2IoT.png";
 import vmwareImg from "../assets/cvc.png";
 
 /**
- * @typedef {"Cloud" | "Security" | "Networking" | "Data & IoT"} CertificationCategory
+ * @typedef {"CLOUD" | "SECURITY" | "NETWORKING" | "DATA_IOT"} CertCategoryKey
+ * @typedef {"ALL" | CertCategoryKey} CertFilterKey
  *
  * @typedef {Object} Certification
  * @property {string} id
@@ -15,7 +16,7 @@ import vmwareImg from "../assets/cvc.png";
  * @property {string} issuer
  * @property {string | null} badgeImage local badge artwork, or null to render the icon fallback
  * @property {string} [credlyUrl] public verification link
- * @property {CertificationCategory} category
+ * @property {CertCategoryKey} categoryKey language-agnostic; the visible label is looked up in the dictionary
  * @property {"Earned" | "In-Progress"} status
  * @property {{ es: string, en: string }} description
  */
@@ -23,8 +24,35 @@ import vmwareImg from "../assets/cvc.png";
 /** Public Credly badge wallet. */
 export const CREDLY_PROFILE_URL = "https://www.credly.com/users/wilson-vasquez.09eff1d9/badges";
 
-/** Filter chips rendered above the grid. `All` is localized by the component. */
-export const CERTIFICATION_CATEGORIES = ["All", "Cloud", "Security", "Networking", "Data & IoT"];
+/**
+ * Category label lookup, keyed by `categoryKey`.
+ *
+ * Filter identity and display text are deliberately decoupled: the key is a
+ * stable, language-agnostic constant, and the label is resolved through
+ * `t.certifications[labelKey]` at render time. Comparing localized labels
+ * instead would make the filter silently match nothing the moment the UI is
+ * switched to Spanish.
+ *
+ * @type {Record<CertCategoryKey, string>}
+ */
+export const CATEGORY_LABEL_KEYS = {
+  CLOUD: "catCloud",
+  SECURITY: "catSecurity",
+  NETWORKING: "catNetworking",
+  DATA_IOT: "catDataIot",
+};
+
+/**
+ * Filter chips rendered above the grid, in display order.
+ * @type {ReadonlyArray<{ key: CertFilterKey, labelKey: string }>}
+ */
+export const CERTIFICATION_CATEGORIES = [
+  { key: "ALL", labelKey: "filterAll" },
+  { key: "CLOUD", labelKey: "catCloud" },
+  { key: "SECURITY", labelKey: "catSecurity" },
+  { key: "NETWORKING", labelKey: "catNetworking" },
+  { key: "DATA_IOT", labelKey: "catDataIot" },
+];
 
 /** @type {Certification[]} */
 export const CERTIFICATIONS_LIST = [
@@ -37,7 +65,7 @@ export const CERTIFICATIONS_LIST = [
     issuer: "Amazon Web Services (AWS)",
     badgeImage: practitionerImg,
     credlyUrl: "https://www.credly.com/badges/1762d7d7-b7c4-4b6d-b330-ee26ba2fd677",
-    category: "Cloud",
+    categoryKey: "CLOUD",
     status: "Earned",
     description: {
       es: "Validación de conceptos fundamentales de computación en la nube AWS, seguridad, arquitectura y modelo de precios.",
@@ -53,7 +81,7 @@ export const CERTIFICATIONS_LIST = [
     issuer: "Amazon Web Services (AWS)",
     badgeImage: serverlessImg,
     credlyUrl: "https://www.credly.com/badges/4002953e-db22-4343-b14d-e94701e62948",
-    category: "Cloud",
+    categoryKey: "CLOUD",
     status: "Earned",
     description: {
       es: "Diseño e implementación de microservicios y soluciones serverless utilizando AWS Lambda, API Gateway y DynamoDB.",
@@ -69,7 +97,7 @@ export const CERTIFICATIONS_LIST = [
     issuer: "Amazon Web Services (AWS)",
     badgeImage: networkingImg,
     credlyUrl: "https://www.credly.com/badges/112a7984-6276-47d5-8146-bc34a3f8384d",
-    category: "Networking",
+    categoryKey: "NETWORKING",
     status: "Earned",
     description: {
       es: "Configuración de conectividad de red segura para aplicaciones en la nube, VPCs, subnets, routing y políticas de aislamiento.",
@@ -85,7 +113,7 @@ export const CERTIFICATIONS_LIST = [
     issuer: "Amazon Web Services (AWS)",
     badgeImage: lakehouseImg,
     credlyUrl: "https://www.credly.com/earner/earned/badge/977d8d4b-f2e8-436e-9768-7224981099f3",
-    category: "Data & IoT",
+    categoryKey: "DATA_IOT",
     status: "Earned",
     description: {
       es: "Arquitecturas modernas de datos, almacenamiento escalable en S3, procesamiento analítico y gobernanza de información.",
@@ -101,7 +129,7 @@ export const CERTIFICATIONS_LIST = [
     issuer: "Cisco Networking Academy",
     badgeImage: ciscoCyberImg,
     credlyUrl: "https://www.credly.com/badges/389a5425-91c1-49b2-b944-1dcb5a6fc8cc",
-    category: "Security",
+    categoryKey: "SECURITY",
     status: "Earned",
     description: {
       es: "Fundamentos de seguridad informática, vectores de amenaza, mitigación de vulnerabilidades y defensa en profundidad.",
@@ -117,7 +145,7 @@ export const CERTIFICATIONS_LIST = [
     issuer: "Cisco Networking Academy",
     badgeImage: ciscoIotImg,
     credlyUrl: "https://www.credly.com/badges/a3a40138-88cb-4100-afc8-b029695bbff5",
-    category: "Data & IoT",
+    categoryKey: "DATA_IOT",
     status: "Earned",
     description: {
       es: "Interconexión de dispositivos inteligentes, protocolos de sensores, automatización y recolección de telemetría.",
@@ -133,7 +161,7 @@ export const CERTIFICATIONS_LIST = [
     issuer: "VMware / IT Academy",
     badgeImage: vmwareImg,
     credlyUrl: "https://www.credly.com/badges/cb6bb6df-c275-4dd0-90b1-a2d1452ad37b",
-    category: "Cloud",
+    categoryKey: "CLOUD",
     status: "Earned",
     description: {
       es: "Conceptos clave de hipervisores, centros de datos definidos por software (SDDC), almacenamiento y redes virtuales.",
@@ -151,7 +179,7 @@ export const CERTIFICATIONS_LIST = [
     },
     issuer: "Fortinet Training Institute",
     badgeImage: null,
-    category: "Security",
+    categoryKey: "SECURITY",
     status: "Earned",
     description: {
       es: "Panorama de amenazas de red, arquitectura de firewalls de próxima generación (NGFW) y seguridad perimetral.",

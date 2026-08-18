@@ -135,6 +135,7 @@ const Navbar = () => {
             <button
               type='button'
               onClick={toggleLanguage}
+              data-testid='lang-toggle'
               aria-label={`${t.nav.toggleLanguage} (${nextLanguage})`}
               title={t.nav.toggleLanguage}
               className={controlClass}
@@ -146,6 +147,7 @@ const Navbar = () => {
             <button
               type='button'
               onClick={toggleTheme}
+              data-testid='theme-toggle'
               aria-label={`${t.nav.toggleTheme} (${themeLabel})`}
               title={t.nav.toggleTheme}
               className={controlClass}
@@ -163,6 +165,7 @@ const Navbar = () => {
           <button
             type='button'
             onClick={toggleLanguage}
+            data-testid='lang-toggle'
             aria-label={`${t.nav.toggleLanguage} (${nextLanguage})`}
             className={controlClass}
           >
@@ -171,6 +174,7 @@ const Navbar = () => {
           <button
             type='button'
             onClick={toggleTheme}
+            data-testid='theme-toggle'
             aria-label={`${t.nav.toggleTheme} (${themeLabel})`}
             className={`${controlClass} px-2`}
           >

@@ -26,16 +26,22 @@ const Hero = () => {
             {t.hero.subtitle}
           </p>
 
+          {/* Real anchors rather than buttons with handlers: they are
+              keyboard-reachable, middle-clickable and shareable for free, and
+              `scroll-behavior: smooth` + `scroll-padding-top: 80px` (both in
+              index.css) already give the smooth, navbar-aware scroll.
+              The projects section's anchor id is `works` — see
+              `SectionWrapper(Works, "works")`; there is no `#projects` id. */}
           <div className='mt-6 sm:mt-8 flex flex-wrap items-center gap-3'>
             <a
               href='#works'
-              className='inline-flex items-center gap-2 rounded-xl bg-accent-solid px-5 py-2.5 text-[14px] font-semibold text-white transition-colors hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-accentv focus-visible:ring-offset-2 focus-visible:ring-offset-primary'
+              className='inline-flex cursor-pointer items-center gap-2 rounded-xl bg-accent-solid px-5 py-2.5 text-[14px] font-semibold text-white shadow-md shadow-accentv/20 transition-all duration-200 hover:-translate-y-0.5 hover:opacity-90 hover:shadow-lg hover:shadow-accentv/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-accentv focus-visible:ring-offset-2 focus-visible:ring-offset-primary motion-reduce:transform-none motion-reduce:transition-none'
             >
               {t.hero.ctaProjects}
             </a>
             <a
               href='#contact'
-              className='inline-flex items-center gap-2 rounded-xl border border-line/20 bg-line/[0.04] px-5 py-2.5 text-[14px] font-semibold text-ink transition-colors hover:border-accentv hover:bg-accentv/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-accentv focus-visible:ring-offset-2 focus-visible:ring-offset-primary'
+              className='inline-flex cursor-pointer items-center gap-2 rounded-xl border border-line/20 bg-line/[0.04] px-5 py-2.5 text-[14px] font-semibold text-ink shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-accentv hover:bg-accentv/10 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-accentv focus-visible:ring-offset-2 focus-visible:ring-offset-primary motion-reduce:transform-none motion-reduce:transition-none'
             >
               {t.hero.ctaContact}
             </a>

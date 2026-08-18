@@ -7,6 +7,7 @@ import { SectionWrapper } from "../hoc";
 import { fadeIn, textVariant } from "../utils/motion";
 import { useLanguage } from "../context/LanguageContext";
 import {
+  CATEGORY_LABEL_KEYS,
   CERTIFICATIONS_LIST,
   CERTIFICATION_CATEGORIES,
   CREDLY_PROFILE_URL,
@@ -69,7 +70,7 @@ const CertificationCard = ({ index, cert, language, copy }) => {
 
       <div className='mt-4 pt-4 border-t border-line/5 flex items-center justify-between gap-3'>
         <span className='text-[11px] bg-black-200 text-secondary px-2.5 py-1 rounded-full'>
-          {cert.category}
+          {copy[CATEGORY_LABEL_KEYS[cert.categoryKey]] || cert.categoryKey}
         </span>
 
         {cert.credlyUrl ? (
@@ -123,13 +124,13 @@ const Certifications = () => {
   // shipped past the build during this section's first pass.
   const copy = t.certifications;
 
-  const [activeCategory, setActiveCategory] = useState("All");
+  const [activeCategory, setActiveCategory] = useState("ALL");
 
   const visibleCertifications = useMemo(
     () =>
-      activeCategory === "All"
+      activeCategory === "ALL"
         ? CERTIFICATIONS_LIST
-        : CERTIFICATIONS_LIST.filter((cert) => cert.category === activeCategory),
+        : CERTIFICATIONS_LIST.filter((cert) => cert.categoryKey === activeCategory),
     [activeCategory]
   );
 
@@ -153,38 +154,52 @@ const Certifications = () => {
         role='group'
         aria-label={copy.filterLabel}
       >
-        {CERTIFICATION_CATEGORIES.map((category) => {
-          const isActive = category === activeCategory;
+        {CERTIFICATION_CATEGORIES.map(({ key, labelKey }) => {
+          const isActive = key === activeCategory;
 
           return (
             <button
-              key={category}
+              key={key}
               type='button'
               aria-pressed={isActive}
-              onClick={() => setActiveCategory(category)}
+              onClick={() => setActiveCategory(key)}
               className={`px-4 py-2 rounded-full text-[13px] border transition-colors duration-200 ${
                 isActive
                   ? "bg-accentv/[0.15] border-accentv/40 text-accent-copy"
                   : "bg-black-200 border-line/5 text-secondary hover:text-ink"
               }`}
             >
-              {category === "All" ? copy.filterAll : category}
+              {copy[labelKey]}
             </button>
           );
         })}
       </motion.div>
 
-      <div className='mt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6'>
-        {visibleCertifications.map((cert, index) => (
-          <CertificationCard
-            key={cert.id}
-            index={index}
-            cert={cert}
-            language={language}
-            copy={copy}
-          />
-        ))}
-      </div>
+      {visibleCertifications.length > 0 ? (
+        <div
+          data-testid='certifications-grid'
+          className='mt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6'
+        >
+          {visibleCertifications.map((cert, index) => (
+            <CertificationCard
+              key={cert.id}
+              index={index}
+              cert={cert}
+              language={language}
+              copy={copy}
+            />
+          ))}
+        </div>
+      ) : (
+        // Defensive: every shipped category currently has at least one badge, but
+        // an empty result must read as an explicit state rather than a blank gap.
+        <p
+          data-testid='certifications-empty'
+          className='mt-10 text-secondary text-[15px]'
+        >
+          {copy.emptyCategory}
+        </p>
+      )}
 
       <motion.div variants={fadeIn("up", "spring", 0.3, 0.75)} className='mt-10 flex justify-center'>
         <a

@@ -85,6 +85,20 @@ module.exports = {
           5: "hsl(var(--chart-5))",
         },
       },
+      // Tailwind's DEFAULT opacity scale is 0 5 10 20 25 30 40 50 60 70 75 80
+      // 90 95 100 — it has no 15, 35, 45, 55, 65, 85. A modifier outside the
+      // scale (`bg-black/65`, `bg-violet-500/15`) is silently dropped by the
+      // JIT: no rule is emitted, no warning is printed, and the build still
+      // passes, so the only symptom is an element that renders with no
+      // background or no border at all. That bit this codebase in 12 places
+      // (the Mini ERP modal scrim and every KPI tile among them).
+      //
+      // Filling the scale to every multiple of 5 removes the whole class of
+      // bug. Utilities are still generated on demand, so unused steps cost
+      // nothing in the bundle.
+      opacity: Object.fromEntries(
+        Array.from({ length: 21 }, (_, i) => [i * 5, String(i * 5 / 100)])
+      ),
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",

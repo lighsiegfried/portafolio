@@ -405,10 +405,14 @@ html {
   }
 }
 
-/* The library hard-codes `box-shadow: 0 3px 0 #ddd` on every timeline card,
-   which reads as a light-gray bar under the near-black dark-mode card. Drive
-   it from the same token as the card arrow so it disappears in dark and stays
-   a hairline in light. */
-.vertical-timeline-element-content {
-  box-shadow: 0 3px 0 var(--timeline-arrow) !important;
+/* Below its 1170px breakpoint the library hard-codes
+   `box-shadow: 0 3px 0 #ddd` on every timeline card, which reads as a
+   light-gray bar under the near-black dark-mode card. Drive it from the same
+   token as the arrow so it vanishes in dark and stays a hairline in light.
+   Above the breakpoint the library removes the shadow itself, so the override
+   is scoped to the same range rather than adding a bar where none existed. */
+@media only screen and (max-width: 1169px) {
+  .vertical-timeline-element-content {
+    box-shadow: 0 3px 0 var(--timeline-arrow) !important;
+  }
 }
