@@ -12,22 +12,92 @@
  *  - No global `*`/`body` base layer is applied (audit R2). Base background/text
  *    are scoped to `.mini-erp-root` only.
  *
- * Values implement a refined dark-neutral enterprise theme using "soft solid
- * tinted surfaces" (not pure black, not transparent glass). Surfaces step up in
- * lightness for clear layer separation:
- *   app #0F1115 (7%) → card #181C23 (12%) → elevated #1F2430 (15%)
- *   → modal/popover #202633 (16%) → section #252C38 (18%)
+ * LIGHT / DARK SPLIT
+ *  - `:root` holds the LIGHT enterprise palette (the default).
+ *  - `.dark` holds the DARK palette. ThemeProvider (src/context/ThemeContext.jsx)
+ *    toggles the `.dark` class on <html>, an ancestor of both the ERP shell and
+ *    every Radix portal in <body>, so portalled overlays follow the theme too.
+ *  - The dark values are the ORIGINAL dark-only palette, moved verbatim: the
+ *    dark Mini ERP is unchanged.
+ *  - Token NAMES are identical in both themes; only the values differ. Anything
+ *    that cannot be expressed as a token (the page wash, the tinted-glass
+ *    surfaces below) is written light-first with a `.dark ...` override.
+ *
+ * Surfaces step for clear layer separation — dark steps UP in lightness from
+ * the app background, light steps DOWN (recessed) from white:
+ *   dark   app #0F1115 (7%) -> card #181C23 (12%) -> elevated #1F2430 (15%)
+ *          -> modal/popover #202633 (16%) -> section #252C38 (18%)
+ *   light  card/popover #FFFFFF -> app #F8F9FC (98%) -> input #F5F7FA (97%)
+ *          -> sidebar #F4F5F8 (96%) -> muted #F0F2F5 (95%) -> accent #E5E8ED (91%)
  * All surface tokens are fully OPAQUE so modals, dropdowns, command palette and
  * popovers never visually mix with the page behind them.
  *
- * Theme-ready: these tokens are the single source of truth; a future light
- * theme can be added by overriding them under a `.light` scope (not implemented
- * here — no theme switch is wired yet).
+ * Contrast: every foreground/background token pair clears WCAG AA in BOTH
+ * themes (4.5:1 body text, 3:1 large text / UI borders). The light border and
+ * input tokens are deliberately mid-gray rather than the customary near-white
+ * hairline, so outline buttons, badges and form controls meet the 3:1 non-text
+ * contrast rule against white cards.
  */
 
+/* =====================================================================
+ * LIGHT — default theme.
+ * ===================================================================== */
 :root {
   --radius: 0.5rem;
 
+  --background: 220 20% 98%; /* #F8F9FC app background (lightest neutral) */
+  --foreground: 222 30% 12%; /* #151B28 text primary — 17.2:1 on card */
+
+  --card: 0 0% 100%; /* #FFFFFF card surface */
+  --card-foreground: 222 30% 12%;
+
+  /* Modal / dropdown / command palette / popover surface — pure white, lifted
+     off the neutral app background by a border + shadow (see glass classes). */
+  --popover: 0 0% 100%; /* #FFFFFF */
+  --popover-foreground: 222 30% 12%;
+
+  --muted: 220 16% 95%; /* #F0F2F5 soft section surface / secondary buttons */
+  --muted-foreground: 220 12% 40%; /* #5A6272 text muted — 6.1:1 on card */
+
+  --accent: 220 16% 91%; /* #E5E8ED — clear hover surface on popovers/menus */
+  --accent-foreground: 222 30% 12%;
+
+  --destructive: 0 72% 45%; /* #C52020 danger — 5.8:1 with white text */
+  --destructive-foreground: 0 0% 100%;
+
+  --border: 220 13% 53%; /* #788297 — >= 3.1:1 on every light surface */
+  --input: 220 14% 50%; /* #6E7A91 stronger border for form controls */
+  --ring: 241 100% 63%; /* #4542FF primary focus ring — 6.0:1 on white */
+
+  /* Primary action accent — consumed by Button/Badge/links. */
+  --primary: 241 100% 63%; /* #4542FF */
+  --primary-foreground: 0 0% 100%;
+  --primary-hover: 241 100% 57%; /* #2724FF */
+
+  /* Form-control fill — intentionally recessed from card/modal for separation. */
+  --surface-input: 220 20% 97%; /* #F5F7FA */
+
+  --sidebar-background: 220 18% 96%; /* #F4F5F8 — a hair darker than the app */
+  --sidebar-foreground: 220 16% 30%; /* #404859 text secondary — 8.3:1 */
+  --sidebar-primary: 241 100% 63%; /* primary */
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 220 16% 92%; /* #E8EAEF hover item */
+  --sidebar-accent-foreground: 222 30% 12%;
+  --sidebar-border: 220 13% 53%; /* >= 3.2:1 on the sidebar surfaces */
+  --sidebar-ring: 241 100% 63%;
+
+  /* Same hue family as dark, darkened so every series clears 3:1 on white. */
+  --chart-1: 241 100% 63%; /* primary #4542FF */
+  --chart-2: 211 100% 40%; /* info #0063CC */
+  --chart-3: 142 71% 32%; /* success #188C42 */
+  --chart-4: 38 92% 38%; /* warning #BA7908 */
+  --chart-5: 258 75% 55%; /* secondary #6A36E2 */
+}
+
+/* =====================================================================
+ * DARK — values moved verbatim from the previous dark-only `:root`.
+ * ===================================================================== */
+.dark {
   --background: 220 17% 7%; /* #0F1115 app background */
   --foreground: 216 33% 97%; /* #F5F7FA text primary */
 
@@ -79,20 +149,29 @@
 /* Base surface scoped to the Mini ERP shell only — never global.
  * A subtle, viewport-anchored radial wash (indigo top-right, cool blue
  * bottom-left) gives the page real depth so the main area reads like the
- * modal's tinted canvas instead of flat near-black. */
+ * modal's tinted canvas instead of a flat slab. The light wash runs at roughly
+ * a third of the dark one's alpha: enough to tint the corners, far too faint to
+ * move any text pair below AA (worst case 5.7:1 for muted body text over the
+ * tinted corner, versus 5.9:1 over the flat background). */
 .mini-erp-root {
   background-color: hsl(var(--background));
   background-image:
-    radial-gradient(115% 85% at 100% 0%, rgba(109, 107, 255, 0.07), transparent 55%),
-    radial-gradient(100% 90% at 0% 100%, rgba(77, 163, 255, 0.05), transparent 55%);
+    radial-gradient(115% 85% at 100% 0%, rgba(69, 66, 255, 0.05), transparent 55%),
+    radial-gradient(100% 90% at 0% 100%, rgba(0, 99, 204, 0.035), transparent 55%);
   background-attachment: fixed;
   color: hsl(var(--foreground));
+}
+
+.dark .mini-erp-root {
+  background-image:
+    radial-gradient(115% 85% at 100% 0%, rgba(109, 107, 255, 0.07), transparent 55%),
+    radial-gradient(100% 90% at 0% 100%, rgba(77, 163, 255, 0.05), transparent 55%);
 }
 
 /* =====================================================================
  * Premium tinted-glass surfaces for floating UI (shared, centralized).
  *
- * Translucent (≈92–96% solid) + soft blur + a subtle indigo tint + an inset
+ * Translucent (≈92–98% solid) + soft blur + a subtle indigo tint + an inset
  * top highlight + a strong drop shadow, so floating panels read as elevated
  * glass — readable over busy pages, never a transparent window. Applied by the
  * shadcn primitives (dialog, sheet, dropdown, select, command, user menu); the
@@ -101,10 +180,27 @@
  *
  * Source order matters (equal specificity): `command` is defined after `modal`
  * and `menu` after `popover` so the more specific surfaces win when layered.
- * Tint constants are intentionally raw rgba (alpha is required for glass); a
- * future light theme can override these four classes under a `.light` scope.
+ * That relative order is preserved inside BOTH the light rules and the `.dark`
+ * overrides. Tint constants are intentionally raw rgba (alpha is required for
+ * glass): light lifts near-white panels with an indigo whisper, a neutral
+ * hairline drawn from `--border` at 92% (>= 3.2:1 against the panel fill and
+ * >= 3:1 against the page behind it, so the panel edge stays identifiable) and
+ * a soft slate shadow; `.dark ...` restores the original smoked-glass values
+ * verbatim.
  * ===================================================================== */
 .erp-glass-popover {
+  background:
+    radial-gradient(130% 130% at 0% 0%, rgba(69, 66, 255, 0.05), transparent 48%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.97), rgba(248, 249, 252, 0.96));
+  border: 1px solid hsl(var(--border) / 0.92);
+  box-shadow:
+    0 18px 50px rgba(21, 27, 40, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+}
+
+.dark .erp-glass-popover {
   background:
     radial-gradient(130% 130% at 0% 0%, rgba(109, 107, 255, 0.1), transparent 48%),
     linear-gradient(180deg, rgba(32, 38, 51, 0.94), rgba(23, 27, 39, 0.93));
@@ -112,11 +208,21 @@
   box-shadow:
     0 18px 50px rgba(0, 0, 0, 0.45),
     inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  -webkit-backdrop-filter: blur(16px);
-  backdrop-filter: blur(16px);
 }
 
 .erp-glass-modal {
+  background:
+    radial-gradient(circle at top left, rgba(69, 66, 255, 0.05), transparent 35%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(246, 248, 252, 0.97));
+  border: 1px solid hsl(var(--border) / 0.92);
+  box-shadow:
+    0 30px 90px rgba(21, 27, 40, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+}
+
+.dark .erp-glass-modal {
   background:
     radial-gradient(circle at top left, rgba(109, 107, 255, 0.1), transparent 35%),
     linear-gradient(135deg, rgba(32, 38, 51, 0.96), rgba(22, 26, 36, 0.95));
@@ -124,11 +230,21 @@
   box-shadow:
     0 30px 90px rgba(0, 0, 0, 0.55),
     inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.erp-glass-command {
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgba(69, 66, 255, 0.06), transparent 46%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(244, 246, 251, 0.97));
+  border: 1px solid hsl(var(--border) / 0.92);
+  box-shadow:
+    0 30px 90px rgba(21, 27, 40, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
   -webkit-backdrop-filter: blur(20px);
   backdrop-filter: blur(20px);
 }
 
-.erp-glass-command {
+.dark .erp-glass-command {
   background:
     radial-gradient(120% 90% at 50% 0%, rgba(109, 107, 255, 0.12), transparent 46%),
     linear-gradient(135deg, rgba(32, 38, 51, 0.96), rgba(18, 22, 31, 0.95));
@@ -136,11 +252,21 @@
   box-shadow:
     0 30px 90px rgba(0, 0, 0, 0.55),
     inset 0 1px 0 rgba(255, 255, 255, 0.06);
-  -webkit-backdrop-filter: blur(20px);
-  backdrop-filter: blur(20px);
 }
 
 .erp-glass-menu {
+  background:
+    radial-gradient(130% 130% at 0% 0%, rgba(69, 66, 255, 0.06), transparent 52%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.97), rgba(246, 248, 252, 0.96));
+  border: 1px solid hsl(var(--border) / 0.92);
+  box-shadow:
+    0 24px 80px rgba(21, 27, 40, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
+}
+
+.dark .erp-glass-menu {
   background:
     radial-gradient(130% 130% at 0% 0%, rgba(109, 107, 255, 0.12), transparent 52%),
     linear-gradient(180deg, rgba(30, 34, 47, 0.95), rgba(24, 28, 40, 0.94));
@@ -148,8 +274,6 @@
   box-shadow:
     0 24px 80px rgba(0, 0, 0, 0.5),
     inset 0 1px 0 rgba(255, 255, 255, 0.06);
-  -webkit-backdrop-filter: blur(18px);
-  backdrop-filter: blur(18px);
 }
 
 /* =====================================================================
@@ -157,10 +281,22 @@
  * floating glass above. Cards, tables and other in-page panels get the same
  * tinted, soft-bordered, gently elevated language as the modal, but WITHOUT
  * the heavy blur/shadow that is reserved for true overlays. Solid + opaque so
- * panels never visually mix with the page; a faint top highlight + soft white
- * border replace the previous harsh outline so surfaces read raised, not flat.
+ * panels never visually mix with the page. In dark, a faint top highlight and a
+ * soft white border make the surface read raised; in light the same job falls to
+ * a neutral hairline that keeps >= 3:1 against both the card and the page behind
+ * it, plus a soft slate shadow in place of the near-black bloom.
  * ===================================================================== */
 .erp-surface-card {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.9), transparent 42%),
+    hsl(var(--card));
+  border: 1px solid hsl(var(--border) / 0.92);
+  box-shadow:
+    0 1px 2px rgba(21, 27, 40, 0.06),
+    0 10px 28px -16px rgba(21, 27, 40, 0.18);
+}
+
+.dark .erp-surface-card {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.018), transparent 42%),
     hsl(var(--card));

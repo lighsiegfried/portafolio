@@ -7,6 +7,7 @@ import {
   DialogTitle,
 } from '@/mini-erp/components/ui/dialog';
 import { Button } from '@/mini-erp/components/ui/button';
+import useErpTranslation from '../../i18n/useErpTranslation';
 
 /**
  * Reusable confirmation dialog for critical / irreversible actions.
@@ -15,7 +16,7 @@ import { Button } from '@/mini-erp/components/ui/button';
  * Props:
  *  - open, onOpenChange
  *  - title, description
- *  - confirmLabel / cancelLabel
+ *  - confirmLabel / cancelLabel (default to `common.confirm` / `common.cancel`)
  *  - destructive: use the destructive button style
  *  - loading: disables buttons + shows a processing label while the action runs
  *  - onConfirm(): runs the confirmed action
@@ -25,12 +26,14 @@ export default function ConfirmDialog({
   onOpenChange,
   title,
   description,
-  confirmLabel = 'Confirmar',
-  cancelLabel = 'Cancelar',
+  confirmLabel,
+  cancelLabel,
   destructive = false,
   loading = false,
   onConfirm,
 }) {
+  const { te } = useErpTranslation();
+
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!loading) onOpenChange(o); }}>
       <DialogContent className="sm:max-w-sm">
@@ -40,7 +43,7 @@ export default function ConfirmDialog({
         </DialogHeader>
         <DialogFooter>
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
-            {cancelLabel}
+            {cancelLabel ?? te.common.cancel}
           </Button>
           <Button
             type="button"
@@ -48,7 +51,7 @@ export default function ConfirmDialog({
             onClick={onConfirm}
             disabled={loading}
           >
-            {loading ? 'Procesando...' : confirmLabel}
+            {loading ? te.common.processing : (confirmLabel ?? te.common.confirm)}
           </Button>
         </DialogFooter>
       </DialogContent>

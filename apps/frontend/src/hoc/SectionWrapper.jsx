@@ -9,6 +9,7 @@ const variantMap = {
   validated: "default",
   work: "default",
   tech: "tech",
+  certifications: "default",
   decisions: "default",
   architecture: "architecture",
   contact: "contact",

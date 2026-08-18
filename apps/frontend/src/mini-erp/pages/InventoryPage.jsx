@@ -3,6 +3,7 @@ import { Plus, Search, ArrowDownLeft, ArrowUpRight, AlertTriangle, Activity } fr
 import * as invApi from '../../services/inventoryApi';
 import * as prodApi from '../../services/productsApi';
 import { useAuth } from '../hooks/useAuth';
+import useErpTranslation from '../i18n/useErpTranslation';
 import { userCan } from '../utils/permissions';
 import { formatNumber } from '../utils/formatters';
 import { Button } from '@/mini-erp/components/ui/button';
@@ -25,6 +26,7 @@ import { MOVEMENT_TYPE_FILTERS } from '../config/inventory';
 
 export default function InventoryPage() {
   const { user } = useAuth();
+  const { te } = useErpTranslation();
   const canCreate = userCan(user, 'createMovement');
 
   const [movements, setMovements] = useState([]);
@@ -51,7 +53,9 @@ export default function InventoryPage() {
       setLowStock(lowRes.data || []);
       setProducts(prodRes.data || []);
     } catch (err) {
-      setError(err.message || 'Error al cargar el inventario');
+      // Only the raw API message is stored; the localized fallback is resolved
+      // at render time so it follows the active language without refetching.
+      setError(err.message || '');
     } finally {
       setLoading(false);
     }
@@ -90,51 +94,55 @@ export default function InventoryPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold text-foreground">Inventario</h1>
+        <h1 className="text-2xl font-bold text-foreground">{te.inventory.title}</h1>
         <InventorySkeleton />
       </div>
     );
   }
-  if (error) return <ErrorState message={error} onRetry={load} />;
+  if (error !== null) return <ErrorState message={error || te.errors.loadInventory} onRetry={load} />;
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Inventario</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Movimientos de stock y alertas de inventario</p>
+          <h1 className="text-2xl font-bold text-foreground">{te.inventory.title}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{te.inventory.subtitle}</p>
         </div>
         {canCreate && (
           <Button size="sm" onClick={() => setCreateOpen(true)}>
-            <Plus className="size-4" />
-            Registrar movimiento
+            <Plus aria-hidden="true" className="size-4" />
+            {te.inventory.newButton}
           </Button>
         )}
       </div>
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <KpiCard label="Entradas" value={formatNumber(stats.inbound)} icon={ArrowDownLeft} accent="green" />
-        <KpiCard label="Salidas" value={formatNumber(stats.outbound)} icon={ArrowUpRight} accent="red" />
-        <KpiCard label="Alertas bajo stock" value={formatNumber(stats.lowStock)} icon={AlertTriangle} accent="yellow" />
-        <KpiCard label="Movimientos" value={formatNumber(stats.total)} icon={Activity} accent="violet" />
+        <KpiCard label={te.inventory.kpi.inbound} value={formatNumber(stats.inbound)} icon={ArrowDownLeft} accent="green" />
+        <KpiCard label={te.inventory.kpi.outbound} value={formatNumber(stats.outbound)} icon={ArrowUpRight} accent="red" />
+        <KpiCard label={te.inventory.kpi.lowStockAlerts} value={formatNumber(stats.lowStock)} icon={AlertTriangle} accent="yellow" />
+        <KpiCard label={te.inventory.kpi.movements} value={formatNumber(stats.total)} icon={Activity} accent="violet" />
       </div>
 
       {lowStock.length > 0 && (
-        <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/5 p-4">
+        <div className="rounded-xl border border-yellow-500/30 bg-yellow-500/10 p-4 dark:border-yellow-500/20 dark:bg-yellow-500/5">
           <div className="mb-3 flex items-center gap-2">
-            <AlertTriangle className="size-4 text-yellow-300" />
-            <h2 className="text-sm font-semibold text-foreground">Productos con bajo stock ({lowStock.length})</h2>
+            <AlertTriangle aria-hidden="true" className="size-4 text-yellow-600 dark:text-yellow-300" />
+            <h2 className="text-sm font-semibold text-foreground">
+              {te.inventory.lowStockPanel.title.replace('{count}', formatNumber(lowStock.length))}
+            </h2>
           </div>
           <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
             {lowStock.map((p) => (
-              <li key={p.id} className="flex items-center justify-between rounded-lg border border-white/[0.06] bg-black/20 px-3 py-2 text-sm">
+              <li key={p.id} className="flex items-center justify-between rounded-lg border border-border bg-background/60 px-3 py-2 text-sm">
                 <div className="min-w-0">
                   <p className="truncate text-foreground">{p.name}</p>
-                  <p className="font-mono text-xs text-violet-300">{p.sku}</p>
+                  <p className="font-mono text-xs text-violet-600 dark:text-violet-300">{p.sku}</p>
                 </div>
                 <div className="shrink-0 text-right">
-                  <p className="font-medium text-red-300 tabular-nums">{formatNumber(p.stock)}</p>
-                  <p className="text-[10px] text-muted-foreground">mín {formatNumber(p.minStock)}</p>
+                  <p className="font-medium text-destructive tabular-nums">{formatNumber(p.stock)}</p>
+                  <p className="text-[10px] text-muted-foreground">
+                    {te.inventory.lowStockPanel.min.replace('{count}', formatNumber(p.minStock))}
+                  </p>
                 </div>
               </li>
             ))}
@@ -143,15 +151,15 @@ export default function InventoryPage() {
       )}
 
       <div className="space-y-4">
-        <h2 className="text-sm font-semibold text-foreground">Movimientos recientes</h2>
+        <h2 className="text-sm font-semibold text-foreground">{te.inventory.recentTitle}</h2>
 
         {movements.length === 0 ? (
           <div className="erp-surface-card rounded-xl p-6">
             <EmptyState
               icon={Activity}
-              title="Sin movimientos"
-              message="Registra una entrada o salida para empezar a controlar el stock."
-              action={canCreate ? { label: 'Registrar movimiento', icon: Plus, onClick: () => setCreateOpen(true) } : undefined}
+              title={te.inventory.empty.title}
+              message={te.inventory.empty.message}
+              action={canCreate ? { label: te.inventory.newButton, icon: Plus, onClick: () => setCreateOpen(true) } : undefined}
             />
           </div>
         ) : (
@@ -159,20 +167,21 @@ export default function InventoryPage() {
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                 <div className="relative w-full sm:max-w-xs">
-                  <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                  <Search aria-hidden="true" className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
-                    placeholder="Buscar por referencia o producto..."
+                    placeholder={te.inventory.searchPlaceholder}
+                    aria-label={te.inventory.searchPlaceholder}
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     className="pl-9"
                   />
                 </div>
                 <Select value={productFilter} onValueChange={setProductFilter}>
-                  <SelectTrigger className="w-full sm:w-56">
-                    <SelectValue placeholder="Producto" />
+                  <SelectTrigger className="w-full sm:w-56" aria-label={te.inventory.productFilterPlaceholder}>
+                    <SelectValue placeholder={te.inventory.productFilterPlaceholder} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Todos los productos</SelectItem>
+                    <SelectItem value="all">{te.inventory.productFilterAll}</SelectItem>
                     {products.map((p) => (
                       <SelectItem key={p.id} value={p.id}>{p.sku} · {p.name}</SelectItem>
                     ))}
@@ -183,7 +192,9 @@ export default function InventoryPage() {
               <Tabs value={typeFilter} onValueChange={setTypeFilter}>
                 <TabsList>
                   {MOVEMENT_TYPE_FILTERS.map((f) => (
-                    <TabsTrigger key={f.value} value={f.value}>{f.label}</TabsTrigger>
+                    <TabsTrigger key={f.value} value={f.value}>
+                      {te.inventory.typeFilters[String(f.value).toLowerCase()] ?? f.label}
+                    </TabsTrigger>
                   ))}
                 </TabsList>
               </Tabs>

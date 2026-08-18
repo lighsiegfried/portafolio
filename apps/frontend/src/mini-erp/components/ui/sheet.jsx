@@ -5,6 +5,7 @@ import { cva } from "class-variance-authority";
 import { X } from "lucide-react"
 
 import { cn } from "@/mini-erp/lib/utils"
+import useErpTranslation from "@/mini-erp/i18n/useErpTranslation"
 
 const Sheet = SheetPrimitive.Root
 
@@ -44,19 +45,23 @@ const sheetVariants = cva(
   }
 )
 
-const SheetContent = React.forwardRef(({ side = "right", className, children, ...props }, ref) => (
+const SheetContent = React.forwardRef(({ side = "right", className, children, ...props }, ref) => {
+  const { te } = useErpTranslation()
+  return (
   <SheetPortal>
     <SheetOverlay />
     <SheetPrimitive.Content ref={ref} className={cn(sheetVariants({ side }), className)} {...props}>
       <SheetPrimitive.Close
-        className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary">
-        <X className="h-4 w-4" />
-        <span className="sr-only">Close</span>
+        className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent"
+        aria-label={te.common.close}>
+        <X className="h-4 w-4" aria-hidden="true" />
+        <span className="sr-only">{te.common.close}</span>
       </SheetPrimitive.Close>
       {children}
     </SheetPrimitive.Content>
   </SheetPortal>
-))
+  )
+})
 SheetContent.displayName = SheetPrimitive.Content.displayName
 
 const SheetHeader = ({

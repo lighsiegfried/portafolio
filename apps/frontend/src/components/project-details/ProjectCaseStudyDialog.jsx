@@ -2,6 +2,8 @@ import React from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { Link } from "react-router-dom";
 
+import { useLanguage } from "../../context/LanguageContext";
+
 // Portfolio-level case-study dialog built directly on the installed
 // @radix-ui/react-dialog primitives. It is intentionally decoupled from the
 // Mini ERP sub-application's own dialog component. Radix provides focus trap,
@@ -17,6 +19,10 @@ import { Link } from "react-router-dom";
 //     rendered in the given order after the header + metrics.
 // The APK download action is env-driven: the URL is passed in as a prop
 // (never hardcoded here); a missing value renders a disabled fallback.
+//
+// The `caseStudy` prop arrives ALREADY localized by Works.jsx (its `{ es, en }`
+// leaves are resolved upstream), so only this file's own chrome copy is read
+// from the dictionary via `useLanguage()`.
 
 const IconArrowRight = (props) => (
   <svg viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' aria-hidden='true' focusable='false' {...props}>
@@ -61,14 +67,14 @@ const IconClose = (props) => (
 );
 
 const Badge = ({ children }) => (
-  <span className='inline-flex items-center rounded-full border border-[#915EFF]/40 bg-[#915EFF]/10 px-2.5 py-0.5 text-[11px] font-medium uppercase tracking-wide text-[#b18cff]'>
+  <span className='inline-flex items-center rounded-full border border-accentv/40 bg-accentv/10 px-2.5 py-0.5 text-[11px] font-medium uppercase tracking-wide text-accent-copy'>
     {children}
   </span>
 );
 
 const SectionHeading = ({ title, badge }) => (
   <div className='flex flex-wrap items-center gap-x-3 gap-y-1'>
-    <h3 className='text-white font-bold text-[18px] sm:text-[20px]'>{title}</h3>
+    <h3 className='text-ink font-bold text-[18px] sm:text-[20px]'>{title}</h3>
     {badge && <Badge>{badge}</Badge>}
   </div>
 );
@@ -77,7 +83,7 @@ const BulletList = ({ items, columns }) => (
   <ul className={`mt-3 gap-x-6 ${columns === 2 ? "sm:columns-2" : ""}`}>
     {items.map((item, i) => (
       <li key={i} className='mb-2 flex break-inside-avoid gap-2 text-secondary text-[14px] leading-[22px]'>
-        <span aria-hidden='true' className='mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full bg-[#915EFF]' />
+        <span aria-hidden='true' className='mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full bg-accentv' />
         <span>{item}</span>
       </li>
     ))}
@@ -100,17 +106,17 @@ const Paragraphs = ({ body }) => {
 const Flow = ({ flow }) => (
   <div>
     {flow.label && (
-      <p className='text-[13px] font-semibold uppercase tracking-wider text-[#b18cff]'>{flow.label}</p>
+      <p className='text-[13px] font-semibold uppercase tracking-wider text-accent-copy'>{flow.label}</p>
     )}
     <div className='mt-3 flex flex-col items-stretch gap-2 sm:flex-row sm:flex-wrap sm:items-stretch'>
       {flow.nodes.map((node, i) => (
         <React.Fragment key={i}>
           {i > 0 && (
-            <div className='flex items-center justify-center text-[#915EFF]'>
+            <div className='flex items-center justify-center text-accentv'>
               <IconChevron className='h-5 w-5 rotate-90 sm:rotate-0' />
             </div>
           )}
-          <div className='flex flex-1 items-center justify-center rounded-xl border border-[#915EFF]/25 bg-[#915EFF]/10 px-3 py-3 text-center text-[13px] font-medium text-white'>
+          <div className='flex flex-1 items-center justify-center rounded-xl border border-accentv/25 bg-accentv/10 px-3 py-3 text-center text-[13px] font-medium text-ink'>
             {node}
           </div>
         </React.Fragment>
@@ -121,6 +127,7 @@ const Flow = ({ flow }) => (
 
 // Generic, typed section dispatcher for rich case studies.
 const CaseStudySection = ({ section }) => {
+  const { t } = useLanguage();
   const { type, title, badge } = section;
 
   switch (type) {
@@ -139,7 +146,7 @@ const CaseStudySection = ({ section }) => {
           <div className={`grid grid-cols-1 gap-6 md:grid-cols-2 ${title ? "mt-3" : ""}`}>
             {section.columns.map((col, i) => (
               <div key={i}>
-                <h4 className='text-white font-bold text-[16px] sm:text-[18px]'>{col.title}</h4>
+                <h4 className='text-ink font-bold text-[16px] sm:text-[18px]'>{col.title}</h4>
                 <Paragraphs body={col.body} />
               </div>
             ))}
@@ -161,8 +168,8 @@ const CaseStudySection = ({ section }) => {
           <SectionHeading title={title} badge={badge} />
           <dl className='mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2'>
             {section.items.map((item, i) => (
-              <div key={i} className='rounded-xl border border-white/10 bg-white/[0.03] p-3.5'>
-                <dt className='text-white font-semibold text-[13px]'>{item.term}</dt>
+              <div key={i} className='rounded-xl border border-line/10 bg-line/[0.03] p-3.5'>
+                <dt className='text-ink font-semibold text-[13px]'>{item.term}</dt>
                 <dd className='mt-1 text-secondary text-[13px] leading-[20px]'>{item.desc}</dd>
               </div>
             ))}
@@ -189,12 +196,12 @@ const CaseStudySection = ({ section }) => {
           <SectionHeading title={title} badge={badge} />
           <div className='mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2'>
             {section.groups.map((group, i) => (
-              <div key={i} className='rounded-xl border border-white/10 bg-white/[0.03] p-4'>
-                <p className='text-[12px] font-semibold uppercase tracking-wider text-[#b18cff]'>{group.category}</p>
+              <div key={i} className='rounded-xl border border-line/10 bg-line/[0.03] p-4'>
+                <p className='text-[12px] font-semibold uppercase tracking-wider text-accent-copy'>{group.category}</p>
                 <ul className='mt-2 space-y-1'>
                   {group.items.map((it, j) => (
                     <li key={j} className='flex gap-2 text-secondary text-[13px] leading-[20px]'>
-                      <span aria-hidden='true' className='mt-[8px] h-1 w-1 shrink-0 rounded-full bg-[#915EFF]' />
+                      <span aria-hidden='true' className='mt-[8px] h-1 w-1 shrink-0 rounded-full bg-accentv' />
                       <span>{it}</span>
                     </li>
                   ))}
@@ -211,15 +218,15 @@ const CaseStudySection = ({ section }) => {
           <SectionHeading title={title} badge={badge} />
           <div className='mt-3 space-y-3'>
             {section.items.map((d, i) => (
-              <div key={i} className='rounded-xl border border-white/10 bg-white/[0.03] p-4'>
-                <p className='text-white font-semibold text-[14px]'>{d.title}</p>
+              <div key={i} className='rounded-xl border border-line/10 bg-line/[0.03] p-4'>
+                <p className='text-ink font-semibold text-[14px]'>{d.title}</p>
                 <p className='mt-1 text-secondary text-[13px] leading-[21px]'>
-                  <span className='text-[#b18cff]'>Motivo: </span>
+                  <span className='text-accent-copy'>{t.caseStudy.reason}</span>
                   {d.reason}
                 </p>
                 {d.tradeoff && (
                   <p className='mt-1 text-secondary text-[13px] leading-[21px]'>
-                    <span className='text-[#b18cff]'>Compensación: </span>
+                    <span className='text-accent-copy'>{t.caseStudy.tradeoff}</span>
                     {d.tradeoff}
                   </p>
                 )}
@@ -235,7 +242,7 @@ const CaseStudySection = ({ section }) => {
           <SectionHeading title={title} badge={badge} />
           <div className='mt-3 flex flex-wrap gap-2'>
             {section.items.map((chip, i) => (
-              <span key={i} className='rounded-lg border border-white/10 bg-white/[0.03] px-2.5 py-1 text-secondary text-[12px]'>
+              <span key={i} className='rounded-lg border border-line/10 bg-line/[0.03] px-2.5 py-1 text-secondary text-[12px]'>
                 {chip}
               </span>
             ))}
@@ -250,9 +257,9 @@ const CaseStudySection = ({ section }) => {
           <SectionHeading title={title} badge={badge} />
           <div className={`mt-3 grid grid-cols-1 gap-3 ${cols}`}>
             {section.items.map((card, i) => (
-              <div key={i} className='rounded-xl border border-white/10 bg-white/[0.03] p-4'>
+              <div key={i} className='rounded-xl border border-line/10 bg-line/[0.03] p-4'>
                 <div className='flex flex-wrap items-center gap-x-2 gap-y-1'>
-                  <p className='text-white font-semibold text-[14px]'>{card.title}</p>
+                  <p className='text-ink font-semibold text-[14px]'>{card.title}</p>
                   {card.badge && <Badge>{card.badge}</Badge>}
                 </div>
                 {card.desc && (
@@ -262,7 +269,7 @@ const CaseStudySection = ({ section }) => {
                   <ul className='mt-2 space-y-1'>
                     {card.items.map((it, j) => (
                       <li key={j} className='flex gap-2 text-secondary text-[13px] leading-[20px]'>
-                        <span aria-hidden='true' className='mt-[8px] h-1 w-1 shrink-0 rounded-full bg-[#915EFF]' />
+                        <span aria-hidden='true' className='mt-[8px] h-1 w-1 shrink-0 rounded-full bg-accentv' />
                         <span>{it}</span>
                       </li>
                     ))}
@@ -278,10 +285,10 @@ const CaseStudySection = ({ section }) => {
     case "callout":
       return (
         <section className='mt-8'>
-          <div className='rounded-xl border border-[#915EFF]/40 bg-[#915EFF]/10 p-4 sm:p-5'>
+          <div className='rounded-xl border border-accentv/40 bg-accentv/10 p-4 sm:p-5'>
             {(title || badge) && (
               <div className='flex flex-wrap items-center gap-x-3 gap-y-1'>
-                {title && <h3 className='text-white font-bold text-[16px] sm:text-[18px]'>{title}</h3>}
+                {title && <h3 className='text-ink font-bold text-[16px] sm:text-[18px]'>{title}</h3>}
                 {badge && <Badge>{badge}</Badge>}
               </div>
             )}
@@ -296,93 +303,99 @@ const CaseStudySection = ({ section }) => {
 };
 
 // Legacy fixed layout (kept for case studies that use flat named fields).
-const LegacyBody = ({ problem, solution, architecture, capabilities, decisions, security, quality, limitations }) => (
-  <>
-    <div className='mt-8 grid grid-cols-1 gap-6 md:grid-cols-2'>
-      {problem && (
-        <section>
-          <SectionHeading title='Problema' />
-          <Paragraphs body={problem} />
-        </section>
-      )}
-      {solution && (
-        <section>
-          <SectionHeading title='Solución' />
-          <Paragraphs body={solution} />
-        </section>
-      )}
-    </div>
+const LegacyBody = ({ problem, solution, architecture, capabilities, decisions, security, quality, limitations }) => {
+  const { t } = useLanguage();
 
-    {(architecture.flows?.length || architecture.integrations?.length) && (
-      <section className='mt-8'>
-        <SectionHeading title='Arquitectura' />
-        <div className='mt-4 space-y-5'>
-          {(architecture.flows || []).map((flow, i) => (
-            <Flow key={i} flow={flow} />
-          ))}
-        </div>
-        {architecture.integrations?.length > 0 && (
-          <div className='mt-5'>
-            <p className='text-[13px] font-semibold uppercase tracking-wider text-[#b18cff]'>Integraciones</p>
-            <BulletList items={architecture.integrations} />
-          </div>
+  return (
+    <>
+      <div className='mt-8 grid grid-cols-1 gap-6 md:grid-cols-2'>
+        {problem && (
+          <section>
+            <SectionHeading title={t.caseStudy.problem} />
+            <Paragraphs body={problem} />
+          </section>
         )}
-      </section>
-    )}
+        {solution && (
+          <section>
+            <SectionHeading title={t.caseStudy.solution} />
+            <Paragraphs body={solution} />
+          </section>
+        )}
+      </div>
 
-    {capabilities.length > 0 && (
-      <section className='mt-8'>
-        <SectionHeading title='Capacidades de negocio' />
-        <div className='mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2'>
-          {capabilities.map((cap, i) => (
-            <div key={i} className='rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2.5 text-secondary text-[13px] leading-[20px]'>
-              {cap}
-            </div>
-          ))}
-        </div>
-      </section>
-    )}
-
-    {decisions.length > 0 && (
-      <section className='mt-8'>
-        <SectionHeading title='Decisiones técnicas' />
-        <div className='mt-3 space-y-3'>
-          {decisions.map((d, i) => (
-            <div key={i} className='rounded-xl border border-white/10 bg-white/[0.03] p-4'>
-              <p className='text-white font-semibold text-[14px]'>{d.title}</p>
-              <p className='mt-1 text-secondary text-[13px] leading-[21px]'>
-                <span className='text-[#b18cff]'>Motivo: </span>
-                {d.reason}
+      {(architecture.flows?.length || architecture.integrations?.length) && (
+        <section className='mt-8'>
+          <SectionHeading title={t.caseStudy.architecture} />
+          <div className='mt-4 space-y-5'>
+            {(architecture.flows || []).map((flow, i) => (
+              <Flow key={i} flow={flow} />
+            ))}
+          </div>
+          {architecture.integrations?.length > 0 && (
+            <div className='mt-5'>
+              <p className='text-[13px] font-semibold uppercase tracking-wider text-accent-copy'>
+                {t.caseStudy.integrations}
               </p>
+              <BulletList items={architecture.integrations} />
             </div>
-          ))}
-        </div>
-      </section>
-    )}
-
-    <div className='mt-8 grid grid-cols-1 gap-6 md:grid-cols-2'>
-      {security.length > 0 && (
-        <section>
-          <SectionHeading title='Seguridad y fiabilidad' />
-          <BulletList items={security} />
+          )}
         </section>
       )}
-      {quality.length > 0 && (
-        <section>
-          <SectionHeading title='Calidad y DevOps' />
-          <BulletList items={quality} />
+
+      {capabilities.length > 0 && (
+        <section className='mt-8'>
+          <SectionHeading title={t.caseStudy.capabilities} />
+          <div className='mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2'>
+            {capabilities.map((cap, i) => (
+              <div key={i} className='rounded-lg border border-line/10 bg-line/[0.03] px-3 py-2.5 text-secondary text-[13px] leading-[20px]'>
+                {cap}
+              </div>
+            ))}
+          </div>
         </section>
       )}
-    </div>
 
-    {limitations.length > 0 && (
-      <section className='mt-8'>
-        <SectionHeading title='Limitaciones y evolución' />
-        <BulletList items={limitations} />
-      </section>
-    )}
-  </>
-);
+      {decisions.length > 0 && (
+        <section className='mt-8'>
+          <SectionHeading title={t.caseStudy.decisions} />
+          <div className='mt-3 space-y-3'>
+            {decisions.map((d, i) => (
+              <div key={i} className='rounded-xl border border-line/10 bg-line/[0.03] p-4'>
+                <p className='text-ink font-semibold text-[14px]'>{d.title}</p>
+                <p className='mt-1 text-secondary text-[13px] leading-[21px]'>
+                  <span className='text-accent-copy'>{t.caseStudy.reason}</span>
+                  {d.reason}
+                </p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <div className='mt-8 grid grid-cols-1 gap-6 md:grid-cols-2'>
+        {security.length > 0 && (
+          <section>
+            <SectionHeading title={t.caseStudy.security} />
+            <BulletList items={security} />
+          </section>
+        )}
+        {quality.length > 0 && (
+          <section>
+            <SectionHeading title={t.caseStudy.quality} />
+            <BulletList items={quality} />
+          </section>
+        )}
+      </div>
+
+      {limitations.length > 0 && (
+        <section className='mt-8'>
+          <SectionHeading title={t.caseStudy.limitations} />
+          <BulletList items={limitations} />
+        </section>
+      )}
+    </>
+  );
+};
 
 const ProjectCaseStudyDialog = ({
   caseStudy,
@@ -391,6 +404,8 @@ const ProjectCaseStudyDialog = ({
   downloadLink,
   downloadLabel,
 }) => {
+  const { t } = useLanguage();
+
   if (!caseStudy) return null;
 
   const {
@@ -424,26 +439,26 @@ const ProjectCaseStudyDialog = ({
   const isInternalDemo = typeof demoHref === "string" && demoHref.startsWith("/");
   const metaLine = [platform, hardware, scope, locale].filter(Boolean).join(" · ");
   const primaryBtn =
-    "inline-flex items-center justify-center gap-2 rounded-xl bg-[#915EFF] px-5 py-3 text-[14px] font-semibold text-white transition-colors hover:bg-[#7d43e0] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#915EFF] focus-visible:ring-offset-2 focus-visible:ring-offset-tertiary";
+    "inline-flex items-center justify-center gap-2 rounded-xl bg-accent-solid px-5 py-3 text-[14px] font-semibold text-white transition-colors hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-accentv focus-visible:ring-offset-2 focus-visible:ring-offset-tertiary";
   const secondaryBtn =
-    "inline-flex items-center justify-center gap-2 rounded-xl border border-[#915EFF]/40 bg-transparent px-5 py-3 text-[14px] font-semibold text-white transition-colors hover:border-[#915EFF] hover:bg-[#915EFF]/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#915EFF] focus-visible:ring-offset-2 focus-visible:ring-offset-tertiary";
-  const dlLabel = downloadLabel || "Descargar app para Android";
+    "inline-flex items-center justify-center gap-2 rounded-xl border border-accentv/40 bg-transparent px-5 py-3 text-[14px] font-semibold text-ink transition-colors hover:border-accentv hover:bg-accentv/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-accentv focus-visible:ring-offset-2 focus-visible:ring-offset-tertiary";
+  const dlLabel = downloadLabel || t.caseStudy.downloadAndroid;
 
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className='fixed inset-0 z-[10001] bg-black/70 backdrop-blur-sm' />
-        <Dialog.Content className='fixed left-1/2 top-1/2 z-[10002] flex max-h-[90dvh] w-[95vw] max-w-5xl -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl border border-[#915EFF]/30 bg-tertiary shadow-2xl focus:outline-none'>
+        <Dialog.Content className='fixed left-1/2 top-1/2 z-[10002] flex max-h-[90dvh] w-[95vw] max-w-5xl -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl border border-accentv/30 bg-tertiary shadow-2xl focus:outline-none'>
           {/* Header (fixed; close button always reachable) */}
-          <div className='relative border-b border-white/10 px-5 py-5 pr-14 sm:px-8'>
-            <p className='text-[12px] font-semibold uppercase tracking-wider text-[#b18cff]'>{eyebrow}</p>
-            <Dialog.Title className='mt-1 text-white font-bold text-[22px] sm:text-[28px] leading-tight'>
+          <div className='relative border-b border-line/10 px-5 py-5 pr-14 sm:px-8'>
+            <p className='text-[12px] font-semibold uppercase tracking-wider text-accent-copy'>{eyebrow}</p>
+            <Dialog.Title className='mt-1 text-ink font-bold text-[22px] sm:text-[28px] leading-tight'>
               {title}
             </Dialog.Title>
             <div className='mt-3 flex flex-wrap items-center gap-x-3 gap-y-2'>
               {status && (
-                <span className='inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-[12px] text-white'>
-                  <span aria-hidden='true' className='h-2 w-2 rounded-full bg-emerald-400' />
+                <span className='inline-flex items-center gap-1.5 rounded-full border border-line/[0.15] bg-line/5 px-3 py-1 text-[12px] text-ink'>
+                  <span aria-hidden='true' className='h-2 w-2 rounded-full bg-emerald-600 dark:bg-emerald-400' />
                   {status}
                 </span>
               )}
@@ -459,8 +474,8 @@ const ProjectCaseStudyDialog = ({
             )}
 
             <Dialog.Close
-              className='absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-black-200 text-secondary transition-colors hover:bg-[#915EFF]/20 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#915EFF] focus-visible:ring-offset-2 focus-visible:ring-offset-tertiary'
-              aria-label='Cerrar caso de estudio'
+              className='absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full border border-line/10 bg-black-200 text-secondary transition-colors hover:bg-accentv/20 hover:text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-accentv focus-visible:ring-offset-2 focus-visible:ring-offset-tertiary'
+              aria-label={t.caseStudy.close}
             >
               <IconClose className='h-4 w-4' />
             </Dialog.Close>
@@ -475,8 +490,8 @@ const ProjectCaseStudyDialog = ({
             {metrics.length > 0 && (
               <div className='mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4'>
                 {metrics.map((m, i) => (
-                  <div key={i} className='rounded-xl border border-white/10 bg-white/[0.03] p-4 text-center'>
-                    <div className='text-[#915EFF] font-black text-[26px] sm:text-[30px] leading-none'>{m.value}</div>
+                  <div key={i} className='rounded-xl border border-line/10 bg-line/[0.03] p-4 text-center'>
+                    <div className='text-accentv font-black text-[26px] sm:text-[30px] leading-none'>{m.value}</div>
                     <div className='mt-1.5 text-secondary text-[12px]'>{m.label}</div>
                   </div>
                 ))}
@@ -501,7 +516,7 @@ const ProjectCaseStudyDialog = ({
 
           {/* Footer (fixed) */}
           {(wantsDownload || demoHref || githubHref || links.note) && (
-            <div className='flex flex-col gap-3 border-t border-white/10 px-5 py-4 sm:flex-row sm:items-center sm:justify-end sm:px-8'>
+            <div className='flex flex-col gap-3 border-t border-line/10 px-5 py-4 sm:flex-row sm:items-center sm:justify-end sm:px-8'>
               {links.note && (
                 <p className='text-secondary text-[12px] sm:mr-auto'>{links.note}</p>
               )}
@@ -511,7 +526,7 @@ const ProjectCaseStudyDialog = ({
                     href={downloadLink}
                     target='_blank'
                     rel='noopener noreferrer'
-                    aria-label={`${dlLabel}, se abre en una nueva pestaña`}
+                    aria-label={t.caseStudy.downloadAria.replace("{label}", dlLabel)}
                     className={primaryBtn}
                   >
                     <IconDownload className='h-4 w-4' />
@@ -520,21 +535,21 @@ const ProjectCaseStudyDialog = ({
                 ) : (
                   <span
                     aria-disabled='true'
-                    className='inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 px-5 py-3 text-[14px] font-semibold text-secondary opacity-60'
+                    className='inline-flex items-center justify-center gap-2 rounded-xl border border-line/10 px-5 py-3 text-[14px] font-semibold text-secondary opacity-60'
                   >
-                    Descarga temporalmente no disponible
+                    {t.caseStudy.downloadUnavailable}
                   </span>
                 ))}
 
               {demoHref &&
                 (isInternalDemo ? (
                   <Link to={demoHref} onClick={() => onOpenChange(false)} className={primaryBtn}>
-                    Abrir Mini ERP
+                    {t.caseStudy.openMiniErp}
                     <IconArrowRight className='h-4 w-4' />
                   </Link>
                 ) : (
                   <a href={demoHref} target='_blank' rel='noopener noreferrer' className={primaryBtn}>
-                    Abrir demo
+                    {t.caseStudy.openDemo}
                     <IconExternal className='h-4 w-4' />
                   </a>
                 ))}
@@ -544,11 +559,11 @@ const ProjectCaseStudyDialog = ({
                   href={githubHref}
                   target='_blank'
                   rel='noopener noreferrer'
-                  aria-label='Ver código en GitHub, se abre en una nueva pestaña'
+                  aria-label={t.caseStudy.viewGithubAria}
                   className={secondaryBtn}
                 >
                   <IconGithub className='h-4 w-4' />
-                  Ver código en GitHub
+                  {t.caseStudy.viewGithub}
                 </a>
               )}
             </div>

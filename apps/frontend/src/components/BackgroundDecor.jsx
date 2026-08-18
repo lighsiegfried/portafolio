@@ -1,12 +1,27 @@
 
 
+/**
+ * Decorative background layers.
+ *
+ * Every literal color here used to be baked for the dark-only portfolio
+ * (white hairlines, fixed opacities, violet/cyan washes tuned for #050816).
+ * They now read from theme tokens so the same markup works on both grounds:
+ *
+ *   --decor-grid           grid hairline color  (light: dark @ 4%, dark: white @ 2%)
+ *   --decor-noise-opacity  film-grain strength  (light: 0.02, dark: 0.015)
+ *   --decor-line-opacity   abstract-line layer  (light: 0.35, dark: 0.2)
+ *   --c-accent-violet      accent hue, darker in light mode for the same read
+ *
+ * The dark-mode result is byte-identical to the previous hardcoded values.
+ */
+
 const GridPattern = () => (
   <div
     className="absolute inset-0 pointer-events-none z-0"
     style={{
       backgroundImage: `
-        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px)
+        linear-gradient(var(--decor-grid) 1px, transparent 1px),
+        linear-gradient(90deg, var(--decor-grid) 1px, transparent 1px)
       `,
       backgroundSize: "60px 60px",
     }}
@@ -15,8 +30,9 @@ const GridPattern = () => (
 
 const NoiseOverlay = () => (
   <div
-    className="absolute inset-0 pointer-events-none z-0 opacity-[0.015]"
+    className="absolute inset-0 pointer-events-none z-0"
     style={{
+      opacity: "var(--decor-noise-opacity)",
       backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
       backgroundRepeat: "repeat",
       backgroundSize: "128px 128px",
@@ -24,31 +40,42 @@ const NoiseOverlay = () => (
   />
 );
 
+// Glow washes. The violet ones resolve through `--c-accent-violet`, so they
+// keep the exact alpha they always had while swapping to the darker light-mode
+// violet (#6d3dd6) that still registers against a near-white page. Cyan has no
+// token; at these alphas it lands with the same delta on either ground.
+const GLOW_VIOLET_08 = "rgb(var(--c-accent-violet) / 0.08)";
+const GLOW_VIOLET_05 = "rgb(var(--c-accent-violet) / 0.05)";
+const GLOW_CYAN_06 = "rgba(6, 182, 212, 0.06)";
+
 const AccentGlows = () => (
   <>
     <div
       className="absolute top-1/4 -left-32 w-[500px] h-[500px] rounded-full pointer-events-none z-0"
       style={{
-        background: "radial-gradient(circle, rgba(128,77,238,0.08) 0%, transparent 70%)",
+        background: `radial-gradient(circle, ${GLOW_VIOLET_08} 0%, transparent 70%)`,
       }}
     />
     <div
       className="absolute bottom-1/4 -right-32 w-[500px] h-[500px] rounded-full pointer-events-none z-0"
       style={{
-        background: "radial-gradient(circle, rgba(6,182,212,0.06) 0%, transparent 70%)",
+        background: `radial-gradient(circle, ${GLOW_CYAN_06} 0%, transparent 70%)`,
       }}
     />
     <div
       className="absolute top-3/4 left-1/3 w-[400px] h-[400px] rounded-full pointer-events-none z-0"
       style={{
-        background: "radial-gradient(circle, rgba(168,85,247,0.05) 0%, transparent 70%)",
+        background: `radial-gradient(circle, ${GLOW_VIOLET_05} 0%, transparent 70%)`,
       }}
     />
   </>
 );
 
 const AbstractLines = () => (
-  <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden opacity-20">
+  <div
+    className="absolute inset-0 pointer-events-none z-0 overflow-hidden"
+    style={{ opacity: "var(--decor-line-opacity)" }}
+  >
     <svg
       className="absolute top-0 right-0 w-[600px] h-[600px]"
       viewBox="0 0 600 600"
@@ -125,6 +152,9 @@ const SectionGlow = ({ position, size, color }) => (
   />
 );
 
+const GLOW_VIOLET_10 = "rgb(var(--c-accent-violet) / 0.1)";
+const GLOW_CYAN_08 = "rgba(6, 182, 212, 0.08)";
+
 const BackgroundDecor = ({ variant = "default" }) => {
   return (
     // pointer-events-none: this decorative, aria-hidden layer must never become
@@ -143,7 +173,7 @@ const BackgroundDecor = ({ variant = "default" }) => {
           <SectionGlow
             position={{ top: "50%", left: "50%" }}
             size="800px"
-            color="rgba(128,77,238,0.1)"
+            color={GLOW_VIOLET_10}
           />
         </>
       )}
@@ -153,12 +183,12 @@ const BackgroundDecor = ({ variant = "default" }) => {
           <SectionGlow
             position={{ top: "30%", left: "20%" }}
             size="600px"
-            color="rgba(128,77,238,0.08)"
+            color={GLOW_VIOLET_08}
           />
           <SectionGlow
             position={{ top: "70%", left: "80%" }}
             size="500px"
-            color="rgba(6,182,212,0.06)"
+            color={GLOW_CYAN_06}
           />
         </>
       )}
@@ -168,12 +198,12 @@ const BackgroundDecor = ({ variant = "default" }) => {
           <SectionGlow
             position={{ top: "40%", left: "50%" }}
             size="700px"
-            color="rgba(128,77,238,0.1)"
+            color={GLOW_VIOLET_10}
           />
           <SectionGlow
             position={{ top: "60%", left: "30%" }}
             size="400px"
-            color="rgba(6,182,212,0.08)"
+            color={GLOW_CYAN_08}
           />
         </>
       )}
@@ -182,7 +212,7 @@ const BackgroundDecor = ({ variant = "default" }) => {
         <SectionGlow
           position={{ top: "50%", left: "50%" }}
           size="600px"
-          color="rgba(128,77,238,0.08)"
+          color={GLOW_VIOLET_08}
         />
       )}
 

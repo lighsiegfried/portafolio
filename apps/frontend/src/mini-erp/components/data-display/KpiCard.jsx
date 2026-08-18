@@ -1,18 +1,24 @@
 import { Card } from '@/mini-erp/components/ui/card';
 import { cn } from '@/mini-erp/lib/utils';
 
+/**
+ * Accent tints. The 500/15 wash reads on both a white and a near-black surface;
+ * the foreground shade flips so the icon keeps contrast in either theme.
+ */
 const ACCENTS = {
-  violet: 'bg-violet-500/15 text-violet-300',
-  yellow: 'bg-yellow-500/15 text-yellow-300',
-  red: 'bg-red-500/15 text-red-300',
-  green: 'bg-green-500/15 text-green-300',
-  cyan: 'bg-cyan-500/15 text-cyan-300',
-  blue: 'bg-blue-500/15 text-blue-300',
+  violet: 'bg-violet-500/15 text-violet-600 dark:text-violet-300',
+  yellow: 'bg-yellow-500/15 text-yellow-700 dark:text-yellow-300',
+  red: 'bg-red-500/15 text-red-600 dark:text-red-300',
+  green: 'bg-green-500/15 text-green-700 dark:text-green-300',
+  cyan: 'bg-cyan-500/15 text-cyan-700 dark:text-cyan-300',
+  blue: 'bg-blue-500/15 text-blue-600 dark:text-blue-300',
 };
 
 /**
  * Premium KPI card. Static value only — the dashboard contract has no historical
  * data, so there are intentionally no trend arrows.
+ *
+ * `label` / `hint` arrive already localized from the calling page.
  */
 export default function KpiCard({ label, value, icon: Icon, accent = 'violet', hint, onClick }) {
   const tint = ACCENTS[accent] || ACCENTS.violet;
@@ -46,7 +52,7 @@ export default function KpiCard({ label, value, icon: Icon, accent = 'violet', h
       </div>
       {Icon && (
         <div className={cn('flex size-10 shrink-0 items-center justify-center rounded-lg', tint)}>
-          <Icon className="size-5" />
+          <Icon className="size-5" aria-hidden="true" />
         </div>
       )}
     </Card>

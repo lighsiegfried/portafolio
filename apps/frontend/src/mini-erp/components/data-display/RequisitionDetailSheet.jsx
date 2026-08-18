@@ -11,6 +11,7 @@ import StatusBadge from '../StatusBadge';
 import RequisitionTimeline from './RequisitionTimeline';
 import { allowedActions, itemName, itemsTotal, PRIORITY_STYLES } from '../../config/requisitions';
 import { formatCurrency, formatDate } from '../../utils/formatters';
+import useErpTranslation from '../../i18n/useErpTranslation';
 import { cn } from '@/mini-erp/lib/utils';
 
 function Row({ label, children }) {
@@ -23,9 +24,9 @@ function Row({ label, children }) {
 }
 
 const INTENT_CLASS = {
-  primary: 'bg-blue-500/80 hover:bg-blue-500 text-white',
-  success: 'bg-emerald-500/80 hover:bg-emerald-500 text-white',
-  danger: 'bg-red-500/80 hover:bg-red-500 text-white',
+  primary: 'bg-blue-600 text-white hover:bg-blue-500',
+  success: 'bg-emerald-600 text-white hover:bg-emerald-500',
+  danger: 'bg-red-600 text-white hover:bg-red-500',
 };
 
 /**
@@ -35,11 +36,14 @@ const INTENT_CLASS = {
  * valid transitions; the action itself is confirmed in a separate dialog.
  */
 export default function RequisitionDetailSheet({ open, onOpenChange, requisition, user, onAction }) {
+  const { te, language } = useErpTranslation();
+
   if (!requisition) return null;
 
   const req = requisition;
   const items = Array.isArray(req.items) ? req.items : [];
   const actions = allowedActions(req, user);
+  const dash = te.formats.emptyValue;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -47,7 +51,7 @@ export default function RequisitionDetailSheet({ open, onOpenChange, requisition
         <SheetHeader className="space-y-2">
           <SheetTitle className="truncate">{req.title}</SheetTitle>
           <SheetDescription className="flex items-center gap-2">
-            <span className="font-mono text-xs text-violet-300">{req.number}</span>
+            <span className="font-mono text-xs text-violet-600 dark:text-violet-300">{req.number}</span>
             <StatusBadge status={req.status} />
           </SheetDescription>
         </SheetHeader>
@@ -57,24 +61,44 @@ export default function RequisitionDetailSheet({ open, onOpenChange, requisition
         </div>
 
         <div className="mt-4">
-          <Row label="Prioridad">
+          <Row label={te.requisitions.detail.priority}>
             <span className={cn('font-medium capitalize', PRIORITY_STYLES[req.priority] || 'text-foreground')}>
-              {req.priority || '-'}
+              {te.status.priority[req.priority] || req.priority || dash}
             </span>
           </Row>
-          {req.department && <Row label="Departamento"><span className="capitalize">{req.department}</span></Row>}
-          <Row label="Creada por"><span className="font-mono text-xs">{(req.createdBy || '-').slice(0, 8)}</span></Row>
-          {req.approvedBy && <Row label="Aprobada por"><span className="font-mono text-xs">{req.approvedBy.slice(0, 8)}</span></Row>}
-          {req.completedBy && <Row label="Completada por"><span className="font-mono text-xs">{req.completedBy.slice(0, 8)}</span></Row>}
-          <Row label="Costo estimado"><span className="font-semibold text-emerald-300">{formatCurrency(itemsTotal(req))}</span></Row>
-          <Row label="Creada">{formatDate(req.createdAt)}</Row>
+          {req.department && (
+            <Row label={te.requisitions.detail.department}>
+              <span className="capitalize">{req.department}</span>
+            </Row>
+          )}
+          <Row label={te.requisitions.detail.createdBy}>
+            <span className="font-mono text-xs">{(req.createdBy || dash).slice(0, 8)}</span>
+          </Row>
+          {req.approvedBy && (
+            <Row label={te.requisitions.detail.approvedBy}>
+              <span className="font-mono text-xs">{req.approvedBy.slice(0, 8)}</span>
+            </Row>
+          )}
+          {req.completedBy && (
+            <Row label={te.requisitions.detail.completedBy}>
+              <span className="font-mono text-xs">{req.completedBy.slice(0, 8)}</span>
+            </Row>
+          )}
+          <Row label={te.requisitions.detail.estimatedCost}>
+            <span className="font-semibold text-emerald-600 dark:text-emerald-300">
+              {formatCurrency(itemsTotal(req), language)}
+            </span>
+          </Row>
+          <Row label={te.requisitions.detail.createdAt}>{formatDate(req.createdAt, language)}</Row>
         </div>
 
         {(req.notes || req.description) && (
           <>
             <Separator className="my-4" />
             <div className="space-y-1">
-              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Notas</p>
+              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                {te.requisitions.detail.notes}
+              </p>
               <p className="text-sm text-foreground">{req.notes || req.description}</p>
             </div>
           </>
@@ -82,18 +106,20 @@ export default function RequisitionDetailSheet({ open, onOpenChange, requisition
 
         {req.rejectionReason && (
           <div className="mt-4 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2">
-            <p className="text-xs font-medium uppercase tracking-wider text-red-300">Motivo de rechazo</p>
-            <p className="mt-1 text-sm text-red-200">{req.rejectionReason}</p>
+            <p className="text-xs font-medium uppercase tracking-wider text-red-600 dark:text-red-300">
+              {te.requisitions.detail.rejectionReason}
+            </p>
+            <p className="mt-1 text-sm text-red-700 dark:text-red-200">{req.rejectionReason}</p>
           </div>
         )}
 
         <Separator className="my-4" />
         <div className="space-y-2">
           <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            Ítems ({items.length})
+            {te.requisitions.detail.items.replace('{count}', items.length)}
           </p>
           {items.length === 0 ? (
-            <p className="py-3 text-center text-xs text-muted-foreground">Sin ítems registrados</p>
+            <p className="py-3 text-center text-xs text-muted-foreground">{te.requisitions.detail.itemsEmpty}</p>
           ) : (
             <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border">
               {items.map((it, i) => (
@@ -106,7 +132,7 @@ export default function RequisitionDetailSheet({ open, onOpenChange, requisition
                     <p className="tabular-nums text-foreground">
                       {it.quantity}{it.unit ? ` ${it.unit}` : ''}
                     </p>
-                    <p className="text-xs tabular-nums text-muted-foreground">{formatCurrency(it.estimatedCost)}</p>
+                    <p className="text-xs tabular-nums text-muted-foreground">{formatCurrency(it.estimatedCost, language)}</p>
                   </div>
                 </li>
               ))}
@@ -124,7 +150,7 @@ export default function RequisitionDetailSheet({ open, onOpenChange, requisition
                   className={cn('flex-1', INTENT_CLASS[action.intent])}
                   onClick={() => onAction(req, action)}
                 >
-                  {action.label}
+                  {te.requisitions.actions[action.key] || action.label}
                 </Button>
               ))}
             </div>

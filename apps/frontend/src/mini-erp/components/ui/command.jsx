@@ -34,7 +34,7 @@ const CommandDialog = ({
 }
 
 const CommandInput = React.forwardRef(({ className, ...props }, ref) => (
-  <div className="flex items-center border-b border-white/10 bg-white/[0.02] px-3" cmdk-input-wrapper="">
+  <div className="flex items-center border-b border-border bg-muted/30 px-3" cmdk-input-wrapper="">
     <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
     <CommandPrimitive.Input
       ref={ref}

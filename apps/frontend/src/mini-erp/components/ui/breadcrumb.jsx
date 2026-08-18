@@ -3,10 +3,12 @@ import { Slot } from "@radix-ui/react-slot"
 import { ChevronRight, MoreHorizontal } from "lucide-react"
 
 import { cn } from "@/mini-erp/lib/utils"
+import useErpTranslation from "@/mini-erp/i18n/useErpTranslation"
 
-const Breadcrumb = React.forwardRef(
-  ({ ...props }, ref) => <nav ref={ref} aria-label="breadcrumb" {...props} />
-)
+const Breadcrumb = React.forwardRef(({ ...props }, ref) => {
+  const { te } = useErpTranslation()
+  return <nav ref={ref} aria-label={te.common.breadcrumb} {...props} />
+})
 Breadcrumb.displayName = "Breadcrumb"
 
 const BreadcrumbList = React.forwardRef(({ className, ...props }, ref) => (
@@ -69,16 +71,19 @@ BreadcrumbSeparator.displayName = "BreadcrumbSeparator"
 const BreadcrumbEllipsis = ({
   className,
   ...props
-}) => (
-  <span
-    role="presentation"
-    aria-hidden="true"
-    className={cn("flex h-9 w-9 items-center justify-center", className)}
-    {...props}>
-    <MoreHorizontal className="h-4 w-4" />
-    <span className="sr-only">More</span>
-  </span>
-)
+}) => {
+  const { te } = useErpTranslation()
+  return (
+    <span
+      role="presentation"
+      aria-hidden="true"
+      className={cn("flex h-9 w-9 items-center justify-center", className)}
+      {...props}>
+      <MoreHorizontal className="h-4 w-4" />
+      <span className="sr-only">{te.common.more}</span>
+    </span>
+  )
+}
 BreadcrumbEllipsis.displayName = "BreadcrumbElipssis"
 
 export {

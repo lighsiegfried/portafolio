@@ -3,6 +3,7 @@ import { toast } from 'sonner';
 import { Plus, Search, FileText, Clock, CheckCircle2, Wallet } from 'lucide-react';
 import * as api from '../../services/requisitionsApi';
 import { useAuth } from '../hooks/useAuth';
+import useErpTranslation from '../i18n/useErpTranslation';
 import { userCan } from '../utils/permissions';
 import { formatCurrency, formatNumber } from '../utils/formatters';
 import { Button } from '@/mini-erp/components/ui/button';
@@ -18,8 +19,16 @@ import ErrorState from '../components/ErrorState';
 import EmptyState from '../components/EmptyState';
 import { REQ_FILTERS, itemsTotal } from '../config/requisitions';
 
+/** Workflow action key -> success toast key inside the `toast.*` namespace. */
+const ACTION_TOAST_KEYS = {
+  approve: 'requisitionApproved',
+  reject: 'requisitionRejected',
+  complete: 'requisitionCompleted',
+};
+
 export default function RequisitionsPage() {
   const { user } = useAuth();
+  const { te } = useErpTranslation();
   const canCreate = userCan(user, 'createRequisition');
 
   const [requisitions, setRequisitions] = useState([]);
@@ -39,7 +48,9 @@ export default function RequisitionsPage() {
       const res = await api.list({ limit: '50' });
       setRequisitions(res.data || []);
     } catch (err) {
-      setError(err.message || 'Error al cargar requisiciones');
+      // Only the raw API message is stored; the localized fallback is resolved
+      // at render time so it follows the active language without refetching.
+      setError(err.message || '');
     } finally {
       setLoading(false);
     }
@@ -89,11 +100,11 @@ export default function RequisitionsPage() {
       if (action.key === 'approve') await api.approve(req.id);
       else if (action.key === 'reject') await api.reject(req.id, reason);
       else if (action.key === 'complete') await api.complete(req.id);
-      toast.success(action.successMessage);
+      toast.success(te.toast[ACTION_TOAST_KEYS[action.key]] || action.successMessage);
       setPendingAction(null);
       await load();
     } catch (err) {
-      toast.error(err.message || 'Error al ejecutar la acción');
+      toast.error(err.message || te.errors.requisitionAction);
     } finally {
       setActionSubmitting(false);
     }
@@ -101,9 +112,10 @@ export default function RequisitionsPage() {
 
   const renderToolbar = (table) => (
     <div className="relative w-full sm:max-w-xs">
-      <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+      <Search aria-hidden="true" className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
       <Input
-        placeholder="Buscar por número o título..."
+        placeholder={te.requisitions.searchPlaceholder}
+        aria-label={te.requisitions.searchPlaceholder}
         value={table.getState().globalFilter ?? ''}
         onChange={(e) => table.setGlobalFilter(e.target.value)}
         className="pl-9"
@@ -115,38 +127,39 @@ export default function RequisitionsPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Requisiciones</h1>
+          <h1 className="text-2xl font-bold text-foreground">{te.requisitions.title}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Flujo de aprobación de compras: <span className="text-foreground">Pendiente → Aprobada → Completada</span>
-            {' '}· una requisición pendiente también puede ser rechazada.
+            {te.requisitions.subtitlePrefix}{' '}
+            <span className="text-foreground">{te.requisitions.subtitleFlow}</span>
+            {' '}{te.requisitions.subtitleSuffix}
           </p>
         </div>
         {canCreate && (
           <Button size="sm" onClick={() => setCreateOpen(true)}>
-            <Plus className="size-4" />
-            Nueva requisición
+            <Plus aria-hidden="true" className="size-4" />
+            {te.requisitions.newButton}
           </Button>
         )}
       </div>
 
-      {error ? (
-        <ErrorState message={error} onRetry={load} />
+      {error !== null ? (
+        <ErrorState message={error || te.errors.loadRequisitions} onRetry={load} />
       ) : loading ? (
         <RequisitionsTableSkeleton />
       ) : (
         <>
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-            <KpiCard label="Total" value={formatNumber(stats.total)} icon={FileText} accent="violet" />
-            <KpiCard label="Pendientes" value={formatNumber(stats.pending)} icon={Clock} accent="yellow" />
-            <KpiCard label="Completadas" value={formatNumber(stats.completed)} icon={CheckCircle2} accent="green" />
-            <KpiCard label="Valor en proceso" value={formatCurrency(stats.pipelineValue)} icon={Wallet} accent="cyan" />
+            <KpiCard label={te.requisitions.kpi.total} value={formatNumber(stats.total)} icon={FileText} accent="violet" />
+            <KpiCard label={te.requisitions.kpi.pending} value={formatNumber(stats.pending)} icon={Clock} accent="yellow" />
+            <KpiCard label={te.requisitions.kpi.completed} value={formatNumber(stats.completed)} icon={CheckCircle2} accent="green" />
+            <KpiCard label={te.requisitions.kpi.pipelineValue} value={formatCurrency(stats.pipelineValue)} icon={Wallet} accent="cyan" />
           </div>
 
           <Tabs value={statusFilter} onValueChange={setStatusFilter}>
             <TabsList className="flex-wrap">
               {REQ_FILTERS.map((f) => (
                 <TabsTrigger key={f.value} value={f.value} className="gap-1.5">
-                  {f.label}
+                  {te.requisitions.filters[f.value] ?? f.label}
                   <span className="rounded-full bg-background/60 px-1.5 text-[10px] tabular-nums text-muted-foreground">
                     {counts[f.value] ?? 0}
                   </span>
@@ -159,9 +172,9 @@ export default function RequisitionsPage() {
             <div className="erp-surface-card rounded-xl p-6">
               <EmptyState
                 icon={FileText}
-                title="Sin requisiciones"
-                message="Crea una requisición para iniciar el flujo de aprobación de compras."
-                action={canCreate ? { label: 'Nueva requisición', icon: Plus, onClick: () => setCreateOpen(true) } : undefined}
+                title={te.requisitions.empty.title}
+                message={te.requisitions.empty.message}
+                action={canCreate ? { label: te.requisitions.newButton, icon: Plus, onClick: () => setCreateOpen(true) } : undefined}
               />
             </div>
           ) : (

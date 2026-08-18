@@ -10,6 +10,7 @@ import EmptyState from '../EmptyState';
 import ErrorState from '../ErrorState';
 import { lowStock as fetchLowStock } from '../../../services/inventoryApi';
 import { formatNumber } from '../../utils/formatters';
+import useErpTranslation from '../../i18n/useErpTranslation';
 
 /**
  * Low-stock alerts. Rendered only for roles with `viewInventory` (gated by the
@@ -17,9 +18,12 @@ import { formatNumber } from '../../utils/formatters';
  * so a failure here never breaks the rest of the dashboard.
  */
 export default function LowStockAlerts() {
+  const { te } = useErpTranslation();
   const navigate = useNavigate();
   const [rows, setRows] = useState(null);
   const [loading, setLoading] = useState(true);
+  // `error` holds `{ message }` so the localized fallback resolves at render time
+  // (keeping `load` free of dictionary deps, so switching language never refetches).
   const [error, setError] = useState(null);
 
   const load = useCallback(async () => {
@@ -29,7 +33,7 @@ export default function LowStockAlerts() {
       const res = await fetchLowStock();
       setRows(res.data || []);
     } catch (err) {
-      setError(err.message || 'Error al cargar bajo stock');
+      setError({ message: err.message });
     } finally {
       setLoading(false);
     }
@@ -41,11 +45,11 @@ export default function LowStockAlerts() {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0">
         <CardTitle className="flex items-center gap-2 text-base">
-          <AlertTriangle className="size-4 text-red-400" />
-          Alertas de bajo stock
+          <AlertTriangle className="size-4 text-red-600 dark:text-red-400" aria-hidden="true" />
+          {te.dashboard.lowStock.title}
         </CardTitle>
         <Button variant="ghost" size="sm" onClick={() => navigate('/mini-erp/inventory')}>
-          Ver inventario
+          {te.dashboard.lowStock.viewInventory}
         </Button>
       </CardHeader>
       <CardContent>
@@ -54,29 +58,29 @@ export default function LowStockAlerts() {
             {[0, 1, 2].map((i) => <Skeleton key={i} className="h-9 w-full" />)}
           </div>
         ) : error ? (
-          <ErrorState message={error} onRetry={load} />
+          <ErrorState message={error.message || te.errors.loadLowStock} onRetry={load} />
         ) : !rows || rows.length === 0 ? (
-          <EmptyState message="Sin productos en bajo stock" />
+          <EmptyState message={te.dashboard.lowStock.empty} />
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>SKU</TableHead>
-                <TableHead>Producto</TableHead>
-                <TableHead className="text-right">Stock</TableHead>
-                <TableHead className="text-right">Mínimo</TableHead>
-                <TableHead className="text-right">Estado</TableHead>
+                <TableHead>{te.dashboard.lowStock.columns.sku}</TableHead>
+                <TableHead>{te.dashboard.lowStock.columns.product}</TableHead>
+                <TableHead className="text-right">{te.dashboard.lowStock.columns.stock}</TableHead>
+                <TableHead className="text-right">{te.dashboard.lowStock.columns.minStock}</TableHead>
+                <TableHead className="text-right">{te.dashboard.lowStock.columns.status}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {rows.map((p) => (
                 <TableRow key={p.id || p.sku}>
-                  <TableCell className="font-mono text-xs text-violet-300">{p.sku}</TableCell>
+                  <TableCell className="font-mono text-xs text-violet-600 dark:text-violet-300">{p.sku}</TableCell>
                   <TableCell className="max-w-[200px] truncate">{p.name}</TableCell>
-                  <TableCell className="text-right font-medium text-red-300">{formatNumber(p.stock)}</TableCell>
+                  <TableCell className="text-right font-medium text-red-600 dark:text-red-300">{formatNumber(p.stock)}</TableCell>
                   <TableCell className="text-right text-xs text-muted-foreground">{formatNumber(p.minStock)}</TableCell>
                   <TableCell className="text-right">
-                    <Badge variant="destructive">Bajo stock</Badge>
+                    <Badge variant="destructive">{te.dashboard.lowStock.badge}</Badge>
                   </TableCell>
                 </TableRow>
               ))}

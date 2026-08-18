@@ -1,10 +1,36 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/logo.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Wilson | Portafolio aws s3</title>
+    <script>
+      // Apply the persisted theme and language BEFORE first paint. Without this
+      // the document renders with the light default for a frame, then flips to
+      // dark once ThemeProvider mounts — a visible flash for dark-mode users.
+      // Kept inline and dependency-free on purpose; ThemeProvider re-applies the
+      // exact same classes on mount, so this is a pure head start, not a second
+      // source of truth.
+      (function () {
+        try {
+          var theme = localStorage.getItem("app-theme");
+          if (theme !== "dark" && theme !== "light") {
+            theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+          }
+          document.documentElement.classList.toggle("dark", theme === "dark");
+          document.documentElement.dataset.theme = theme;
+
+          var lang = localStorage.getItem("app-lang");
+          if (lang !== "es" && lang !== "en") {
+            lang = (navigator.language || "es").toLowerCase().indexOf("es") === 0 ? "es" : "en";
+          }
+          document.documentElement.lang = lang;
+        } catch (e) {
+          /* storage blocked — ThemeProvider still resolves the theme on mount */
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

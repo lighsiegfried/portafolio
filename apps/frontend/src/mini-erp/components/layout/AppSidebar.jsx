@@ -13,11 +13,13 @@ import {
   SidebarMenuItem,
 } from '@/mini-erp/components/ui/sidebar';
 import { useAuth } from '../../hooks/useAuth';
-import { getVisibleNavItems } from '../../config/navigation';
+import { getVisibleNavItems, navTitle } from '../../config/navigation';
+import useErpTranslation from '../../i18n/useErpTranslation';
 
 export default function AppSidebar() {
   const { user } = useAuth();
   const location = useLocation();
+  const { te } = useErpTranslation();
   const items = getVisibleNavItems(user);
 
   return (
@@ -27,12 +29,12 @@ export default function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton asChild size="lg" className="data-[state=open]:bg-sidebar-accent">
               <Link to="/mini-erp/dashboard">
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-violet-500/20 text-violet-300 font-bold">
+                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-[hsl(var(--primary))]/15 text-[hsl(var(--primary-hover))] font-bold">
                   E
                 </div>
                 <div className="grid flex-1 text-left leading-tight">
-                  <span className="truncate font-semibold text-sidebar-foreground">Mini ERP</span>
-                  <span className="truncate text-xs text-muted-foreground">CRM Lite</span>
+                  <span className="truncate font-semibold text-sidebar-foreground">{te.nav.brand}</span>
+                  <span className="truncate text-xs text-muted-foreground">{te.nav.brandSubtitle}</span>
                 </div>
               </Link>
             </SidebarMenuButton>
@@ -42,17 +44,18 @@ export default function AppSidebar() {
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Gestión</SidebarGroupLabel>
+          <SidebarGroupLabel>{te.nav.groupManagement}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {items.map((item) => {
                 const active = location.pathname === item.url || location.pathname.startsWith(`${item.url}/`);
+                const label = navTitle(te, item.titleKey);
                 return (
                   <SidebarMenuItem key={item.url}>
-                    <SidebarMenuButton asChild isActive={active} tooltip={item.title}>
+                    <SidebarMenuButton asChild isActive={active} tooltip={label}>
                       <NavLink to={item.url}>
-                        <item.icon />
-                        <span>{item.title}</span>
+                        <item.icon aria-hidden="true" />
+                        <span>{label}</span>
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -66,10 +69,10 @@ export default function AppSidebar() {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Volver al portafolio">
+            <SidebarMenuButton asChild tooltip={te.nav.backToPortfolio}>
               <Link to="/">
-                <Home />
-                <span>Volver al portafolio</span>
+                <Home aria-hidden="true" />
+                <span>{te.nav.backToPortfolio}</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>

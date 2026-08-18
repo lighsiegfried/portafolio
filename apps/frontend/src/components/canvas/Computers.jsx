@@ -4,6 +4,7 @@ import { OrbitControls, Preload, useGLTF } from "@react-three/drei";
 
 import CanvasLoader from "../Loader";
 import ErrorBoundary from "../ErrorBoundary";
+import { useLanguage } from "../../context/LanguageContext";
 import { fixNaNPositions } from "../../utils/threeFix";
 
 const Computers = ({ isMobile }) => {
@@ -21,6 +22,9 @@ const Computers = ({ isMobile }) => {
 
   if (!ready) return null;
 
+  // Lighting is intentionally theme-independent: the desktop_pc model is a
+  // dark asset, so the key spotlight that made it read against #050816 gives it
+  // *more* contrast against the light page ground, not less.
   return (
     <mesh>
       <hemisphereLight intensity={0.15} groundColor='black' />
@@ -43,14 +47,21 @@ const Computers = ({ isMobile }) => {
   );
 };
 
-const Fallback = () => (
+const Fallback = ({ message }) => (
   <div className="w-full h-full flex items-center justify-center">
-    <div className="w-12 h-12 border-2 border-violet-500/30 border-t-violet-400 rounded-full animate-spin" />
+    <div
+      role='status'
+      aria-label={message}
+      title={message}
+      className="w-12 h-12 border-2 border-accentv/30 border-t-accentv rounded-full animate-spin"
+    />
   </div>
 );
 
 const ComputersCanvas = () => {
   const [isMobile, setIsMobile] = useState(false);
+  // Hook lives in the DOM tree; the strings travel into the r3f scene as props.
+  const { t } = useLanguage();
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(max-width: 500px)");
@@ -65,7 +76,7 @@ const ComputersCanvas = () => {
   }, []);
 
   return (
-    <ErrorBoundary fallback={<Fallback />}>
+    <ErrorBoundary fallback={<Fallback message={t.common.sceneUnavailable} />}>
       <Canvas
         frameloop='demand'
         shadows
@@ -76,7 +87,14 @@ const ComputersCanvas = () => {
         }}
         gl={{ preserveDrawingBuffer: true }}
       >
-        <Suspense fallback={<CanvasLoader />}>
+        <Suspense
+          fallback={
+            <CanvasLoader
+              label={t.common.loadingScene}
+              percentLabel={t.common.loadingPercent}
+            />
+          }
+        >
           <OrbitControls
             enableZoom={false}
             maxPolarAngle={Math.PI / 2}

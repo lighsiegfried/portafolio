@@ -13,47 +13,52 @@ import StatusBadge from '../StatusBadge';
 import DataTable from './DataTable';
 import { allowedActions, itemsTotal, PRIORITY_STYLES } from '../../config/requisitions';
 import { formatCurrency, formatDate } from '../../utils/formatters';
+import useErpTranslation from '../../i18n/useErpTranslation';
 import { cn } from '@/mini-erp/lib/utils';
 
 /** Professional requisitions table (reuses the shared DataTable). */
 export default function RequisitionsTable({ requisitions, user, onOpen, onAction, renderToolbar }) {
+  const { te, language } = useErpTranslation();
+
   const columns = useMemo(() => [
     {
       accessorKey: 'number',
-      header: 'Número',
-      cell: ({ row }) => <span className="font-mono text-xs text-violet-300">{row.original.number}</span>,
+      header: te.requisitions.table.number,
+      cell: ({ row }) => (
+        <span className="font-mono text-xs text-violet-600 dark:text-violet-300">{row.original.number}</span>
+      ),
     },
     {
       accessorKey: 'title',
-      header: 'Título',
+      header: te.requisitions.table.title,
       cell: ({ row }) => <span className="font-medium text-foreground">{row.original.title}</span>,
     },
     {
       accessorKey: 'status',
-      header: 'Estado',
+      header: te.requisitions.table.status,
       cell: ({ row }) => <StatusBadge status={row.original.status} />,
     },
     {
       accessorKey: 'priority',
-      header: 'Prioridad',
+      header: te.requisitions.table.priority,
       cell: ({ row }) => (
         <span className={cn('text-xs font-medium capitalize', PRIORITY_STYLES[row.original.priority] || 'text-muted-foreground')}>
-          {row.original.priority || '-'}
+          {te.status.priority[row.original.priority] || row.original.priority || te.formats.emptyValue}
         </span>
       ),
     },
     {
       id: 'total',
       accessorFn: (r) => itemsTotal(r),
-      header: 'Costo est.',
+      header: te.requisitions.table.estimatedCost,
       meta: { className: 'text-right' },
-      cell: ({ row }) => <span className="tabular-nums">{formatCurrency(itemsTotal(row.original))}</span>,
+      cell: ({ row }) => <span className="tabular-nums">{formatCurrency(itemsTotal(row.original), language)}</span>,
     },
     {
       accessorKey: 'createdAt',
-      header: 'Fecha',
+      header: te.requisitions.table.date,
       meta: { className: 'text-right' },
-      cell: ({ row }) => <span className="text-xs text-muted-foreground">{formatDate(row.original.createdAt)}</span>,
+      cell: ({ row }) => <span className="text-xs text-muted-foreground">{formatDate(row.original.createdAt, language)}</span>,
     },
     {
       id: 'actions',
@@ -66,23 +71,23 @@ export default function RequisitionsTable({ requisitions, user, onOpen, onAction
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="size-8">
-                <MoreHorizontal className="size-4" />
-                <span className="sr-only">Acciones</span>
+              <Button variant="ghost" size="icon" className="size-8" aria-label={te.common.actions}>
+                <MoreHorizontal className="size-4" aria-hidden="true" />
+                <span className="sr-only">{te.common.actions}</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => onOpen(req)}>
-                <Eye className="size-4" />
-                Ver detalle
+                <Eye className="size-4" aria-hidden="true" />
+                {te.common.viewDetail}
               </DropdownMenuItem>
               {actions.length > 0 && (
                 <>
                   <DropdownMenuSeparator />
-                  <DropdownMenuLabel>Flujo</DropdownMenuLabel>
+                  <DropdownMenuLabel>{te.requisitions.table.flowGroup}</DropdownMenuLabel>
                   {actions.map((action) => (
                     <DropdownMenuItem key={action.key} onClick={() => onAction(req, action)}>
-                      {action.label}
+                      {te.requisitions.actions[action.key] || action.label}
                     </DropdownMenuItem>
                   ))}
                 </>
@@ -92,14 +97,14 @@ export default function RequisitionsTable({ requisitions, user, onOpen, onAction
         );
       },
     },
-  ], [user, onOpen, onAction]);
+  ], [te, language, user, onOpen, onAction]);
 
   return (
     <DataTable
       columns={columns}
       data={requisitions}
       renderToolbar={renderToolbar}
-      emptyMessage="No hay requisiciones en este estado"
+      emptyMessage={te.requisitions.table.empty}
     />
   );
 }

@@ -10,14 +10,29 @@
  * `rejected` and `completed` are terminal. The frontend derives the available
  * actions from this single source so it can never offer a transition the
  * backend would reject (the backend still re-validates every transition).
+ *
+ * i18n: labels are keyed through the ERP dictionary (`status.requisition.*`,
+ * `requisitions.filters.*`, `requisitions.actions.*`, `requisitions.timeline.*`,
+ * `toast.requisition*`). The static `label` fields hold the Spanish strings so
+ * untouched call sites keep working; React call sites pass `te`:
+ *
+ *   const { te } = useErpTranslation();
+ *   allowedActions(req, user, te)   // actions with localized labels/copy
+ *   localizedReqFilters(te)         // filter tabs
+ *   statusLabel(req.status, te)
+ *   timelineSteps(req.status, te)
  */
 import { userCan } from '../utils/permissions';
+import { erpTranslations } from '../i18n/erpTranslations';
+
+/** Spanish dictionary slice used as the non-localized fallback. */
+const FALLBACK = erpTranslations.es;
 
 export const REQ_STATUSES = [
-  { value: 'pending', label: 'Pendiente', dot: 'bg-yellow-400' },
-  { value: 'approved', label: 'Aprobada', dot: 'bg-blue-400' },
-  { value: 'completed', label: 'Completada', dot: 'bg-emerald-400' },
-  { value: 'rejected', label: 'Rechazada', dot: 'bg-red-400' },
+  { value: 'pending', labelKey: 'status.requisition.pending', label: FALLBACK.status.requisition.pending, dot: 'bg-amber-500 dark:bg-amber-400' },
+  { value: 'approved', labelKey: 'status.requisition.approved', label: FALLBACK.status.requisition.approved, dot: 'bg-blue-500 dark:bg-blue-400' },
+  { value: 'completed', labelKey: 'status.requisition.completed', label: FALLBACK.status.requisition.completed, dot: 'bg-emerald-500 dark:bg-emerald-400' },
+  { value: 'rejected', labelKey: 'status.requisition.rejected', label: FALLBACK.status.requisition.rejected, dot: 'bg-red-500 dark:bg-red-400' },
 ];
 
 export const TERMINAL_STATUSES = ['completed', 'rejected'];
@@ -25,91 +40,162 @@ export const TERMINAL_STATUSES = ['completed', 'rejected'];
 /**
  * Allowed transitions. Each action declares the status it may run **from**, the
  * permission that gates it, and UI metadata for the confirmation dialog.
+ *
+ * The `*Key` fields point at the dictionary; the plain fields are the Spanish
+ * fallback. Use `localizedReqAction()` / `allowedActions(req, user, te)` to get
+ * an action whose copy already follows the active language.
  */
 export const REQ_ACTIONS = {
   approve: {
     key: 'approve',
     from: 'pending',
     permission: 'approveRequisition',
-    label: 'Aprobar',
+    label: FALLBACK.requisitions.actions.approve,
+    labelKey: 'requisitions.actions.approve',
     intent: 'primary',
-    confirmTitle: 'Aprobar requisición',
-    confirmBody: 'La requisición pasará a estado "Aprobada" y podrá completarse.',
-    successMessage: 'Requisición aprobada',
+    confirmTitle: FALLBACK.requisitions.actions.approveTitle,
+    confirmTitleKey: 'requisitions.actions.approveTitle',
+    confirmBody: FALLBACK.requisitions.actions.approveBody,
+    confirmBodyKey: 'requisitions.actions.approveBody',
+    successMessage: FALLBACK.toast.requisitionApproved,
+    successMessageKey: 'toast.requisitionApproved',
     requiresReason: false,
   },
   reject: {
     key: 'reject',
     from: 'pending',
     permission: 'rejectRequisition',
-    label: 'Rechazar',
+    label: FALLBACK.requisitions.actions.reject,
+    labelKey: 'requisitions.actions.reject',
     intent: 'danger',
-    confirmTitle: 'Rechazar requisición',
-    confirmBody: 'La requisición quedará rechazada de forma definitiva. Indica el motivo.',
-    successMessage: 'Requisición rechazada',
+    confirmTitle: FALLBACK.requisitions.actions.rejectTitle,
+    confirmTitleKey: 'requisitions.actions.rejectTitle',
+    confirmBody: FALLBACK.requisitions.actions.rejectBody,
+    confirmBodyKey: 'requisitions.actions.rejectBody',
+    successMessage: FALLBACK.toast.requisitionRejected,
+    successMessageKey: 'toast.requisitionRejected',
     requiresReason: true,
   },
   complete: {
     key: 'complete',
     from: 'approved',
     permission: 'completeRequisition',
-    label: 'Completar',
+    label: FALLBACK.requisitions.actions.complete,
+    labelKey: 'requisitions.actions.complete',
     intent: 'success',
-    confirmTitle: 'Completar requisición',
-    confirmBody: 'La requisición se marcará como "Completada". Esta acción es definitiva.',
-    successMessage: 'Requisición completada',
+    confirmTitle: FALLBACK.requisitions.actions.completeTitle,
+    confirmTitleKey: 'requisitions.actions.completeTitle',
+    confirmBody: FALLBACK.requisitions.actions.completeBody,
+    confirmBodyKey: 'requisitions.actions.completeBody',
+    successMessage: FALLBACK.toast.requisitionCompleted,
+    successMessageKey: 'toast.requisitionCompleted',
     requiresReason: false,
   },
 };
 
-/** Status filter tabs (the workflow stages + a catch-all "Todas"). */
+/** Status filter tabs (the workflow stages + a catch-all "all"). */
 export const REQ_FILTERS = [
-  { value: 'all', label: 'Todas' },
-  { value: 'pending', label: 'Pendientes' },
-  { value: 'approved', label: 'Aprobadas' },
-  { value: 'completed', label: 'Completadas' },
-  { value: 'rejected', label: 'Rechazadas' },
+  { value: 'all', labelKey: 'requisitions.filters.all', label: FALLBACK.requisitions.filters.all },
+  { value: 'pending', labelKey: 'requisitions.filters.pending', label: FALLBACK.requisitions.filters.pending },
+  { value: 'approved', labelKey: 'requisitions.filters.approved', label: FALLBACK.requisitions.filters.approved },
+  { value: 'completed', labelKey: 'requisitions.filters.completed', label: FALLBACK.requisitions.filters.completed },
+  { value: 'rejected', labelKey: 'requisitions.filters.rejected', label: FALLBACK.requisitions.filters.rejected },
 ];
 
-export function statusLabel(status) {
-  return REQ_STATUSES.find((s) => s.value === status)?.label || status;
+/**
+ * @param {string} status
+ * @param {object} [te] dictionary from `useErpTranslation()`
+ */
+export function statusLabel(status, te) {
+  const dictionary = te || FALLBACK;
+  return dictionary.status?.requisition?.[status]
+    || REQ_STATUSES.find((s) => s.value === status)?.label
+    || status;
+}
+
+/** `REQ_STATUSES` with `label` resolved for the active language. */
+export function localizedReqStatuses(te) {
+  return REQ_STATUSES.map((status) => ({ ...status, label: statusLabel(status.value, te) }));
+}
+
+/** `REQ_FILTERS` with `label` resolved for the active language. */
+export function localizedReqFilters(te) {
+  const dictionary = te || FALLBACK;
+  return REQ_FILTERS.map((filter) => ({
+    ...filter,
+    label: dictionary.requisitions?.filters?.[filter.value] || filter.label,
+  }));
+}
+
+/** Success toast key per action, e.g. approve -> toast.requisitionApproved. */
+const SUCCESS_TOAST_KEYS = {
+  approve: 'requisitionApproved',
+  reject: 'requisitionRejected',
+  complete: 'requisitionCompleted',
+};
+
+/** One action with its label / confirmation copy / success toast localized. */
+export function localizedReqAction(action, te) {
+  if (!action) return action;
+  const dictionary = te || FALLBACK;
+  const actions = dictionary.requisitions?.actions;
+  return {
+    ...action,
+    label: actions?.[action.key] || action.label,
+    confirmTitle: actions?.[`${action.key}Title`] || action.confirmTitle,
+    confirmBody: actions?.[`${action.key}Body`] || action.confirmBody,
+    successMessage: dictionary.toast?.[SUCCESS_TOAST_KEYS[action.key]] || action.successMessage,
+  };
 }
 
 /**
- * The actions a given user may perform on a requisition right now — gated by
- * both the current status (state machine) and the user's role (permissions).
+ * The actions a given user may perform on a requisition right now, gated by
+ * both the current status (state machine) and the user role (permissions).
+ *
+ * @param {object} req
+ * @param {object} user
+ * @param {object} [te] pass it to get localized labels / confirmation copy
  */
-export function allowedActions(req, user) {
+export function allowedActions(req, user, te) {
   if (!req) return [];
-  return Object.values(REQ_ACTIONS).filter(
+  const actions = Object.values(REQ_ACTIONS).filter(
     (a) => req.status === a.from && userCan(user, a.permission)
   );
+  return te ? actions.map((a) => localizedReqAction(a, te)) : actions;
 }
 
 /**
  * Progress steps for the status timeline / indicator. A rejected requisition
  * branches off the happy path.
+ *
+ * @param {string} status
+ * @param {object} [te]
  */
-export function timelineSteps(status) {
+export function timelineSteps(status, te) {
+  const dictionary = te || FALLBACK;
   if (status === 'rejected') {
     return [
-      { key: 'pending', label: 'Creada', state: 'done' },
-      { key: 'rejected', label: 'Rechazada', state: 'rejected' },
+      {
+        key: 'pending',
+        label: dictionary.requisitions?.timeline?.created || FALLBACK.requisitions.timeline.created,
+        state: 'done',
+      },
+      { key: 'rejected', label: statusLabel('rejected', te), state: 'rejected' },
     ];
   }
   const order = ['pending', 'approved', 'completed'];
   const current = order.indexOf(status);
   return order.map((key, i) => ({
     key,
-    label: statusLabel(key),
+    label: statusLabel(key, te),
     state: i < current ? 'done' : i === current ? 'current' : 'todo',
   }));
 }
 
 // Created items carry `productName`/`unit`; seed items carry `productId` only.
 // Read both shapes defensively.
-export function itemName(item) {
-  return item.productName || item.productId || '-';
+export function itemName(item, te) {
+  return item.productName || item.productId || (te || FALLBACK).formats?.emptyValue || '-';
 }
 
 export function itemsTotal(req) {
@@ -118,9 +204,10 @@ export function itemsTotal(req) {
   return items.reduce((sum, it) => sum + (Number(it.estimatedCost) || 0), 0);
 }
 
+/** Priority accents readable on both a white and a near-black surface. */
 export const PRIORITY_STYLES = {
-  urgente: 'text-red-300',
-  alta: 'text-yellow-300',
+  urgente: 'text-red-600 dark:text-red-400',
+  alta: 'text-amber-600 dark:text-amber-400',
   media: 'text-muted-foreground',
   baja: 'text-muted-foreground',
 };

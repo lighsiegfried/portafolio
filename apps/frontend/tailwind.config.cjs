@@ -6,19 +6,42 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // --- Portfolio tokens (preserved) -------------------------------------
-        // primary/secondary are upgraded from plain hex strings to objects so the
-        // bare `DEFAULT` keeps the EXACT existing hex (Tailwind resolves
-        // `bg-primary`/`text-secondary` to DEFAULT — portfolio stays identical),
-        // while exposing `*-foreground` utilities that shadcn/ui primitives need.
-        primary: { DEFAULT: "#050816", foreground: "#f3f3f3" },
-        secondary: { DEFAULT: "#aaa6c3", foreground: "#0b0b16" },
-        tertiary: "#151030",
-        "black-100": "#100d25",
-        "black-200": "#090325",
-        "white-100": "#f3f3f3",
+        // --- Portfolio tokens ---------------------------------------------------
+        // These used to be literal hex values baked for the dark-only portfolio.
+        // They are now resolved from CSS custom properties declared in
+        // `src/index.css` (`:root` = light, `.dark` = the ORIGINAL hex values),
+        // so a single `.dark` class on <html> repaints the whole portfolio.
+        // The `<alpha-value>` placeholder keeps opacity modifiers working
+        // (`bg-primary/80`, `border-line/5`, ...).
+        //
+        // Dark-mode values are byte-identical to the previous palette:
+        //   primary #050816 · secondary #aaa6c3 · tertiary #151030
+        //   black-100 #100d25 · black-200 #090325 · white-100 #f3f3f3
+        primary: {
+          DEFAULT: "rgb(var(--c-primary) / <alpha-value>)",
+          foreground: "rgb(var(--c-primary-foreground) / <alpha-value>)",
+        },
+        secondary: {
+          DEFAULT: "rgb(var(--c-secondary) / <alpha-value>)",
+          foreground: "rgb(var(--c-secondary-foreground) / <alpha-value>)",
+        },
+        tertiary: "rgb(var(--c-tertiary) / <alpha-value>)",
+        "black-100": "rgb(var(--c-black-100) / <alpha-value>)",
+        "black-200": "rgb(var(--c-black-200) / <alpha-value>)",
+        "white-100": "rgb(var(--c-white-100) / <alpha-value>)",
 
-        // --- shadcn/ui semantic tokens (new keys; portfolio never uses these) --
+        // --- Theme-aware neutrals (new) ----------------------------------------
+        // `ink` replaces literal `text-white` on portfolio copy; `line` replaces
+        // literal `white/5`-style hairline borders and translucent overlays.
+        // Both invert in light mode, so `text-ink` / `border-line/10` read
+        // correctly on either background without per-usage `dark:` variants.
+        ink: "rgb(var(--c-ink) / <alpha-value>)",
+        line: "rgb(var(--c-line) / <alpha-value>)",
+        // Fixed accent used by hero/nav highlights — identical in both themes
+        // except for a slightly darker light-mode variant for AA contrast.
+        accentv: "rgb(var(--c-accent-violet) / <alpha-value>)",
+
+        // --- shadcn/ui semantic tokens (Mini ERP) ------------------------------
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
@@ -68,7 +91,9 @@ module.exports = {
         sm: "calc(var(--radius) - 4px)",
       },
       boxShadow: {
-        card: "0px 35px 120px -15px #211e35",
+        // Was `0px 35px 120px -15px #211e35` (dark-only). Now theme-driven so
+        // light mode gets a soft neutral lift instead of a near-black bloom.
+        card: "var(--shadow-card)",
       },
       screens: {
         xs: "450px",

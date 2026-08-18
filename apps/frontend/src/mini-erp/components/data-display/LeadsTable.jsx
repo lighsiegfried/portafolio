@@ -13,26 +13,30 @@ import StatusBadge from '../StatusBadge';
 import DataTable from './DataTable';
 import { LEAD_STAGES, leadCompany, leadContact, sourceLabel } from '../../config/leads';
 import { formatCurrency, formatDate } from '../../utils/formatters';
+import useErpTranslation from '../../i18n/useErpTranslation';
 
 /** Enhanced table view of leads (reuses the shared DataTable). */
 export default function LeadsTable({ leads, canManage, onOpen, onMove }) {
+  const { te } = useErpTranslation();
+  const dash = te.formats.emptyValue;
+
   const columns = useMemo(() => [
-    { id: 'company', accessorFn: (l) => leadCompany(l), header: 'Empresa', cell: ({ row }) => <span className="font-medium text-foreground">{leadCompany(row.original)}</span> },
-    { id: 'contact', accessorFn: (l) => leadContact(l), header: 'Contacto', cell: ({ row }) => <span className="text-muted-foreground">{leadContact(row.original)}</span> },
-    { accessorKey: 'email', header: 'Email', cell: ({ row }) => <span className="text-xs text-muted-foreground">{row.original.email || '-'}</span> },
-    { accessorKey: 'status', header: 'Estado', cell: ({ row }) => <StatusBadge status={row.original.status} /> },
-    { accessorKey: 'source', header: 'Fuente', cell: ({ row }) => <span className="text-xs text-muted-foreground">{sourceLabel(row.original.source)}</span> },
+    { id: 'company', accessorFn: (l) => leadCompany(l), header: te.leads.table.company, cell: ({ row }) => <span className="font-medium text-foreground">{leadCompany(row.original)}</span> },
+    { id: 'contact', accessorFn: (l) => leadContact(l), header: te.leads.table.contact, cell: ({ row }) => <span className="text-muted-foreground">{leadContact(row.original)}</span> },
+    { accessorKey: 'email', header: te.leads.table.email, cell: ({ row }) => <span className="text-xs text-muted-foreground">{row.original.email || dash}</span> },
+    { accessorKey: 'status', header: te.leads.table.status, cell: ({ row }) => <StatusBadge status={row.original.status} /> },
+    { accessorKey: 'source', header: te.leads.table.source, cell: ({ row }) => <span className="text-xs text-muted-foreground">{te.leads.sources[row.original.source] || sourceLabel(row.original.source)}</span> },
     {
       accessorKey: 'estimatedValue',
-      header: 'Valor',
+      header: te.leads.table.value,
       meta: { className: 'text-right' },
-      cell: ({ row }) => <span className="tabular-nums">{row.original.estimatedValue != null ? formatCurrency(row.original.estimatedValue) : '-'}</span>,
+      cell: ({ row }) => <span className="tabular-nums">{row.original.estimatedValue != null ? formatCurrency(row.original.estimatedValue) : dash}</span>,
     },
     {
       accessorKey: 'nextFollowUp',
-      header: 'Seguimiento',
+      header: te.leads.table.followUp,
       meta: { className: 'text-right' },
-      cell: ({ row }) => <span className="text-xs text-muted-foreground">{row.original.nextFollowUp ? formatDate(row.original.nextFollowUp) : '-'}</span>,
+      cell: ({ row }) => <span className="text-xs text-muted-foreground">{row.original.nextFollowUp ? formatDate(row.original.nextFollowUp) : dash}</span>,
     },
     {
       id: 'actions',
@@ -44,23 +48,23 @@ export default function LeadsTable({ leads, canManage, onOpen, onMove }) {
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="size-8">
-                <MoreHorizontal className="size-4" />
-                <span className="sr-only">Acciones</span>
+              <Button variant="ghost" size="icon" className="size-8" aria-label={te.common.actions}>
+                <MoreHorizontal className="size-4" aria-hidden="true" />
+                <span className="sr-only">{te.common.actions}</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => onOpen(lead)}>
-                <Eye className="size-4" />
-                Ver detalle
+                <Eye className="size-4" aria-hidden="true" />
+                {te.leads.table.viewDetail}
               </DropdownMenuItem>
               {canManage && (
                 <>
                   <DropdownMenuSeparator />
-                  <DropdownMenuLabel>Mover a</DropdownMenuLabel>
+                  <DropdownMenuLabel>{te.common.moveTo}</DropdownMenuLabel>
                   {LEAD_STAGES.filter((s) => s.status !== lead.status).map((s) => (
                     <DropdownMenuItem key={s.status} onClick={() => onMove(lead, s.status)}>
-                      {s.label}
+                      {te.status.lead[s.status] || s.label}
                     </DropdownMenuItem>
                   ))}
                 </>
@@ -70,7 +74,7 @@ export default function LeadsTable({ leads, canManage, onOpen, onMove }) {
         );
       },
     },
-  ], [canManage, onOpen, onMove]);
+  ], [canManage, onOpen, onMove, te, dash]);
 
-  return <DataTable columns={columns} data={leads} emptyMessage="Ningún lead coincide con la búsqueda" />;
+  return <DataTable columns={columns} data={leads} emptyMessage={te.leads.table.empty} />;
 }

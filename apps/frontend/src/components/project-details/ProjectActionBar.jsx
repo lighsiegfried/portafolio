@@ -1,6 +1,8 @@
 import React from "react";
 import { Link } from "react-router-dom";
 
+import { useLanguage } from "../../context/LanguageContext";
+
 // Labeled, accessible action area for a project card. Renders real semantic
 // elements: a <button> to open the case-study dialog and <a>/<Link> for
 // navigation. Every action is data-driven — only actions whose data is present
@@ -75,9 +77,13 @@ const ProjectActionBar = ({
   onOpenCaseStudy,
   showDownload = false,
   downloadLink,
-  downloadLabel = "Descargar app",
+  downloadLabel,
 }) => {
+  const { t } = useLanguage();
   const isInternalDemo = typeof demoLink === "string" && demoLink.startsWith("/");
+  // A default parameter cannot read the language hook, so the fallback label is
+  // resolved here instead.
+  const resolvedDownloadLabel = downloadLabel || t.projects.downloadApp;
 
   return (
     <div className='mt-5 flex flex-wrap items-center gap-2.5'>
@@ -89,9 +95,9 @@ const ProjectActionBar = ({
             onOpenCaseStudy();
           }}
           aria-haspopup='dialog'
-          className='group inline-flex items-center gap-2 rounded-xl bg-[#915EFF] px-4 py-2.5 text-[14px] font-semibold text-white transition-colors hover:bg-[#7d43e0] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#915EFF] focus-visible:ring-offset-2 focus-visible:ring-offset-tertiary'
+          className='group inline-flex items-center gap-2 rounded-xl bg-accent-solid px-4 py-2.5 text-[14px] font-semibold text-white transition-colors hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-accentv focus-visible:ring-offset-2 focus-visible:ring-offset-tertiary'
         >
-          Ver caso de estudio
+          {t.projects.viewCaseStudy}
           <IconArrowRight className='h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5' />
         </button>
       )}
@@ -103,18 +109,20 @@ const ProjectActionBar = ({
             target='_blank'
             rel='noopener noreferrer'
             onClick={stop}
-            aria-label={`${downloadLabel} de ${name}, se abre en una nueva pestaña`}
-            className='inline-flex items-center gap-2 rounded-xl border border-[#915EFF]/40 bg-[#915EFF]/10 px-4 py-2.5 text-[14px] font-semibold text-[#b18cff] transition-colors hover:border-[#915EFF] hover:bg-[#915EFF]/20 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#915EFF] focus-visible:ring-offset-2 focus-visible:ring-offset-tertiary'
+            aria-label={t.projects.downloadAria
+              .replace("{label}", resolvedDownloadLabel)
+              .replace("{name}", name)}
+            className='inline-flex items-center gap-2 rounded-xl border border-accentv/40 bg-accentv/10 px-4 py-2.5 text-[14px] font-semibold text-accent-copy transition-colors hover:border-accentv hover:bg-accentv/20 hover:text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-accentv focus-visible:ring-offset-2 focus-visible:ring-offset-tertiary'
           >
             <IconDownload className='h-4 w-4' />
-            {downloadLabel}
+            {resolvedDownloadLabel}
           </a>
         ) : (
           <span
             aria-disabled='true'
-            className='inline-flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2.5 text-[14px] font-semibold text-secondary opacity-60'
+            className='inline-flex items-center gap-2 rounded-xl border border-line/10 px-4 py-2.5 text-[14px] font-semibold text-secondary opacity-60'
           >
-            Descarga no disponible
+            {t.projects.downloadUnavailableShort}
           </span>
         ))}
 
@@ -124,11 +132,11 @@ const ProjectActionBar = ({
           target='_blank'
           rel='noopener noreferrer'
           onClick={stop}
-          aria-label={`Ver el repositorio de ${name} en GitHub, se abre en una nueva pestaña`}
-          className='inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/[0.03] px-4 py-2.5 text-[14px] font-semibold text-white transition-colors hover:border-[#915EFF] hover:bg-[#915EFF]/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#915EFF] focus-visible:ring-offset-2 focus-visible:ring-offset-tertiary'
+          aria-label={t.projects.githubAria.replace("{name}", name)}
+          className='inline-flex items-center gap-2 rounded-xl border border-line/[0.15] bg-line/[0.03] px-4 py-2.5 text-[14px] font-semibold text-ink transition-colors hover:border-accentv hover:bg-accentv/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-accentv focus-visible:ring-offset-2 focus-visible:ring-offset-tertiary'
         >
           <IconGithub className='h-4 w-4' />
-          GitHub
+          {t.projects.githubRepo}
         </a>
       )}
 
@@ -137,10 +145,10 @@ const ProjectActionBar = ({
           <Link
             to={demoLink}
             onClick={stop}
-            aria-label={`Abrir demo de ${name}`}
-            className='inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/[0.03] px-4 py-2.5 text-[14px] font-semibold text-white transition-colors hover:border-[#915EFF] hover:bg-[#915EFF]/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#915EFF] focus-visible:ring-offset-2 focus-visible:ring-offset-tertiary'
+            aria-label={t.projects.demoAria.replace("{name}", name)}
+            className='inline-flex items-center gap-2 rounded-xl border border-line/[0.15] bg-line/[0.03] px-4 py-2.5 text-[14px] font-semibold text-ink transition-colors hover:border-accentv hover:bg-accentv/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-accentv focus-visible:ring-offset-2 focus-visible:ring-offset-tertiary'
           >
-            Abrir demo
+            {t.projects.openDemo}
             <IconArrowRight className='h-4 w-4' />
           </Link>
         ) : (
@@ -149,11 +157,11 @@ const ProjectActionBar = ({
             target='_blank'
             rel='noopener noreferrer'
             onClick={stop}
-            aria-label={`Abrir demo de ${name}, se abre en una nueva pestaña`}
-            className='inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/[0.03] px-4 py-2.5 text-[14px] font-semibold text-white transition-colors hover:border-[#915EFF] hover:bg-[#915EFF]/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#915EFF] focus-visible:ring-offset-2 focus-visible:ring-offset-tertiary'
+            aria-label={t.projects.demoAriaExternal.replace("{name}", name)}
+            className='inline-flex items-center gap-2 rounded-xl border border-line/[0.15] bg-line/[0.03] px-4 py-2.5 text-[14px] font-semibold text-ink transition-colors hover:border-accentv hover:bg-accentv/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-accentv focus-visible:ring-offset-2 focus-visible:ring-offset-tertiary'
           >
             <IconExternal className='h-4 w-4' />
-            Abrir demo
+            {t.projects.openDemo}
           </a>
         ))}
     </div>

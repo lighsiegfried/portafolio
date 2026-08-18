@@ -20,7 +20,13 @@ import {
   SelectValue,
 } from '@/mini-erp/components/ui/select';
 import * as api from '../../../services/productsApi';
+import useErpTranslation from '../../i18n/useErpTranslation';
 
+/**
+ * Category values are the backend contract; the `label` here is the untranslated
+ * fallback. Prefer `te.products.categories[value]` (or `categoryLabel(value, te)`)
+ * for anything user-visible.
+ */
 export const PRODUCT_CATEGORIES = [
   { value: 'insumo', label: 'Insumo' },
   { value: 'materia_prima', label: 'Materia Prima' },
@@ -29,7 +35,14 @@ export const PRODUCT_CATEGORIES = [
   { value: 'oficina', label: 'Oficina' },
 ];
 
-export function categoryLabel(value) {
+/**
+ * @param {string} value category value
+ * @param {object} [te] optional ERP dictionary from `useErpTranslation()`
+ * @returns {string} localized label when `te` is provided, else the static label
+ */
+export function categoryLabel(value, te) {
+  const localized = te?.products?.categories?.[value];
+  if (localized) return localized;
   const found = PRODUCT_CATEGORIES.find((c) => c.value === value);
   return found ? found.label : value;
 }
@@ -41,6 +54,7 @@ const EMPTY = { sku: '', name: '', category: 'insumo', unit: 'unidad', price: 0,
  * SKU is immutable on edit (identifier); backend enforces SKU uniqueness on create.
  */
 export default function ProductFormDialog({ open, onOpenChange, product, onSaved }) {
+  const { te } = useErpTranslation();
   const isEdit = Boolean(product);
   const [form, setForm] = useState(EMPTY);
   const [submitting, setSubmitting] = useState(false);
@@ -72,7 +86,7 @@ export default function ProductFormDialog({ open, onOpenChange, product, onSaved
   async function handleSubmit(e) {
     e.preventDefault();
     if (!form.name.trim() || (!isEdit && !form.sku.trim())) {
-      setError('SKU y nombre son requeridos');
+      setError(te.products.form.errors.required);
       return;
     }
     setSubmitting(true);
@@ -87,7 +101,7 @@ export default function ProductFormDialog({ open, onOpenChange, product, onSaved
           price: Number(form.price) || 0,
           minStock: Number(form.minStock) || 0,
         });
-        toast.success('Producto actualizado');
+        toast.success(te.toast.productUpdated);
       } else {
         await api.create({
           sku: form.sku.trim(),
@@ -99,12 +113,12 @@ export default function ProductFormDialog({ open, onOpenChange, product, onSaved
           minStock: Number(form.minStock) || 0,
           initialStock: Number(form.initialStock) || 0,
         });
-        toast.success('Producto creado');
+        toast.success(te.toast.productCreated);
       }
       onOpenChange(false);
       onSaved();
     } catch (err) {
-      const message = err.message || 'Error al guardar el producto';
+      const message = err.message || te.errors.saveProduct;
       setError(message);
       toast.error(message);
     } finally {
@@ -116,57 +130,57 @@ export default function ProductFormDialog({ open, onOpenChange, product, onSaved
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{isEdit ? 'Editar producto' : 'Nuevo producto'}</DialogTitle>
+          <DialogTitle>{isEdit ? te.products.form.editTitle : te.products.form.createTitle}</DialogTitle>
           <DialogDescription>
-            {isEdit ? 'Actualiza los datos del producto.' : 'Registra un nuevo producto en el catálogo.'}
+            {isEdit ? te.products.form.editDescription : te.products.form.createDescription}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-red-300">
+            <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-red-600 dark:text-red-300">
               {error}
             </p>
           )}
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label htmlFor="product-sku">SKU</Label>
+              <Label htmlFor="product-sku">{te.products.form.sku}</Label>
               <Input
                 id="product-sku"
                 value={form.sku}
                 onChange={(e) => set('sku', e.target.value)}
                 disabled={isEdit}
-                placeholder="INS-001"
+                placeholder={te.products.form.skuPlaceholder}
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="product-unit">Unidad</Label>
-              <Input id="product-unit" value={form.unit} onChange={(e) => set('unit', e.target.value)} placeholder="unidad" />
+              <Label htmlFor="product-unit">{te.products.form.unit}</Label>
+              <Input id="product-unit" value={form.unit} onChange={(e) => set('unit', e.target.value)} placeholder={te.products.form.unitPlaceholder} />
             </div>
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="product-name">Nombre</Label>
-            <Input id="product-name" value={form.name} onChange={(e) => set('name', e.target.value)} placeholder="Nombre del producto" />
+            <Label htmlFor="product-name">{te.products.form.name}</Label>
+            <Input id="product-name" value={form.name} onChange={(e) => set('name', e.target.value)} placeholder={te.products.form.namePlaceholder} />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label htmlFor="product-category">Categoría</Label>
+              <Label htmlFor="product-category">{te.products.form.category}</Label>
               <Select value={form.category} onValueChange={(v) => set('category', v)}>
                 <SelectTrigger id="product-category">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   {PRODUCT_CATEGORIES.map((c) => (
-                    <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                    <SelectItem key={c.value} value={c.value}>{categoryLabel(c.value, te)}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="product-price">Precio</Label>
+              <Label htmlFor="product-price">{te.products.form.price}</Label>
               <Input
                 id="product-price"
                 type="number"
@@ -180,7 +194,7 @@ export default function ProductFormDialog({ open, onOpenChange, product, onSaved
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label htmlFor="product-minstock">Stock mínimo</Label>
+              <Label htmlFor="product-minstock">{te.products.form.minStock}</Label>
               <Input
                 id="product-minstock"
                 type="number"
@@ -191,7 +205,7 @@ export default function ProductFormDialog({ open, onOpenChange, product, onSaved
             </div>
             {!isEdit && (
               <div className="space-y-1.5">
-                <Label htmlFor="product-initialstock">Stock inicial</Label>
+                <Label htmlFor="product-initialstock">{te.products.form.initialStock}</Label>
                 <Input
                   id="product-initialstock"
                   type="number"
@@ -204,22 +218,26 @@ export default function ProductFormDialog({ open, onOpenChange, product, onSaved
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="product-description">Descripción</Label>
+            <Label htmlFor="product-description">{te.products.form.description}</Label>
             <Textarea
               id="product-description"
               rows={2}
               value={form.description}
               onChange={(e) => set('description', e.target.value)}
-              placeholder="Opcional"
+              placeholder={te.products.form.descriptionPlaceholder}
             />
           </div>
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancelar
+              {te.common.cancel}
             </Button>
             <Button type="submit" disabled={submitting}>
-              {submitting ? 'Guardando...' : isEdit ? 'Guardar cambios' : 'Crear producto'}
+              {submitting
+                ? te.products.form.submitting
+                : isEdit
+                  ? te.products.form.submitEdit
+                  : te.products.form.submitCreate}
             </Button>
           </DialogFooter>
         </form>

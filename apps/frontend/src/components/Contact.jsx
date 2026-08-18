@@ -6,6 +6,7 @@ import { EarthCanvas } from "./canvas";
 import { SectionWrapper } from "../hoc";
 import { slideIn } from "../utils/motion";
 import { post } from "../services/api";
+import { useLanguage } from "../context/LanguageContext";
 
 const MIN_NAME = 2;
 const MAX_NAME = 120;
@@ -15,35 +16,63 @@ const MAX_MESSAGE = 2000;
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-function validateForm({ name, email, message }) {
+/**
+ * Fill `{token}` placeholders in a dictionary string.
+ *
+ * Every message is authored as a complete sentence per language, so numbers are
+ * substituted into the resolved template rather than concatenated around
+ * fragments — word order differs between ES and EN.
+ *
+ * @param {string | undefined} template
+ * @param {Record<string, string | number>} [values]
+ * @returns {string}
+ */
+const format = (template, values = {}) =>
+  Object.entries(values).reduce(
+    (text, [token, value]) => text.replace("{" + token + "}", String(value)),
+    template || ""
+  );
+
+/**
+ * Validate the contact form.
+ *
+ * Pure and module-level: the copy is injected so the function never needs the
+ * language hook. Only the messages are localized — the rules (lengths, regex,
+ * branching) are language independent and unchanged.
+ *
+ * @param {{ name: string, email: string, message: string }} values
+ * @param {Record<string, string>} [copy] - the `t.contact` namespace.
+ * @returns {{ name?: string, email?: string, message?: string }}
+ */
+function validateForm({ name, email, message }, copy = {}) {
   const errors = {};
 
   const trimmedName = name.trim();
   if (!trimmedName) {
-    errors.name = "El nombre es requerido.";
+    errors.name = format(copy.validationNameRequired);
   } else if (trimmedName.length < MIN_NAME) {
-    errors.name = `Tu nombre debe tener al menos ${MIN_NAME} caracteres.`;
+    errors.name = format(copy.validationNameMin, { min: MIN_NAME });
   } else if (trimmedName.length > MAX_NAME) {
-    errors.name = `Tu nombre no puede superar ${MAX_NAME} caracteres.`;
+    errors.name = format(copy.validationNameMax, { max: MAX_NAME });
   }
 
   const trimmedEmail = email.trim();
   if (!trimmedEmail) {
-    errors.email = "El correo electrónico es requerido.";
+    errors.email = format(copy.validationEmailRequired);
   } else if (!EMAIL_REGEX.test(trimmedEmail)) {
-    errors.email = "Ingresa un correo electrónico válido.";
+    errors.email = format(copy.validationEmailInvalid);
   } else if (trimmedEmail.length > MAX_EMAIL) {
-    errors.email = `El correo no puede superar ${MAX_EMAIL} caracteres.`;
+    errors.email = format(copy.validationEmailMax, { max: MAX_EMAIL });
   }
 
   if (!message || typeof message !== "string" || !message.trim()) {
-    errors.message = "El mensaje es requerido.";
+    errors.message = format(copy.validationMessageRequired);
   } else {
     const trimmedMessage = message.trim();
     if (trimmedMessage.length < MIN_MESSAGE) {
-      errors.message = `Tu mensaje debe tener al menos ${MIN_MESSAGE} caracteres.`;
+      errors.message = format(copy.validationMessageMin, { min: MIN_MESSAGE });
     } else if (trimmedMessage.length > MAX_MESSAGE) {
-      errors.message = `Tu mensaje no puede superar ${MAX_MESSAGE} caracteres.`;
+      errors.message = format(copy.validationMessageMax, { max: MAX_MESSAGE });
     }
   }
 
@@ -51,6 +80,9 @@ function validateForm({ name, email, message }) {
 }
 
 const Contact = () => {
+  const { t } = useLanguage();
+  const copy = t.contact;
+
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -62,7 +94,7 @@ const Contact = () => {
   const [status, setStatus] = useState(null);
   const [serverError, setServerError] = useState(null);
   const [limitNotice, setLimitNotice] = useState("");
-  
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -70,7 +102,7 @@ const Contact = () => {
     setServerError(null);
     setFormErrors({});
 
-    const errors = validateForm(form);
+    const errors = validateForm(form, copy);
 
     if (Object.keys(errors).length > 0) {
       setFormErrors(errors);
@@ -94,11 +126,10 @@ const Contact = () => {
       const message = err?.message || err?.error?.message;
 
       if (code === "VALIDATION_ERROR" && message) {
+        // Backend-supplied detail: rendered verbatim, it is not dictionary copy.
         setServerError(message);
       } else {
-        setServerError(
-          "No pudimos enviar el mensaje en este momento. Intenta nuevamente más tarde."
-        );
+        setServerError(copy.errorMessage);
       }
     } finally {
       setLoading(false);
@@ -116,9 +147,9 @@ const Contact = () => {
   if (name === "message") {
     if (value.length > MAX_MESSAGE) {
       nextValue = value.slice(0, MAX_MESSAGE);
-      setLimitNotice(`Tu mensaje llegó al límite de ${MAX_MESSAGE} caracteres.`);
+      setLimitNotice(format(copy.limitReached, { max: MAX_MESSAGE }));
     } else if (value.length === MAX_MESSAGE) {
-      setLimitNotice(`Tu mensaje llegó al límite de ${MAX_MESSAGE} caracteres.`);
+      setLimitNotice(format(copy.limitReached, { max: MAX_MESSAGE }));
     } else {
       setLimitNotice("");
     }
@@ -138,6 +169,20 @@ const Contact = () => {
   }
   };
 
+  const trimmedMessageLength = form.message.trim().length;
+  const isMessageTooShort =
+    trimmedMessageLength > 0 && trimmedMessageLength < MIN_MESSAGE;
+
+  // Only reference nodes that are actually rendered, otherwise screen readers
+  // announce a dangling `aria-describedby` target.
+  const messageDescribedBy = [
+    "contact-message-hint",
+    limitNotice ? "contact-message-limit" : null,
+    formErrors.message ? "contact-message-error" : null,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
     <div
       className={`xl:mt-12 flex xl:flex-row flex-col-reverse gap-10 overflow-hidden`}
@@ -146,17 +191,23 @@ const Contact = () => {
         variants={slideIn("left", "tween", 0.2, 1)}
         className='flex-[0.75] bg-black-100 p-8 rounded-2xl'
       >
-        <p className={styles.sectionSubText}>Ponte en contacto</p>
-        <h3 className={styles.sectionHeadText}>Contacto</h3>
+        <p className={styles.sectionSubText}>{copy.badge}</p>
+        <h3 className={styles.sectionHeadText}>{copy.title}</h3>
 
         {status === "success" && (
-          <div className='mt-6 p-4 bg-green-900/50 border border-green-500 rounded-lg text-green-300 text-sm'>
-            Gracias, tu mensaje fue recibido correctamente.
+          <div
+            role='status'
+            className='mt-6 p-4 rounded-lg text-sm border bg-emerald-500/10 border-emerald-600/40 text-emerald-700 dark:bg-emerald-900/40 dark:border-emerald-500 dark:text-emerald-300'
+          >
+            {copy.successMessage}
           </div>
         )}
 
         {serverError && (
-          <div className='mt-6 p-4 bg-red-900/50 border border-red-500 rounded-lg text-red-300 text-sm'>
+          <div
+            role='alert'
+            className='mt-6 p-4 rounded-lg text-sm border bg-red-500/10 border-red-600/40 text-red-700 dark:bg-red-900/40 dark:border-red-500 dark:text-red-300'
+          >
             {serverError}
           </div>
         )}
@@ -167,90 +218,114 @@ const Contact = () => {
           className='mt-12 flex flex-col gap-8'
         >
           <label className='flex flex-col'>
-            <span className='text-white font-medium mb-4'>Tu nombre</span>
+            <span className='text-ink font-medium mb-4'>{copy.nameLabel}</span>
             <input
               type='text'
               name='name'
               value={form.name}
               onChange={handleChange}
               maxLength={MAX_NAME}
-              placeholder="¿Cuál es tu nombre?"
-              className={`bg-tertiary py-4 px-6 placeholder:text-secondary text-white rounded-lg outline-none border-none font-medium ${
+              placeholder={copy.namePlaceholder}
+              aria-invalid={formErrors.name ? "true" : "false"}
+              aria-describedby={formErrors.name ? "contact-name-error" : undefined}
+              className={`bg-tertiary py-4 px-6 placeholder:text-secondary text-ink rounded-lg outline-none border border-line/10 font-medium ${
                 formErrors.name ? "ring-2 ring-red-500" : ""
               }`}
             />
             {formErrors.name && (
-              <span className='mt-1 text-red-400 text-xs'>
+              <span
+                id='contact-name-error'
+                className='mt-1 text-red-600 dark:text-red-400 text-xs'
+              >
                 {formErrors.name}
               </span>
             )}
           </label>
           <label className='flex flex-col'>
-            <span className='text-white font-medium mb-4'>Tu e-mail</span>
+            <span className='text-ink font-medium mb-4'>{copy.emailLabel}</span>
             <input
               type='email'
               name='email'
               value={form.email}
               onChange={handleChange}
               maxLength={MAX_EMAIL}
-              placeholder="¿Cuál es tu correo electrónico?"
-              className={`bg-tertiary py-4 px-6 placeholder:text-secondary text-white rounded-lg outline-none border-none font-medium ${
+              placeholder={copy.emailPlaceholder}
+              aria-invalid={formErrors.email ? "true" : "false"}
+              aria-describedby={formErrors.email ? "contact-email-error" : undefined}
+              className={`bg-tertiary py-4 px-6 placeholder:text-secondary text-ink rounded-lg outline-none border border-line/10 font-medium ${
                 formErrors.email ? "ring-2 ring-red-500" : ""
               }`}
             />
             {formErrors.email && (
-              <span className='mt-1 text-red-400 text-xs'>
+              <span
+                id='contact-email-error'
+                className='mt-1 text-red-600 dark:text-red-400 text-xs'
+              >
                 {formErrors.email}
               </span>
             )}
           </label>
           <label className='flex flex-col'>
-            <span className='text-white font-medium mb-4'>Tu mensaje</span>
+            <span className='text-ink font-medium mb-4'>{copy.messageLabel}</span>
             <textarea
               rows={7}
               name='message'
               value={form.message}
               onChange={handleChange}
               maxLength={MAX_MESSAGE}
-              placeholder='¿En qué puedo ayudarte?'
-              className={`bg-tertiary py-4 px-6 placeholder:text-secondary text-white rounded-lg outline-none border-none font-medium ${
+              placeholder={copy.messagePlaceholder}
+              aria-invalid={formErrors.message ? "true" : "false"}
+              aria-describedby={messageDescribedBy}
+              className={`bg-tertiary py-4 px-6 placeholder:text-secondary text-ink rounded-lg outline-none border border-line/10 font-medium ${
                 formErrors.message ? "ring-2 ring-red-500" : ""
               }`}
             />
             <div className='mt-2 flex items-center justify-between text-xs'>
               <span
+                id='contact-message-hint'
                 className={
-                  form.message.trim().length > 0 &&
-                  form.message.trim().length < MIN_MESSAGE
-                    ? "text-red-400"
+                  isMessageTooShort
+                    ? "text-red-600 dark:text-red-400"
                     : "text-secondary"
                 }
               >
-                {form.message.trim().length > 0 &&
-                form.message.trim().length < MIN_MESSAGE
-                  ? `Faltan ${MIN_MESSAGE - form.message.trim().length} caracteres para poder enviar.`
-                  : `${MAX_MESSAGE - form.message.length} caracteres restantes.`}
+                {isMessageTooShort
+                  ? format(copy.charsMissing, {
+                      count: MIN_MESSAGE - trimmedMessageLength,
+                    })
+                  : format(copy.charsRemaining, {
+                      count: MAX_MESSAGE - form.message.length,
+                    })}
               </span>
 
               <span
                 className={
                   form.message.length >= MAX_MESSAGE
-                    ? "text-yellow-300"
+                    ? "text-amber-600 dark:text-amber-300"
                     : "text-secondary"
                 }
               >
-                {form.message.length} / {MAX_MESSAGE}
+                {format(copy.charsCounter, {
+                  count: form.message.length,
+                  max: MAX_MESSAGE,
+                })}
               </span>
             </div>
 
             {limitNotice && (
-              <span className='mt-1 text-yellow-300 text-xs'>
+              <span
+                id='contact-message-limit'
+                className='mt-1 text-amber-600 dark:text-amber-300 text-xs'
+              >
                 {limitNotice}
               </span>
             )}
-            
+
             {formErrors.message && (
-              <span className='mt-1 text-red-400 text-xs'>
+              <span
+                id='contact-message-error'
+                className='mt-1 text-red-600 dark:text-red-400 text-xs'
+              >
                 {formErrors.message}
               </span>
             )}
@@ -259,11 +334,11 @@ const Contact = () => {
           <button
             type='submit'
             disabled={loading}
-            className={`bg-tertiary py-3 px-8 rounded-xl outline-none w-fit text-white font-bold shadow-md shadow-primary ${
+            className={`bg-accent-solid py-3 px-8 rounded-xl outline-none w-fit text-white font-bold shadow-md shadow-primary ${
               loading ? "opacity-50 cursor-not-allowed" : ""
             }`}
           >
-            {loading ? "Enviando..." : "Enviar"}
+            {loading ? copy.sending : copy.sendButton}
           </button>
         </form>
       </motion.div>

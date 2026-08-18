@@ -4,18 +4,138 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ==========================================================================
+   Theme palette — single source of truth for the portfolio color system.
+
+   `:root` holds the LIGHT palette. `.dark` (applied to <html> by
+   ThemeProvider) restores the ORIGINAL dark portfolio values byte for byte,
+   so the dark experience is unchanged from before the theme engine landed.
+
+   Channels are space-separated RGB triples so Tailwind can compose them with
+   opacity modifiers via `rgb(var(--token) / <alpha-value>)`.
+   ========================================================================== */
+:root {
+  color-scheme: light;
+
+  --c-primary: 244 246 251; /* #f4f6fb page background */
+  --c-primary-foreground: 15 23 42;
+  --c-secondary: 71 85 105; /* #475569 muted body copy (AA on light) */
+  --c-secondary-foreground: 255 255 255;
+  --c-tertiary: 255 255 255; /* #ffffff card surface */
+  --c-black-100: 238 241 247; /* #eef1f7 recessed surface */
+  --c-black-200: 226 232 240; /* #e2e8f0 chip / inset surface */
+  --c-white-100: 15 23 42; /* #0f172a strong body copy */
+  --c-ink: 11 18 32; /* #0b1220 headings (was literal white) */
+  --c-line: 15 23 42; /* hairline borders & translucent overlays */
+  --c-accent-violet: 109 61 214; /* #6d3dd6 darker violet for AA on light */
+  /* Accent used as COPY (labels, eyebrows) — must clear 4.5:1 on the accent
+     tints (`bg-accentv/10`, `/15`). On light that is the same violet; in dark
+     it is the original `#b18cff` the pre-theme design used for these labels. */
+  --c-accent-text: 109 61 214;
+  /* Accent used as a SOLID button fill under white text. Kept separate from
+     `--c-accent-violet` because a single violet cannot clear 4.5:1 against
+     BOTH white text on the fill and accent text on the fill's own /10 tint. */
+  --c-accent-solid: 109 61 214;
+  --c-hero-sub: 51 65 85; /* #334155 hero subtitle */
+
+  --shadow-card: 0px 18px 45px -20px rgba(15, 23, 42, 0.28);
+
+  /* react-vertical-timeline-component paints via inline styles / its own CSS */
+  --timeline-card: #ffffff;
+  --timeline-arrow: #e2e8f0;
+  --timeline-line: #cbd5e1;
+  --timeline-date: #475569;
+
+  /* Decorative layers in BackgroundDecor (grid, noise, glows) */
+  --decor-grid: rgba(15, 23, 42, 0.04);
+  --decor-noise-opacity: 0.02;
+  --decor-line-opacity: 0.35;
+
+  /* `.canvas-loader` paints its dots from animated box-shadows, which no
+     inline style can override — so the dot color is a token. */
+  --loader-dot: 15 23 42;
+
+  /* Project tag gradients. The dark stops are the original artwork; the light
+     stops are darkened so the clipped text still clears 4.5:1 on the white
+     card (`#38ef7d` was 1.52:1, `#56ccf2` 1.86:1, `#fc6767` 2.89:1). */
+  --grad-orange-1: #c2410c;
+  --grad-orange-2: #b45309;
+  --grad-green-1: #065f46;
+  --grad-green-2: #0f766e;
+  --grad-blue-1: #1d4ed8;
+  --grad-blue-2: #0369a1;
+  --grad-pink-1: #be185d;
+  --grad-pink-2: #c2185b;
+}
+
+.dark {
+  color-scheme: dark;
+
+  --c-primary: 5 8 22; /* #050816 */
+  --c-primary-foreground: 243 243 243;
+  --c-secondary: 170 166 195; /* #aaa6c3 */
+  --c-secondary-foreground: 11 11 22;
+  --c-tertiary: 21 16 48; /* #151030 */
+  --c-black-100: 16 13 37; /* #100d25 */
+  --c-black-200: 9 3 37; /* #090325 */
+  --c-white-100: 243 243 243; /* #f3f3f3 */
+  --c-ink: 255 255 255;
+  --c-line: 255 255 255;
+  --c-accent-violet: 145 94 255; /* #915EFF */
+  --c-accent-text: 177 140 255; /* #b18cff — 6.29:1 on the accentv/10 tint */
+  --c-accent-solid: 135 80 234; /* #8750ea — white label reaches 4.81:1 */
+  --c-hero-sub: 223 217 255; /* #dfd9ff hero subtitle */
+
+  --shadow-card: 0px 35px 120px -15px #211e35;
+
+  --timeline-card: #1d1836;
+  --timeline-arrow: #232631;
+  --timeline-line: rgba(255, 255, 255, 0.12);
+  --timeline-date: #aaa6c3;
+
+  --decor-grid: rgba(255, 255, 255, 0.02);
+  --decor-noise-opacity: 0.015;
+  --decor-line-opacity: 0.2;
+
+  --loader-dot: 255 255 255;
+
+  --grad-orange-1: #f12711;
+  --grad-orange-2: #f5af19;
+  --grad-green-1: #11998e;
+  --grad-green-2: #38ef7d;
+  --grad-blue-1: #2f80ed;
+  --grad-blue-2: #56ccf2;
+  --grad-pink-1: #ec008c;
+  --grad-pink-2: #fc6767;
+}
+
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
   font-family: "Poppins", sans-serif;
   scroll-behavior: smooth;
-  color-scheme: dark;
+}
+
+/* Hero backdrop. The dark theme keeps the original `herobg.png` artwork; the
+   light theme swaps in a soft aurora gradient, since the artwork is a
+   near-black photo that cannot be tinted into a usable light surface. */
+.hero-backdrop-light {
+  background-image:
+    radial-gradient(120% 90% at 85% 0%, rgba(145, 94, 255, 0.16), transparent 60%),
+    radial-gradient(90% 80% at 0% 100%, rgba(6, 182, 212, 0.14), transparent 60%),
+    linear-gradient(180deg, #ffffff 0%, rgb(var(--c-primary)) 100%);
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
 }
 
 html, body {
   overflow-x: hidden;
   width: 100%;
+  /* Page ground must follow the theme; without it the browser default (white)
+     shows through wherever the 3D canvases render transparent pixels. */
+  background-color: rgb(var(--c-primary));
 }
 
 #root {
@@ -63,68 +183,39 @@ html {
 }
 
 .orange-text-gradient {
-  background: #f12711; /* fallback for old browsers */
-  background: -webkit-linear-gradient(
-    to top,
-    #f12711,
-    #f5af19
-  ); /* Chrome 10-25, Safari 5.1-6 */
-  background: linear-gradient(
-    to top,
-    #f12711,
-    #f5af19
-  ); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+  background: var(--grad-orange-1); /* fallback for old browsers */
+  background: linear-gradient(to top, var(--grad-orange-1), var(--grad-orange-2));
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
+  color: transparent;
 }
 
 .green-text-gradient {
-  background: #11998e; /* fallback for old browsers */
-  background: -webkit-linear-gradient(
-    to top,
-    #11998e,
-    #38ef7d
-  ); /* Chrome 10-25, Safari 5.1-6 */
-  background: linear-gradient(
-    to top,
-    #11998e,
-    #38ef7d
-  ); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+  background: var(--grad-green-1); /* fallback for old browsers */
+  background: linear-gradient(to top, var(--grad-green-1), var(--grad-green-2));
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
+  color: transparent;
 }
 
 .blue-text-gradient {
-  /* background: -webkit-linear-gradient(#eee, #333); */
-  background: #56ccf2; /* fallback for old browsers */
-  background: -webkit-linear-gradient(
-    to top,
-    #2f80ed,
-    #56ccf2
-  ); /* Chrome 10-25, Safari 5.1-6 */
-  background: linear-gradient(
-    to top,
-    #2f80ed,
-    #56ccf2
-  ); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+  background: var(--grad-blue-1); /* fallback for old browsers */
+  background: linear-gradient(to top, var(--grad-blue-1), var(--grad-blue-2));
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
+  color: transparent;
 }
 
 .pink-text-gradient {
-  background: #ec008c; /* fallback for old browsers */
-  background: -webkit-linear-gradient(
-    to top,
-    #ec008c,
-    #fc6767
-  ); /* Chrome 10-25, Safari 5.1-6 */
-  background: linear-gradient(
-    to top,
-    #ec008c,
-    #fc6767
-  ); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+  background: var(--grad-pink-1); /* fallback for old browsers */
+  background: linear-gradient(to top, var(--grad-pink-1), var(--grad-pink-2));
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
+  color: transparent;
 }
 
 /* Vertical Timeline Component - Mobile overrides */
@@ -148,7 +239,7 @@ html {
     display: block !important;
     margin-top: 8px !important;
     float: none !important;
-    color: #aaa6c3 !important;
+    color: var(--timeline-date) !important;
     font-size: 13px !important;
   }
   .vertical-timeline-element-icon {
@@ -182,77 +273,77 @@ html {
 @keyframes mulShdSpin {
   0%,
   100% {
-    box-shadow: 0em -2.6em 0em 0em #ffffff,
-      1.8em -1.8em 0 0em rgba(255, 255, 255, 0.2),
-      2.5em 0em 0 0em rgba(255, 255, 255, 0.2),
-      1.75em 1.75em 0 0em rgba(255, 255, 255, 0.2),
-      0em 2.5em 0 0em rgba(255, 255, 255, 0.2),
-      -1.8em 1.8em 0 0em rgba(255, 255, 255, 0.2),
-      -2.6em 0em 0 0em rgba(255, 255, 255, 0.5),
-      -1.8em -1.8em 0 0em rgba(255, 255, 255, 0.7);
+    box-shadow: 0em -2.6em 0em 0em rgb(var(--loader-dot)),
+      1.8em -1.8em 0 0em rgb(var(--loader-dot) / 0.2),
+      2.5em 0em 0 0em rgb(var(--loader-dot) / 0.2),
+      1.75em 1.75em 0 0em rgb(var(--loader-dot) / 0.2),
+      0em 2.5em 0 0em rgb(var(--loader-dot) / 0.2),
+      -1.8em 1.8em 0 0em rgb(var(--loader-dot) / 0.2),
+      -2.6em 0em 0 0em rgb(var(--loader-dot) / 0.5),
+      -1.8em -1.8em 0 0em rgb(var(--loader-dot) / 0.7);
   }
   12.5% {
-    box-shadow: 0em -2.6em 0em 0em rgba(255, 255, 255, 0.7),
-      1.8em -1.8em 0 0em #ffffff, 2.5em 0em 0 0em rgba(255, 255, 255, 0.2),
-      1.75em 1.75em 0 0em rgba(255, 255, 255, 0.2),
-      0em 2.5em 0 0em rgba(255, 255, 255, 0.2),
-      -1.8em 1.8em 0 0em rgba(255, 255, 255, 0.2),
-      -2.6em 0em 0 0em rgba(255, 255, 255, 0.2),
-      -1.8em -1.8em 0 0em rgba(255, 255, 255, 0.5);
+    box-shadow: 0em -2.6em 0em 0em rgb(var(--loader-dot) / 0.7),
+      1.8em -1.8em 0 0em rgb(var(--loader-dot)), 2.5em 0em 0 0em rgb(var(--loader-dot) / 0.2),
+      1.75em 1.75em 0 0em rgb(var(--loader-dot) / 0.2),
+      0em 2.5em 0 0em rgb(var(--loader-dot) / 0.2),
+      -1.8em 1.8em 0 0em rgb(var(--loader-dot) / 0.2),
+      -2.6em 0em 0 0em rgb(var(--loader-dot) / 0.2),
+      -1.8em -1.8em 0 0em rgb(var(--loader-dot) / 0.5);
   }
   25% {
-    box-shadow: 0em -2.6em 0em 0em rgba(255, 255, 255, 0.5),
-      1.8em -1.8em 0 0em rgba(255, 255, 255, 0.7), 2.5em 0em 0 0em #ffffff,
-      1.75em 1.75em 0 0em rgba(255, 255, 255, 0.2),
-      0em 2.5em 0 0em rgba(255, 255, 255, 0.2),
-      -1.8em 1.8em 0 0em rgba(255, 255, 255, 0.2),
-      -2.6em 0em 0 0em rgba(255, 255, 255, 0.2),
-      -1.8em -1.8em 0 0em rgba(255, 255, 255, 0.2);
+    box-shadow: 0em -2.6em 0em 0em rgb(var(--loader-dot) / 0.5),
+      1.8em -1.8em 0 0em rgb(var(--loader-dot) / 0.7), 2.5em 0em 0 0em rgb(var(--loader-dot)),
+      1.75em 1.75em 0 0em rgb(var(--loader-dot) / 0.2),
+      0em 2.5em 0 0em rgb(var(--loader-dot) / 0.2),
+      -1.8em 1.8em 0 0em rgb(var(--loader-dot) / 0.2),
+      -2.6em 0em 0 0em rgb(var(--loader-dot) / 0.2),
+      -1.8em -1.8em 0 0em rgb(var(--loader-dot) / 0.2);
   }
   37.5% {
-    box-shadow: 0em -2.6em 0em 0em rgba(255, 255, 255, 0.2),
-      1.8em -1.8em 0 0em rgba(255, 255, 255, 0.5),
-      2.5em 0em 0 0em rgba(255, 255, 255, 0.7), 1.75em 1.75em 0 0em #ffffff,
-      0em 2.5em 0 0em rgba(255, 255, 255, 0.2),
-      -1.8em 1.8em 0 0em rgba(255, 255, 255, 0.2),
-      -2.6em 0em 0 0em rgba(255, 255, 255, 0.2),
-      -1.8em -1.8em 0 0em rgba(255, 255, 255, 0.2);
+    box-shadow: 0em -2.6em 0em 0em rgb(var(--loader-dot) / 0.2),
+      1.8em -1.8em 0 0em rgb(var(--loader-dot) / 0.5),
+      2.5em 0em 0 0em rgb(var(--loader-dot) / 0.7), 1.75em 1.75em 0 0em rgb(var(--loader-dot)),
+      0em 2.5em 0 0em rgb(var(--loader-dot) / 0.2),
+      -1.8em 1.8em 0 0em rgb(var(--loader-dot) / 0.2),
+      -2.6em 0em 0 0em rgb(var(--loader-dot) / 0.2),
+      -1.8em -1.8em 0 0em rgb(var(--loader-dot) / 0.2);
   }
   50% {
-    box-shadow: 0em -2.6em 0em 0em rgba(255, 255, 255, 0.2),
-      1.8em -1.8em 0 0em rgba(255, 255, 255, 0.2),
-      2.5em 0em 0 0em rgba(255, 255, 255, 0.5),
-      1.75em 1.75em 0 0em rgba(255, 255, 255, 0.7), 0em 2.5em 0 0em #ffffff,
-      -1.8em 1.8em 0 0em rgba(255, 255, 255, 0.2),
-      -2.6em 0em 0 0em rgba(255, 255, 255, 0.2),
-      -1.8em -1.8em 0 0em rgba(255, 255, 255, 0.2);
+    box-shadow: 0em -2.6em 0em 0em rgb(var(--loader-dot) / 0.2),
+      1.8em -1.8em 0 0em rgb(var(--loader-dot) / 0.2),
+      2.5em 0em 0 0em rgb(var(--loader-dot) / 0.5),
+      1.75em 1.75em 0 0em rgb(var(--loader-dot) / 0.7), 0em 2.5em 0 0em rgb(var(--loader-dot)),
+      -1.8em 1.8em 0 0em rgb(var(--loader-dot) / 0.2),
+      -2.6em 0em 0 0em rgb(var(--loader-dot) / 0.2),
+      -1.8em -1.8em 0 0em rgb(var(--loader-dot) / 0.2);
   }
   62.5% {
-    box-shadow: 0em -2.6em 0em 0em rgba(255, 255, 255, 0.2),
-      1.8em -1.8em 0 0em rgba(255, 255, 255, 0.2),
-      2.5em 0em 0 0em rgba(255, 255, 255, 0.2),
-      1.75em 1.75em 0 0em rgba(255, 255, 255, 0.5),
-      0em 2.5em 0 0em rgba(255, 255, 255, 0.7), -1.8em 1.8em 0 0em #ffffff,
-      -2.6em 0em 0 0em rgba(255, 255, 255, 0.2),
-      -1.8em -1.8em 0 0em rgba(255, 255, 255, 0.2);
+    box-shadow: 0em -2.6em 0em 0em rgb(var(--loader-dot) / 0.2),
+      1.8em -1.8em 0 0em rgb(var(--loader-dot) / 0.2),
+      2.5em 0em 0 0em rgb(var(--loader-dot) / 0.2),
+      1.75em 1.75em 0 0em rgb(var(--loader-dot) / 0.5),
+      0em 2.5em 0 0em rgb(var(--loader-dot) / 0.7), -1.8em 1.8em 0 0em rgb(var(--loader-dot)),
+      -2.6em 0em 0 0em rgb(var(--loader-dot) / 0.2),
+      -1.8em -1.8em 0 0em rgb(var(--loader-dot) / 0.2);
   }
   75% {
-    box-shadow: 0em -2.6em 0em 0em rgba(255, 255, 255, 0.2),
-      1.8em -1.8em 0 0em rgba(255, 255, 255, 0.2),
-      2.5em 0em 0 0em rgba(255, 255, 255, 0.2),
-      1.75em 1.75em 0 0em rgba(255, 255, 255, 0.2),
-      0em 2.5em 0 0em rgba(255, 255, 255, 0.5),
-      -1.8em 1.8em 0 0em rgba(255, 255, 255, 0.7), -2.6em 0em 0 0em #ffffff,
-      -1.8em -1.8em 0 0em rgba(255, 255, 255, 0.2);
+    box-shadow: 0em -2.6em 0em 0em rgb(var(--loader-dot) / 0.2),
+      1.8em -1.8em 0 0em rgb(var(--loader-dot) / 0.2),
+      2.5em 0em 0 0em rgb(var(--loader-dot) / 0.2),
+      1.75em 1.75em 0 0em rgb(var(--loader-dot) / 0.2),
+      0em 2.5em 0 0em rgb(var(--loader-dot) / 0.5),
+      -1.8em 1.8em 0 0em rgb(var(--loader-dot) / 0.7), -2.6em 0em 0 0em rgb(var(--loader-dot)),
+      -1.8em -1.8em 0 0em rgb(var(--loader-dot) / 0.2);
   }
   87.5% {
-    box-shadow: 0em -2.6em 0em 0em rgba(255, 255, 255, 0.2),
-      1.8em -1.8em 0 0em rgba(255, 255, 255, 0.2),
-      2.5em 0em 0 0em rgba(255, 255, 255, 0.2),
-      1.75em 1.75em 0 0em rgba(255, 255, 255, 0.2),
-      0em 2.5em 0 0em rgba(255, 255, 255, 0.2),
-      -1.8em 1.8em 0 0em rgba(255, 255, 255, 0.5),
-      -2.6em 0em 0 0em rgba(255, 255, 255, 0.7), -1.8em -1.8em 0 0em #ffffff;
+    box-shadow: 0em -2.6em 0em 0em rgb(var(--loader-dot) / 0.2),
+      1.8em -1.8em 0 0em rgb(var(--loader-dot) / 0.2),
+      2.5em 0em 0 0em rgb(var(--loader-dot) / 0.2),
+      1.75em 1.75em 0 0em rgb(var(--loader-dot) / 0.2),
+      0em 2.5em 0 0em rgb(var(--loader-dot) / 0.2),
+      -1.8em 1.8em 0 0em rgb(var(--loader-dot) / 0.5),
+      -2.6em 0em 0 0em rgb(var(--loader-dot) / 0.7), -1.8em -1.8em 0 0em rgb(var(--loader-dot));
   }
 }
 
@@ -265,4 +356,59 @@ html {
     transform: none !important;
     transition: none !important;
   }
+}
+
+/* --------------------------------------------------------------------------
+   react-vertical-timeline-component theming.
+   The library ships a fixed light-gray spine and dark date text; both are
+   driven from theme tokens here so the Experience section works in either
+   mode. Card surface / arrow are set from Experience.jsx inline styles using
+   the same tokens.
+   -------------------------------------------------------------------------- */
+.vertical-timeline::before {
+  background: var(--timeline-line) !important;
+}
+
+.vertical-timeline-element-date {
+  color: var(--timeline-date) !important;
+}
+
+/* --------------------------------------------------------------------------
+   Accent utilities that need a SECOND accent value per theme.
+
+   `accentv` (`--c-accent-violet`) stays the brand violet used for borders,
+   rings, dots and icons. Two extra roles cannot share it, because in dark
+   mode no single violet clears 4.5:1 for both of them at once:
+
+     .text-accent-copy  accent-colored COPY sitting on an accent tint
+                        (`bg-accentv/10`, `/15`). `#915EFF` scored 4.10:1
+                        there; `#b18cff` — the value the pre-theme design
+                        actually used for these labels — scores 6.29:1.
+     .bg-accent-solid   a solid accent fill under a WHITE label. White on
+                        `#915EFF` is 4.00:1; on `#8750ea` it is 4.81:1.
+
+   Both collapse to `#6d3dd6` in light mode, where that single violet already
+   clears AA in every direction.
+   -------------------------------------------------------------------------- */
+@layer utilities {
+  .text-accent-copy {
+    color: rgb(var(--c-accent-text));
+  }
+
+  .decoration-accent-copy {
+    -webkit-text-decoration-color: rgb(var(--c-accent-text));
+    text-decoration-color: rgb(var(--c-accent-text));
+  }
+
+  .bg-accent-solid {
+    background-color: rgb(var(--c-accent-solid));
+  }
+}
+
+/* The library hard-codes `box-shadow: 0 3px 0 #ddd` on every timeline card,
+   which reads as a light-gray bar under the near-black dark-mode card. Drive
+   it from the same token as the card arrow so it disappears in dark and stays
+   a hairline in light. */
+.vertical-timeline-element-content {
+  box-shadow: 0 3px 0 var(--timeline-arrow) !important;
 }

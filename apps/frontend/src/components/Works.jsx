@@ -10,6 +10,26 @@ import { projects } from "../constants";
 import { fadeIn, textVariant } from "../utils/motion";
 import { ProjectActionBar, ProjectCaseStudyDialog } from "./project-details";
 import useTiltEnabled from "../hooks/useTiltEnabled";
+import useLocalized from "../hooks/useLocalized";
+import { useLanguage } from "../context/LanguageContext";
+
+/**
+ * Fill the `{token}` placeholders of a dictionary sentence.
+ * Every sentence is authored end to end per language, so localized strings are
+ * never built by concatenating fragments across languages.
+ *
+ * @param {string | undefined} template sentence containing `{token}` markers
+ * @param {Record<string, string>} values token -> replacement value
+ * @returns {string}
+ */
+const fillTemplate = (template, values) => {
+  if (typeof template !== "string") return "";
+
+  return Object.keys(values).reduce(
+    (text, token) => text.split(`{${token}}`).join(values[token]),
+    template
+  );
+};
 
 const ProjectCard = ({
   index,
@@ -29,6 +49,8 @@ const ProjectCard = ({
   tiltEnabled,
 }) => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
+  const copy = t.projects;
   const [caseStudyOpen, setCaseStudyOpen] = useState(false);
   const imageObjectClass =
     image_fit === "contain"
@@ -59,7 +81,7 @@ const ProjectCard = ({
         >
           <img
             src={image}
-            alt={image_alt || "project_image"}
+            alt={image_alt || fillTemplate(copy.imageAltFallback, { name })}
             className={`w-full h-full ${imageObjectClass} rounded-2xl`}
           />
 
@@ -76,7 +98,7 @@ const ProjectCard = ({
                 >
                   <img
                     src={github}
-                    alt='source code'
+                    alt={copy.sourceCodeIconAlt}
                     className='w-1/2 h-1/2 object-contain'
                   />
                 </div>
@@ -85,8 +107,9 @@ const ProjectCard = ({
                 <div
                   onClick={() => navigate(demo_link)}
                   className='violet-gradient w-10 h-10 rounded-full flex justify-center items-center cursor-pointer'
-                  title="Ver demo"
+                  title={copy.demoTitle}
                 >
+                  {/* Sits on the fixed violet gradient fill in both themes. */}
                   <span className='text-white text-xs font-bold'>&#9654;</span>
                 </div>
               )}
@@ -95,7 +118,7 @@ const ProjectCard = ({
         </div>
 
         <div className='mt-5'>
-          <h3 className='text-white font-bold text-[24px]'>{name}</h3>
+          <h3 className='text-ink font-bold text-[24px]'>{name}</h3>
           <p className='mt-2 text-secondary text-[14px]'>{description}</p>
         </div>
 
@@ -121,8 +144,10 @@ const ProjectCard = ({
                 target='_blank'
                 rel='noopener noreferrer'
                 onClick={(e) => e.stopPropagation()}
-                aria-label={`${download_label}, APK oficial, se abre en una nueva pestaña`}
-                className='group inline-flex w-fit max-w-full items-center gap-3 rounded-xl border border-[#915EFF]/40 bg-[#915EFF]/10 px-4 py-3 transition-all duration-300 hover:border-[#915EFF] hover:bg-[#915EFF]/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#915EFF] focus-visible:ring-offset-2 focus-visible:ring-offset-tertiary'
+                aria-label={fillTemplate(copy.downloadApkAria, {
+                  label: download_label,
+                })}
+                className='group inline-flex w-fit max-w-full items-center gap-3 rounded-xl border border-accentv/40 bg-accentv/10 px-4 py-3 transition-all duration-300 hover:border-accentv hover:bg-accentv/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-accentv focus-visible:ring-offset-2 focus-visible:ring-offset-tertiary'
               >
                 <svg
                   aria-hidden='true'
@@ -133,7 +158,7 @@ const ProjectCard = ({
                   strokeWidth='2'
                   strokeLinecap='round'
                   strokeLinejoin='round'
-                  className='w-[22px] h-[22px] shrink-0 text-[#b18cff] transition-transform duration-300 group-hover:translate-y-0.5'
+                  className='w-[22px] h-[22px] shrink-0 text-accent-copy transition-transform duration-300 group-hover:translate-y-0.5'
                 >
                   <path d='M12 3v12' />
                   <path d='m7 10 5 5 5-5' />
@@ -141,11 +166,11 @@ const ProjectCard = ({
                 </svg>
 
                 <span className='flex flex-col items-start min-w-0'>
-                  <span className='font-semibold text-[14px] text-[#b18cff] underline decoration-[#915EFF] underline-offset-4 transition-colors group-hover:text-white'>
+                  <span className='font-semibold text-[14px] text-accent-copy underline decoration-accent-copy underline-offset-4 transition-colors group-hover:text-ink'>
                     {download_label}
                   </span>
-                  <span className='mt-1 text-[12px] font-normal text-secondary transition-colors group-hover:text-gray-300'>
-                    {download_description || "APK oficial · descarga directa"}
+                  <span className='mt-1 text-[12px] font-normal text-secondary transition-colors group-hover:text-gray-600 dark:group-hover:text-gray-300'>
+                    {download_description || copy.downloadHint}
                   </span>
                 </span>
               </a>
@@ -162,7 +187,7 @@ const ProjectCard = ({
                 >
                   <path d='M12 3a1 1 0 0 1 1 1v9.586l2.293-2.293a1 1 0 1 1 1.414 1.414l-4 4a1 1 0 0 1-1.414 0l-4-4a1 1 0 1 1 1.414-1.414L11 13.586V4a1 1 0 0 1 1-1Zm-7 14a1 1 0 0 1 1 1v1h12v-1a1 1 0 1 1 2 0v2a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1Z' />
                 </svg>
-                Descarga temporalmente no disponible
+                {copy.downloadUnavailable}
               </span>
             )}
           </div>
@@ -194,11 +219,18 @@ const ProjectCard = ({
 
 const Works = () => {
   const tiltEnabled = useTiltEnabled();
+  const { t } = useLanguage();
+  // Resolved once per language change for the whole section: every `{ es, en }`
+  // leaf of `projects` (group titles, names, descriptions, alt text, download
+  // copy and the nested caseStudy trees) collapses to the active language here,
+  // so ProjectCard and its children receive plain strings.
+  const localizedProjects = useLocalized(projects);
+
   return (
     <>
       <motion.div variants={textVariant()}>
-        <p className={`${styles.sectionSubText}`}>Evidencia técnica</p>
-        <h2 className={`${styles.sectionHeadText}`}>Casos de estudio y proyectos</h2>
+        <p className={`${styles.sectionSubText}`}>{t.projects.badge}</p>
+        <h2 className={`${styles.sectionHeadText}`}>{t.projects.title}</h2>
       </motion.div>
 
       <div className='w-full flex'>
@@ -206,13 +238,13 @@ const Works = () => {
           variants={fadeIn("", "", 0.1, 1)}
           className='mt-2 sm:mt-3 text-secondary text-[15px] sm:text-[17px] max-w-3xl leading-[24px] sm:leading-[30px]'
         >
-          Estos proyectos muestran diferentes etapas de mi experiencia: desde sistemas empresariales y arquitectura cloud hasta proyectos iniciales que forman parte de mi base técnica.
+          {t.projects.subtitle}
         </motion.p>
       </div>
 
-      {projects.map((group, groupIndex) => (
+      {localizedProjects.map((group, groupIndex) => (
         <div key={`group-${groupIndex}`} className='mt-4 sm:mt-10 lg:mt-20'>
-          <h3 className='text-white font-bold text-[18px] sm:text-[20px] mb-2 sm:mb-4 lg:mb-8'>
+          <h3 className='text-ink font-bold text-[18px] sm:text-[20px] mb-2 sm:mb-4 lg:mb-8'>
             {group.title}
           </h3>
           <div className='flex flex-wrap gap-4 sm:gap-6 lg:gap-7'>

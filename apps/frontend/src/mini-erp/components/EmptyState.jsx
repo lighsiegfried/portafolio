@@ -1,4 +1,5 @@
 import { Button } from '@/mini-erp/components/ui/button';
+import useErpTranslation from '../i18n/useErpTranslation';
 
 /**
  * Empty state. `message` alone keeps the original behavior; optionally pass a
@@ -6,16 +7,22 @@ import { Button } from '@/mini-erp/components/ui/button';
  * guide the user toward the next useful step.
  */
 export default function EmptyState({ message, title, icon: Icon, action }) {
+  const { te } = useErpTranslation();
+
   return (
     <div className="flex flex-col items-center justify-center py-16 text-center text-muted-foreground">
       <div className="mb-4 flex size-12 items-center justify-center rounded-full bg-muted/50">
-        {Icon ? <Icon className="size-5 text-muted-foreground" /> : <span className="text-xl text-muted-foreground">-</span>}
+        {Icon ? (
+          <Icon className="size-5 text-muted-foreground" aria-hidden="true" />
+        ) : (
+          <span className="text-xl text-muted-foreground" aria-hidden="true">{te.formats.emptyValue}</span>
+        )}
       </div>
       {title && <p className="text-sm font-medium text-foreground">{title}</p>}
-      <p className="mt-0.5 max-w-sm text-sm">{message || 'Sin datos'}</p>
+      <p className="mt-0.5 max-w-sm text-sm">{message || te.empty.default}</p>
       {action && (
         <Button size="sm" className="mt-4" onClick={action.onClick}>
-          {action.icon && <action.icon className="size-4" />}
+          {action.icon && <action.icon className="size-4" aria-hidden="true" />}
           {action.label}
         </Button>
       )}

@@ -10,11 +10,19 @@ import {
 import { Button } from '@/mini-erp/components/ui/button';
 import { Label } from '@/mini-erp/components/ui/label';
 import { Textarea } from '@/mini-erp/components/ui/textarea';
+import useErpTranslation from '../../i18n/useErpTranslation';
 
 const INTENT_VARIANT = {
   primary: 'default',
   success: 'default',
   danger: 'destructive',
+};
+
+/** REQ_ACTIONS key -> the `requisitions.actions.*` dictionary keys that describe it. */
+const ACTION_TEXT_KEYS = {
+  approve: { label: 'approve', title: 'approveTitle', body: 'approveBody' },
+  reject: { label: 'reject', title: 'rejectTitle', body: 'rejectBody' },
+  complete: { label: 'complete', title: 'completeTitle', body: 'completeBody' },
 };
 
 /**
@@ -29,6 +37,7 @@ const INTENT_VARIANT = {
  *  - onClose()
  */
 export default function RequisitionActionDialog({ action, requisition, submitting, onConfirm, onClose }) {
+  const { te } = useErpTranslation();
   const [reason, setReason] = useState('');
   const [touched, setTouched] = useState(false);
 
@@ -43,6 +52,13 @@ export default function RequisitionActionDialog({ action, requisition, submittin
   const requiresReason = action.requiresReason;
   const reasonInvalid = requiresReason && !reason.trim();
 
+  // Localized copy, keyed by the action; falls back to whatever the config carries.
+  const textKeys = ACTION_TEXT_KEYS[action.key];
+  const actionText = te.requisitions.actions;
+  const confirmTitle = (textKeys && actionText[textKeys.title]) || action.confirmTitle;
+  const confirmBody = (textKeys && actionText[textKeys.body]) || action.confirmBody;
+  const confirmLabel = (textKeys && actionText[textKeys.label]) || action.label;
+
   function handleConfirm() {
     if (reasonInvalid) {
       setTouched(true);
@@ -55,35 +71,35 @@ export default function RequisitionActionDialog({ action, requisition, submittin
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{action.confirmTitle}</DialogTitle>
+          <DialogTitle>{confirmTitle}</DialogTitle>
           <DialogDescription>
             {requisition.number ? `${requisition.number} · ` : ''}{requisition.title}
           </DialogDescription>
         </DialogHeader>
 
-        <p className="text-sm text-muted-foreground">{action.confirmBody}</p>
+        <p className="text-sm text-muted-foreground">{confirmBody}</p>
 
         {requiresReason && (
           <div className="space-y-1.5">
-            <Label htmlFor="reject-reason">Motivo de rechazo</Label>
+            <Label htmlFor="reject-reason">{actionText.reasonLabel}</Label>
             <Textarea
               id="reject-reason"
               rows={3}
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               onBlur={() => setTouched(true)}
-              placeholder="Explica por qué se rechaza la requisición..."
+              placeholder={actionText.reasonPlaceholder}
               autoFocus
             />
             {touched && reasonInvalid && (
-              <p className="text-xs text-red-300">El motivo es requerido para rechazar.</p>
+              <p className="text-xs text-red-600 dark:text-red-300">{actionText.reasonRequired}</p>
             )}
           </div>
         )}
 
         <DialogFooter>
           <Button type="button" variant="outline" onClick={onClose} disabled={submitting}>
-            Cancelar
+            {te.common.cancel}
           </Button>
           <Button
             type="button"
@@ -91,7 +107,7 @@ export default function RequisitionActionDialog({ action, requisition, submittin
             onClick={handleConfirm}
             disabled={submitting || reasonInvalid}
           >
-            {submitting ? 'Procesando...' : action.label}
+            {submitting ? actionText.submitting : confirmLabel}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -5,6 +5,7 @@ import { PanelLeft } from "lucide-react"
 
 import { useIsMobile } from "@/mini-erp/hooks/use-mobile"
 import { cn } from "@/mini-erp/lib/utils"
+import useErpTranslation from "@/mini-erp/i18n/useErpTranslation"
 import { Button } from "@/mini-erp/components/ui/button"
 import { Input } from "@/mini-erp/components/ui/input"
 import { Separator } from "@/mini-erp/components/ui/separator"
@@ -146,6 +147,7 @@ const Sidebar = React.forwardRef((
   ref
 ) => {
   const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
+  const { te } = useErpTranslation()
 
   if (collapsible === "none") {
     return (
@@ -175,8 +177,8 @@ const Sidebar = React.forwardRef((
           }
           side={side}>
           <SheetHeader className="sr-only">
-            <SheetTitle>Sidebar</SheetTitle>
-            <SheetDescription>Displays the mobile sidebar.</SheetDescription>
+            <SheetTitle>{te.common.sidebar}</SheetTitle>
+            <SheetDescription>{te.common.sidebarDescription}</SheetDescription>
           </SheetHeader>
           <div className="flex h-full w-full flex-col">{children}</div>
         </SheetContent>
@@ -228,6 +230,7 @@ Sidebar.displayName = "Sidebar"
 
 const SidebarTrigger = React.forwardRef(({ className, onClick, ...props }, ref) => {
   const { toggleSidebar } = useSidebar()
+  const { te } = useErpTranslation()
 
   return (
     <Button
@@ -241,8 +244,8 @@ const SidebarTrigger = React.forwardRef(({ className, onClick, ...props }, ref) 
         toggleSidebar()
       }}
       {...props}>
-      <PanelLeft />
-      <span className="sr-only">Toggle Sidebar</span>
+      <PanelLeft aria-hidden="true" />
+      <span className="sr-only">{te.common.toggleSidebar}</span>
     </Button>
   );
 })
@@ -250,15 +253,16 @@ SidebarTrigger.displayName = "SidebarTrigger"
 
 const SidebarRail = React.forwardRef(({ className, ...props }, ref) => {
   const { toggleSidebar } = useSidebar()
+  const { te } = useErpTranslation()
 
   return (
     <button
       ref={ref}
       data-sidebar="rail"
-      aria-label="Toggle Sidebar"
+      aria-label={te.common.toggleSidebar}
       tabIndex={-1}
       onClick={toggleSidebar}
-      title="Toggle Sidebar"
+      title={te.common.toggleSidebar}
       className={cn(
         "absolute inset-y-0 z-20 hidden w-4 -translate-x-1/2 transition-all ease-linear after:absolute after:inset-y-0 after:left-1/2 after:w-[2px] hover:after:bg-sidebar-border group-data-[side=left]:-right-4 group-data-[side=right]:left-0 sm:flex",
         "[[data-side=left]_&]:cursor-w-resize [[data-side=right]_&]:cursor-e-resize",

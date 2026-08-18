@@ -3,6 +3,7 @@ import { toast } from 'sonner';
 import { Plus, Search, LayoutGrid, Table as TableIcon, Users, Activity, Trophy, Wallet } from 'lucide-react';
 import * as api from '../../services/leadsApi';
 import { useAuth } from '../hooks/useAuth';
+import useErpTranslation from '../i18n/useErpTranslation';
 import { userCan } from '../utils/permissions';
 import { formatCurrency, formatNumber } from '../utils/formatters';
 import { Button } from '@/mini-erp/components/ui/button';
@@ -27,6 +28,7 @@ import { LEAD_SOURCES, leadCompany, leadContact, stageLabel } from '../config/le
 
 export default function LeadsPage() {
   const { user } = useAuth();
+  const { te } = useErpTranslation();
   const canManage = userCan(user, 'manageLeads');
 
   const [leads, setLeads] = useState([]);
@@ -47,7 +49,9 @@ export default function LeadsPage() {
       const res = await api.list({ limit: '100' });
       setLeads(res.data || []);
     } catch (err) {
-      setError(err.message || 'Error al cargar leads');
+      // Only the raw API message is stored; the localized fallback is resolved
+      // at render time so it follows the active language without refetching.
+      setError(err.message || '');
     } finally {
       setLoading(false);
     }
@@ -89,12 +93,12 @@ export default function LeadsPage() {
     setLeads((list) => list.map((l) => (l.id === lead.id ? { ...l, status: newStatus } : l)));
     try {
       await api.update(lead.id, { status: newStatus });
-      toast.success(`Lead movido a "${stageLabel(newStatus)}"`);
+      toast.success(te.toast.leadMoved.replace('{stage}', te.status.lead[newStatus] ?? stageLabel(newStatus)));
     } catch (err) {
       setLeads(previous);
-      toast.error(err.message || 'Error al mover el lead');
+      toast.error(err.message || te.errors.moveLead);
     }
-  }, [leads]);
+  }, [leads, te]);
 
   // Quick status moves (board/table). Marking a lead as "Perdido" is a negative,
   // hard-to-reverse outcome, so it requires explicit confirmation first.
@@ -117,68 +121,69 @@ export default function LeadsPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold text-foreground">CRM Lite</h1>
+        <h1 className="text-2xl font-bold text-foreground">{te.leads.title}</h1>
         <LeadsBoardSkeleton />
       </div>
     );
   }
-  if (error) return <ErrorState message={error} onRetry={load} />;
+  if (error !== null) return <ErrorState message={error || te.errors.loadLeads} onRetry={load} />;
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">CRM Lite</h1>
-          <p className="text-sm text-muted-foreground">Pipeline de leads y clientes potenciales</p>
+          <h1 className="text-2xl font-bold text-foreground">{te.leads.title}</h1>
+          <p className="text-sm text-muted-foreground">{te.leads.subtitle}</p>
         </div>
         {canManage && (
           <Button size="sm" onClick={() => setFormState({ open: true, lead: null })}>
-            <Plus className="size-4" />
-            Nuevo lead
+            <Plus aria-hidden="true" className="size-4" />
+            {te.leads.newButton}
           </Button>
         )}
       </div>
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <KpiCard label="Total leads" value={formatNumber(stats.total)} icon={Users} accent="violet" />
-        <KpiCard label="Activos" value={formatNumber(stats.active)} icon={Activity} accent="cyan" />
-        <KpiCard label="Ganados" value={formatNumber(stats.won)} icon={Trophy} accent="green" />
-        <KpiCard label="Valor en pipeline" value={formatCurrency(stats.pipelineValue)} icon={Wallet} accent="yellow" />
+        <KpiCard label={te.leads.kpi.total} value={formatNumber(stats.total)} icon={Users} accent="violet" />
+        <KpiCard label={te.leads.kpi.active} value={formatNumber(stats.active)} icon={Activity} accent="cyan" />
+        <KpiCard label={te.leads.kpi.won} value={formatNumber(stats.won)} icon={Trophy} accent="green" />
+        <KpiCard label={te.leads.kpi.pipelineValue} value={formatCurrency(stats.pipelineValue)} icon={Wallet} accent="yellow" />
       </div>
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <div className="relative w-full sm:max-w-xs">
-            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Search aria-hidden="true" className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Buscar empresa, contacto o email..."
+              placeholder={te.leads.searchPlaceholder}
+              aria-label={te.leads.searchPlaceholder}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9"
             />
           </div>
           <Select value={sourceFilter} onValueChange={setSourceFilter}>
-            <SelectTrigger className="w-full sm:w-44">
-              <SelectValue placeholder="Fuente" />
+            <SelectTrigger className="w-full sm:w-44" aria-label={te.leads.sourceFilterPlaceholder}>
+              <SelectValue placeholder={te.leads.sourceFilterPlaceholder} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todas las fuentes</SelectItem>
+              <SelectItem value="all">{te.leads.sourceFilterAll}</SelectItem>
               {LEAD_SOURCES.map((s) => (
-                <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                <SelectItem key={s.value} value={s.value}>{te.leads.sources[s.value] ?? s.label}</SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
 
-        <div className="flex items-center gap-1 rounded-lg border border-white/[0.06] bg-muted/40 p-1">
+        <div className="flex items-center gap-1 rounded-lg border border-border bg-muted/40 p-1">
           <Button
             variant={view === 'kanban' ? 'secondary' : 'ghost'}
             size="sm"
             className="h-7 gap-1.5"
             onClick={() => setView('kanban')}
           >
-            <LayoutGrid className="size-4" />
-            Pipeline
+            <LayoutGrid aria-hidden="true" className="size-4" />
+            {te.leads.view.pipeline}
           </Button>
           <Button
             variant={view === 'table' ? 'secondary' : 'ghost'}
@@ -186,8 +191,8 @@ export default function LeadsPage() {
             className="h-7 gap-1.5"
             onClick={() => setView('table')}
           >
-            <TableIcon className="size-4" />
-            Tabla
+            <TableIcon aria-hidden="true" className="size-4" />
+            {te.leads.view.table}
           </Button>
         </div>
       </div>
@@ -196,9 +201,9 @@ export default function LeadsPage() {
         <div className="erp-surface-card rounded-xl p-6">
           <EmptyState
             icon={Users}
-            title="Sin leads todavía"
-            message="Registra tu primer lead para empezar a construir el pipeline."
-            action={canManage ? { label: 'Nuevo lead', icon: Plus, onClick: () => setFormState({ open: true, lead: null }) } : undefined}
+            title={te.leads.empty.title}
+            message={te.leads.empty.message}
+            action={canManage ? { label: te.leads.newButton, icon: Plus, onClick: () => setFormState({ open: true, lead: null }) } : undefined}
           />
         </div>
       ) : view === 'kanban' ? (
@@ -226,9 +231,9 @@ export default function LeadsPage() {
       <ConfirmDialog
         open={Boolean(pendingMove)}
         onOpenChange={(o) => { if (!o) setPendingMove(null); }}
-        title="Marcar lead como perdido"
-        description={pendingMove ? `"${leadCompany(pendingMove.lead)}" se moverá a "Perdido". Podrás reactivarlo cambiando su estado más adelante.` : ''}
-        confirmLabel="Marcar como perdido"
+        title={te.leads.confirmLost.title}
+        description={pendingMove ? te.leads.confirmLost.descriptionBoard.replace('{company}', leadCompany(pendingMove.lead)) : ''}
+        confirmLabel={te.leads.confirmLost.confirm}
         destructive
         onConfirm={confirmMove}
       />

@@ -111,10 +111,13 @@ graphify-out/cache/
 codebase-memory.db
 *.codebase-memory
 
+
 # AI context layer kept local-only, consistent with AGENTS.md / PROJECT_CONTEXT.md.
 # To publish it with the repo instead, delete the lines below (see
 # docs/AI_CONTEXT/00_READ_ME_FIRST.md → "Tracking policy").
 CONTEXTO.md
 CLAUDE.md
+.agents
+.codex
 PHASE_AI_NAVIGATION_LAYER.md
 PHASE_AI_NAVIGATION_TOOLS_COMPLETED.md

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Package, AlertTriangle, Tags, Wallet, Plus, MoreHorizontal, Pencil, ArrowLeftRight, Search } from 'lucide-react';
 import * as api from '../../services/productsApi';
 import { useAuth } from '../hooks/useAuth';
+import useErpTranslation from '../i18n/useErpTranslation';
 import { userCan } from '../utils/permissions';
 import { formatCurrency, formatNumber } from '../utils/formatters';
 import { Card } from '@/mini-erp/components/ui/card';
@@ -59,6 +60,7 @@ function ProductsSkeleton() {
 
 export default function ProductsPage() {
   const { user } = useAuth();
+  const { te } = useErpTranslation();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -77,7 +79,9 @@ export default function ProductsPage() {
       const res = await api.list({ limit: '50' });
       setData(res.data || []);
     } catch (err) {
-      setError(err.message || 'Error al cargar productos');
+      // Only the raw API message is stored; the localized fallback is resolved
+      // at render time so it follows the active language without refetching.
+      setError(err.message || '');
     } finally {
       setLoading(false);
     }
@@ -100,55 +104,59 @@ export default function ProductsPage() {
     const cols = [
       {
         accessorKey: 'sku',
-        header: 'SKU',
-        cell: ({ row }) => <span className="font-mono text-xs text-violet-300">{row.original.sku}</span>,
+        header: te.products.table.sku,
+        cell: ({ row }) => <span className="font-mono text-xs text-violet-600 dark:text-violet-300">{row.original.sku}</span>,
       },
       {
         accessorKey: 'name',
-        header: 'Nombre',
+        header: te.products.table.name,
         cell: ({ row }) => (
           <div className="min-w-0">
             <span className="font-medium text-foreground">{row.original.name}</span>
             {row.original.active === false && (
-              <Badge variant="outline" className="ml-2 text-[10px]">Inactivo</Badge>
+              <Badge variant="outline" className="ml-2 text-[10px]">{te.products.table.inactive}</Badge>
             )}
           </div>
         ),
       },
       {
         accessorKey: 'category',
-        header: 'Categoría',
+        header: te.products.table.category,
         filterFn: 'equals',
-        cell: ({ row }) => <Badge variant="secondary">{categoryLabel(row.original.category)}</Badge>,
+        cell: ({ row }) => (
+          <Badge variant="secondary">
+            {te.products.categories[row.original.category] ?? categoryLabel(row.original.category)}
+          </Badge>
+        ),
       },
       {
         accessorKey: 'stock',
-        header: 'Stock',
+        header: te.products.table.stock,
         meta: { className: 'text-right' },
         cell: ({ row }) => {
           const low = isLowStock(row.original);
           return (
             <span className="inline-flex items-center justify-end gap-2">
-              <span className={low ? 'font-medium text-red-300' : 'text-foreground'}>{formatNumber(row.original.stock)}</span>
-              {low && <Badge variant="destructive" className="text-[10px]">Bajo</Badge>}
+              <span className={low ? 'font-medium text-destructive' : 'text-foreground'}>{formatNumber(row.original.stock)}</span>
+              {low && <Badge variant="destructive" className="text-[10px]">{te.products.table.lowBadge}</Badge>}
             </span>
           );
         },
       },
       {
         accessorKey: 'minStock',
-        header: 'Mínimo',
+        header: te.products.table.minStock,
         meta: { className: 'text-right' },
         cell: ({ row }) => <span className="text-xs text-muted-foreground">{formatNumber(row.original.minStock)}</span>,
       },
       {
         accessorKey: 'unit',
-        header: 'Unidad',
+        header: te.products.table.unit,
         cell: ({ row }) => <span className="text-xs text-muted-foreground">{row.original.unit}</span>,
       },
       {
         accessorKey: 'price',
-        header: 'Precio',
+        header: te.products.table.price,
         meta: { className: 'text-right' },
         cell: ({ row }) => <span className="tabular-nums">{formatCurrency(row.original.price)}</span>,
       },
@@ -163,22 +171,22 @@ export default function ProductsPage() {
         cell: ({ row }) => (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="size-8">
-                <MoreHorizontal className="size-4" />
-                <span className="sr-only">Acciones</span>
+              <Button variant="ghost" size="icon" className="size-8" aria-label={te.common.actions}>
+                <MoreHorizontal aria-hidden="true" className="size-4" />
+                <span className="sr-only">{te.common.actions}</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               {canEdit && (
                 <DropdownMenuItem onClick={() => setFormState({ open: true, product: row.original })}>
-                  <Pencil className="size-4" />
-                  Editar
+                  <Pencil aria-hidden="true" className="size-4" />
+                  {te.products.rowActions.edit}
                 </DropdownMenuItem>
               )}
               {canAdjustStock && (
                 <DropdownMenuItem onClick={() => setStockState({ open: true, product: row.original })}>
-                  <ArrowLeftRight className="size-4" />
-                  Ajustar stock
+                  <ArrowLeftRight aria-hidden="true" className="size-4" />
+                  {te.products.rowActions.adjustStock}
                 </DropdownMenuItem>
               )}
             </DropdownMenuContent>
@@ -188,10 +196,10 @@ export default function ProductsPage() {
     }
 
     return cols;
-  }, [hasRowActions, canEdit, canAdjustStock]);
+  }, [hasRowActions, canEdit, canAdjustStock, te]);
 
   if (loading) return <ProductsSkeleton />;
-  if (error) return <ErrorState message={error} onRetry={load} />;
+  if (error !== null) return <ErrorState message={error || te.errors.loadProducts} onRetry={load} />;
 
   const products = data || [];
 
@@ -199,46 +207,47 @@ export default function ProductsPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Productos</h1>
-          <p className="text-sm text-muted-foreground">Catálogo de productos y materiales</p>
+          <h1 className="text-2xl font-bold text-foreground">{te.products.title}</h1>
+          <p className="text-sm text-muted-foreground">{te.products.subtitle}</p>
         </div>
         {canCreate && (
           <Button size="sm" onClick={() => setFormState({ open: true, product: null })}>
-            <Plus className="size-4" />
-            Nuevo producto
+            <Plus aria-hidden="true" className="size-4" />
+            {te.products.newButton}
           </Button>
         )}
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KpiCard label="Total productos" value={formatNumber(stats.total)} icon={Package} accent="violet" />
-        <KpiCard label="Bajo stock" value={formatNumber(stats.lowStock)} icon={AlertTriangle} accent="red" />
-        <KpiCard label="Categorías" value={formatNumber(stats.categories)} icon={Tags} accent="cyan" />
-        <KpiCard label="Valor inventario" value={formatCurrency(stats.inventoryValue)} icon={Wallet} accent="green" />
+        <KpiCard label={te.products.kpi.total} value={formatNumber(stats.total)} icon={Package} accent="violet" />
+        <KpiCard label={te.products.kpi.lowStock} value={formatNumber(stats.lowStock)} icon={AlertTriangle} accent="red" />
+        <KpiCard label={te.products.kpi.categories} value={formatNumber(stats.categories)} icon={Tags} accent="cyan" />
+        <KpiCard label={te.products.kpi.inventoryValue} value={formatCurrency(stats.inventoryValue)} icon={Wallet} accent="green" />
       </div>
 
       {products.length === 0 ? (
         <Card className="p-6">
           <EmptyState
             icon={Package}
-            title="Catálogo vacío"
-            message="Agrega tu primer producto para empezar a gestionar el inventario."
-            action={canCreate ? { label: 'Nuevo producto', icon: Plus, onClick: () => setFormState({ open: true, product: null }) } : undefined}
+            title={te.products.empty.title}
+            message={te.products.empty.message}
+            action={canCreate ? { label: te.products.newButton, icon: Plus, onClick: () => setFormState({ open: true, product: null }) } : undefined}
           />
         </Card>
       ) : (
         <DataTable
           columns={columns}
           data={products}
-          emptyMessage="Ningún producto coincide con la búsqueda"
+          emptyMessage={te.products.table.empty}
           renderToolbar={(table) => {
             const categoryValue = table.getColumn('category')?.getFilterValue() ?? 'all';
             return (
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                 <div className="relative w-full sm:max-w-xs">
-                  <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                  <Search aria-hidden="true" className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
-                    placeholder="Buscar por SKU o nombre..."
+                    placeholder={te.products.searchPlaceholder}
+                    aria-label={te.products.searchPlaceholder}
                     value={table.getState().globalFilter ?? ''}
                     onChange={(e) => table.setGlobalFilter(e.target.value)}
                     className="pl-9"
@@ -248,13 +257,13 @@ export default function ProductsPage() {
                   value={categoryValue}
                   onValueChange={(v) => table.getColumn('category')?.setFilterValue(v === 'all' ? undefined : v)}
                 >
-                  <SelectTrigger className="w-full sm:w-48">
-                    <SelectValue placeholder="Categoría" />
+                  <SelectTrigger className="w-full sm:w-48" aria-label={te.products.categoryFilterPlaceholder}>
+                    <SelectValue placeholder={te.products.categoryFilterPlaceholder} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Todas las categorías</SelectItem>
+                    <SelectItem value="all">{te.products.categoryFilterAll}</SelectItem>
                     {PRODUCT_CATEGORIES.map((c) => (
-                      <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                      <SelectItem key={c.value} value={c.value}>{te.products.categories[c.value] ?? c.label}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>

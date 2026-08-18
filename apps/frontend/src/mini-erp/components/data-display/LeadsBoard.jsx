@@ -2,9 +2,12 @@ import { useMemo } from 'react';
 import LeadCard from './LeadCard';
 import { LEAD_STAGES } from '../../config/leads';
 import { formatCurrency } from '../../utils/formatters';
+import useErpTranslation from '../../i18n/useErpTranslation';
 
 /** Kanban pipeline: one column per lead status. */
 export default function LeadsBoard({ leads, canManage, onOpen, onMove }) {
+  const { te } = useErpTranslation();
+
   const grouped = useMemo(() => {
     const map = Object.fromEntries(LEAD_STAGES.map((s) => [s.status, []]));
     for (const lead of leads) {
@@ -21,10 +24,12 @@ export default function LeadsBoard({ leads, canManage, onOpen, onMove }) {
         const total = items.reduce((sum, l) => sum + (l.estimatedValue || 0), 0);
         return (
           <div key={stage.status} className="flex w-72 shrink-0 flex-col">
-            <div className="mb-2 flex items-center justify-between rounded-lg border border-white/[0.06] bg-muted/40 px-3 py-2">
+            <div className="mb-2 flex items-center justify-between rounded-lg border border-border bg-muted/40 px-3 py-2">
               <div className="flex items-center gap-2">
-                <span className={`size-2.5 rounded-full ${stage.dot}`} />
-                <span className="text-sm font-medium text-foreground">{stage.label}</span>
+                <span className={`size-2.5 rounded-full ${stage.dot}`} aria-hidden="true" />
+                <span className="text-sm font-medium text-foreground">
+                  {te.status.lead[stage.status] || stage.label}
+                </span>
                 <span className="text-xs text-muted-foreground">{items.length}</span>
               </div>
               {total > 0 && <span className="text-[11px] text-muted-foreground">{formatCurrency(total)}</span>}
@@ -32,8 +37,8 @@ export default function LeadsBoard({ leads, canManage, onOpen, onMove }) {
 
             <div className="flex flex-1 flex-col gap-2">
               {items.length === 0 ? (
-                <div className="rounded-lg border border-dashed border-white/[0.08] bg-white/[0.015] px-3 py-8 text-center text-xs text-muted-foreground">
-                  Sin leads en esta etapa
+                <div className="rounded-lg border border-dashed border-border bg-muted/20 px-3 py-8 text-center text-xs text-muted-foreground">
+                  {te.leads.board.emptyStage}
                 </div>
               ) : (
                 items.map((lead) => (

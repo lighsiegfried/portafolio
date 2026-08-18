@@ -13,15 +13,17 @@ import { Button } from '@/mini-erp/components/ui/button';
 import { Badge } from '@/mini-erp/components/ui/badge';
 import ConfirmDialog from '../feedback/ConfirmDialog';
 import { useAuth } from '../../hooks/useAuth';
+import useErpTranslation from '../../i18n/useErpTranslation';
 
 export default function UserMenu() {
   const { user, logout } = useAuth();
+  const { te } = useErpTranslation();
   const navigate = useNavigate();
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   if (!user) return null;
 
-  const name = user.name || user.username || 'Usuario';
+  const name = user.name || user.username || te.auth.userFallback;
   const initial = name.charAt(0).toUpperCase();
   const role = (user.role || '').toUpperCase();
 
@@ -34,12 +36,12 @@ export default function UserMenu() {
     <>
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="h-9 gap-2 px-2">
-          <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[hsl(var(--primary))]/20 text-xs font-semibold text-[hsl(var(--primary-hover))]">
+        <Button variant="ghost" className="h-9 gap-2 px-2" aria-label={name}>
+          <span aria-hidden="true" className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[hsl(var(--primary))]/20 text-xs font-semibold text-[hsl(var(--primary-hover))]">
             {initial}
           </span>
           <span className="hidden text-left text-sm leading-tight sm:block">{name}</span>
-          <ChevronsUpDown className="hidden size-4 text-muted-foreground sm:block" />
+          <ChevronsUpDown aria-hidden="true" className="hidden size-4 text-muted-foreground sm:block" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" sideOffset={8} className="erp-glass-menu w-64 rounded-2xl p-2">
@@ -54,10 +56,10 @@ export default function UserMenu() {
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onSelect={(e) => { e.preventDefault(); setConfirmOpen(true); }}
-          className="text-red-300 focus:text-red-200"
+          className="text-red-600 focus:text-red-700 dark:text-red-400 dark:focus:text-red-300"
         >
-          <LogOut className="size-4" />
-          Salir
+          <LogOut aria-hidden="true" className="size-4" />
+          {te.auth.logout}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -65,9 +67,9 @@ export default function UserMenu() {
     <ConfirmDialog
       open={confirmOpen}
       onOpenChange={setConfirmOpen}
-      title="Cerrar sesión"
-      description="Se cerrará tu sesión y volverás al portafolio."
-      confirmLabel="Cerrar sesión"
+      title={te.auth.logoutTitle}
+      description={te.auth.logoutDescription}
+      confirmLabel={te.auth.logoutConfirm}
       destructive
       onConfirm={handleLogout}
     />

@@ -23,6 +23,7 @@ import ConfirmDialog from '../feedback/ConfirmDialog';
 import * as api from '../../../services/leadsApi';
 import { LEAD_STAGES, leadCompany, leadContact, sourceLabel } from '../../config/leads';
 import { formatCurrency, formatDate, formatDateTime } from '../../utils/formatters';
+import useErpTranslation from '../../i18n/useErpTranslation';
 
 function normalizeNotes(notes) {
   if (!notes) return [];
@@ -51,6 +52,7 @@ function Row({ label, children }) {
  * Mutating actions are gated by `canManage`.
  */
 export default function LeadDetailSheet({ open, onOpenChange, lead, canManage, onEdit, onChanged }) {
+  const { te } = useErpTranslation();
   const [status, setStatus] = useState('new');
   const [savingStatus, setSavingStatus] = useState(false);
   const [confirmLost, setConfirmLost] = useState(false);
@@ -65,6 +67,7 @@ export default function LeadDetailSheet({ open, onOpenChange, lead, canManage, o
   if (!lead) return null;
 
   const notes = normalizeNotes(lead.notes);
+  const dash = te.formats.emptyValue;
 
   function requestStatusUpdate() {
     if (status === lead.status) return;
@@ -77,10 +80,10 @@ export default function LeadDetailSheet({ open, onOpenChange, lead, canManage, o
     setSavingStatus(true);
     try {
       await api.update(lead.id, { status });
-      toast.success('Estado actualizado');
+      toast.success(te.toast.leadStatusUpdated);
       onChanged();
     } catch (err) {
-      toast.error(err.message || 'Error al actualizar estado');
+      toast.error(err.message || te.errors.updateStatus);
       setStatus(lead.status);
     } finally {
       setSavingStatus(false);
@@ -93,10 +96,10 @@ export default function LeadDetailSheet({ open, onOpenChange, lead, canManage, o
     try {
       await api.addNote(lead.id, noteContent.trim());
       setNoteContent('');
-      toast.success('Nota agregada');
+      toast.success(te.toast.noteAdded);
       onChanged();
     } catch (err) {
-      toast.error(err.message || 'Error al agregar nota');
+      toast.error(err.message || te.errors.addNote);
     } finally {
       setSavingNote(false);
     }
@@ -111,30 +114,30 @@ export default function LeadDetailSheet({ open, onOpenChange, lead, canManage, o
             <SheetTitle className="truncate">{leadCompany(lead)}</SheetTitle>
             {canManage && (
               <Button variant="outline" size="sm" onClick={() => onEdit(lead)}>
-                <Pencil className="size-4" />
-                Editar
+                <Pencil className="size-4" aria-hidden="true" />
+                {te.leads.detail.edit}
               </Button>
             )}
           </div>
           <SheetDescription className="flex items-center gap-2">
             <StatusBadge status={lead.status} />
-            <span className="text-xs">{sourceLabel(lead.source)}</span>
+            <span className="text-xs">{te.leads.sources[lead.source] || sourceLabel(lead.source)}</span>
           </SheetDescription>
         </SheetHeader>
 
         <div className="mt-4">
-          <Row label="Contacto">{leadContact(lead)}</Row>
-          <Row label="Email">{lead.email || '-'}</Row>
-          <Row label="Teléfono">{lead.phone || '-'}</Row>
-          <Row label="Valor estimado">{lead.estimatedValue != null ? formatCurrency(lead.estimatedValue) : '-'}</Row>
-          <Row label="Próximo seguimiento">{lead.nextFollowUp ? formatDate(lead.nextFollowUp) : '-'}</Row>
+          <Row label={te.leads.detail.contact}>{leadContact(lead)}</Row>
+          <Row label={te.leads.detail.email}>{lead.email || dash}</Row>
+          <Row label={te.leads.detail.phone}>{lead.phone || dash}</Row>
+          <Row label={te.leads.detail.estimatedValue}>{lead.estimatedValue != null ? formatCurrency(lead.estimatedValue) : dash}</Row>
+          <Row label={te.leads.detail.nextFollowUp}>{lead.nextFollowUp ? formatDate(lead.nextFollowUp) : dash}</Row>
         </div>
 
         {canManage && (
           <>
             <Separator className="my-4" />
             <div className="space-y-2">
-              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Cambiar estado</p>
+              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{te.leads.detail.changeStatus}</p>
               <div className="flex items-center gap-2">
                 <Select value={status} onValueChange={setStatus}>
                   <SelectTrigger className="flex-1">
@@ -142,12 +145,12 @@ export default function LeadDetailSheet({ open, onOpenChange, lead, canManage, o
                   </SelectTrigger>
                   <SelectContent>
                     {LEAD_STAGES.map((s) => (
-                      <SelectItem key={s.status} value={s.status}>{s.label}</SelectItem>
+                      <SelectItem key={s.status} value={s.status}>{te.status.lead[s.status] || s.label}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
                 <Button onClick={requestStatusUpdate} disabled={savingStatus || status === lead.status}>
-                  Actualizar
+                  {te.leads.detail.update}
                 </Button>
               </div>
             </div>
@@ -157,7 +160,7 @@ export default function LeadDetailSheet({ open, onOpenChange, lead, canManage, o
         <Separator className="my-4" />
         <div className="space-y-3">
           <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            Notas ({notes.length})
+            {te.leads.detail.notes.replace('{count}', notes.length)}
           </p>
 
           {canManage && (
@@ -165,7 +168,8 @@ export default function LeadDetailSheet({ open, onOpenChange, lead, canManage, o
               <Input
                 value={noteContent}
                 onChange={(e) => setNoteContent(e.target.value)}
-                placeholder="Agregar nota..."
+                placeholder={te.leads.detail.notePlaceholder}
+                aria-label={te.leads.detail.notePlaceholder}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     e.preventDefault();
@@ -174,13 +178,13 @@ export default function LeadDetailSheet({ open, onOpenChange, lead, canManage, o
                 }}
               />
               <Button onClick={handleAddNote} disabled={savingNote || !noteContent.trim()}>
-                Agregar
+                {te.leads.detail.addNote}
               </Button>
             </div>
           )}
 
           {notes.length === 0 ? (
-            <p className="py-4 text-center text-xs text-muted-foreground">Sin notas todavía</p>
+            <p className="py-4 text-center text-xs text-muted-foreground">{te.leads.detail.notesEmpty}</p>
           ) : (
             <ul className="space-y-2">
               {notes.map((n) => (
@@ -200,9 +204,9 @@ export default function LeadDetailSheet({ open, onOpenChange, lead, canManage, o
     <ConfirmDialog
       open={confirmLost}
       onOpenChange={(o) => { if (!o) { setConfirmLost(false); setStatus(lead.status); } }}
-      title="Marcar lead como perdido"
-      description={`"${leadCompany(lead)}" se marcará como "Perdido".`}
-      confirmLabel="Marcar como perdido"
+      title={te.leads.confirmLost.title}
+      description={te.leads.confirmLost.descriptionDetail.replace('{company}', leadCompany(lead))}
+      confirmLabel={te.leads.confirmLost.confirm}
       destructive
       loading={savingStatus}
       onConfirm={doStatusUpdate}

@@ -1,39 +1,72 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
-import { About, AwsArchitecture, Contact, Experience, Hero, Navbar, Tech, TechnicalDecisions, ValidatedExperience, Works, StarsCanvas } from "./components";
+import {
+  About,
+  AwsArchitecture,
+  Certifications,
+  Contact,
+  Experience,
+  Footer,
+  Hero,
+  Navbar,
+  Tech,
+  TechnicalDecisions,
+  ValidatedExperience,
+  Works,
+  StarsCanvas,
+} from "./components";
 import BackgroundDecor from "./components/BackgroundDecor";
+import { ThemeProvider, useTheme } from "./context/ThemeContext";
+import { LanguageProvider } from "./context/LanguageContext";
 import MiniErpApp from "./mini-erp/MiniErpApp";
 
-const Portfolio = () => (
-  <div className='relative z-0 bg-primary'>
-    <Navbar />
-    <BackgroundDecor />
-    <div className='bg-hero-pattern bg-cover bg-no-repeat bg-center relative z-0'>
-      <Hero />
+const Portfolio = () => {
+  const { isDark } = useTheme();
+
+  return (
+    <div className='relative z-0 bg-primary'>
+      <Navbar />
+      <BackgroundDecor />
+      {/* `herobg.png` is a near-black photograph, so light mode swaps it for an
+          aurora gradient instead of trying to tint the artwork. */}
+      <div
+        className={`${
+          isDark ? "bg-hero-pattern bg-cover bg-no-repeat bg-center" : "hero-backdrop-light"
+        } relative z-0`}
+      >
+        <Hero />
+      </div>
+      <About />
+      <ValidatedExperience />
+      <Experience />
+      <Tech />
+      {/* Certifications sits between the tech stack and the case studies. */}
+      <Certifications />
+      <Works />
+      <TechnicalDecisions />
+      <AwsArchitecture />
+      <div className='relative z-0'>
+        <Contact />
+        <StarsCanvas />
+      </div>
+      <Footer />
     </div>
-    <About />
-    <ValidatedExperience />
-    <Experience />
-    <Tech />
-    <Works />
-    <TechnicalDecisions />
-    <AwsArchitecture />
-    <div className='relative z-0'>
-      <Contact />
-      <StarsCanvas />
-    </div>
-  </div>
-);
+  );
+};
 
 const App = () => {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/mini-erp/*" element={<MiniErpApp />} />
-        <Route path="*" element={<Portfolio />} />
-      </Routes>
-    </BrowserRouter>
+    <ThemeProvider>
+      <LanguageProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/mini-erp/*" element={<MiniErpApp />} />
+            <Route path="*" element={<Portfolio />} />
+          </Routes>
+        </BrowserRouter>
+      </LanguageProvider>
+    </ThemeProvider>
   );
-}
+};
 
 export default App;
