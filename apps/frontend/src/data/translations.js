@@ -51,8 +51,6 @@
  * @property {string} name
  * @property {string} title
  * @property {string} subtitle
- * @property {string} ctaProjects
- * @property {string} ctaContact
  * @property {string} scrollHint
  */
 
@@ -143,6 +141,10 @@
  * @property {string} noCredly shown instead of the verify link when credlyUrl is absent
  * @property {string} curriculumTarget card footer prefix
  * @property {string} badgeAlt alt-text template containing a `{title}` placeholder
+ * @property {string} inspectBadge accessible name/tooltip for the badge zoom trigger,
+ *   containing a `{title}` placeholder
+ * @property {string} detailBadge eyebrow above the badge-detail dialog title
+ * @property {string} closeDetail aria-label for the badge-detail dialog close button
  */
 
 /**
@@ -366,8 +368,6 @@ export const translations = {
       title: "Software Engineer enfocado en sistemas empresariales, cloud e IA",
       subtitle:
         "Construyo soluciones full-stack, automatizaciones y arquitecturas cloud pensadas para operación real.",
-      ctaProjects: "Ver Casos de Estudio",
-      ctaContact: "Contactar",
       scrollHint: "Desplázate para explorar",
     },
 
@@ -461,6 +461,9 @@ export const translations = {
       noCredly: "Credencial emitida por el instituto",
       curriculumTarget: "Objetivo curricular:",
       badgeAlt: "Insignia de {title}",
+      inspectBadge: "Ampliar la credencial {title}",
+      detailBadge: "Detalle de la credencial",
+      closeDetail: "Cerrar el detalle de la credencial",
     },
 
     projects: {
@@ -665,8 +668,6 @@ export const translations = {
       title: "Software Engineer focused on Enterprise Systems, Cloud & AI",
       subtitle:
         "Building full-stack solutions, business automations, and cloud architectures engineered for real-world operations.",
-      ctaProjects: "View Case Studies",
-      ctaContact: "Get in Touch",
       scrollHint: "Scroll to explore",
     },
 
@@ -760,6 +761,9 @@ export const translations = {
       noCredly: "Credential issued by the institute",
       curriculumTarget: "Curriculum target:",
       badgeAlt: "{title} badge",
+      inspectBadge: "Enlarge the {title} credential",
+      detailBadge: "Credential detail",
+      closeDetail: "Close credential detail",
     },
 
     projects: {

@@ -112,7 +112,7 @@ export const CERTIFICATIONS_LIST = [
     },
     issuer: "Amazon Web Services (AWS)",
     badgeImage: lakehouseImg,
-    credlyUrl: "https://www.credly.com/earner/earned/badge/977d8d4b-f2e8-436e-9768-7224981099f3",
+    credlyUrl: "https://www.credly.com/badges/977d8d4b-f2e8-436e-9768-7224981099f3",
     categoryKey: "DATA_IOT",
     status: "Earned",
     description: {

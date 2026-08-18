@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/logo.svg" />
@@ -21,10 +21,13 @@
           document.documentElement.classList.toggle("dark", theme === "dark");
           document.documentElement.dataset.theme = theme;
 
+          // English is the default locale: only an explicit, previously saved
+          // preference switches the document to Spanish. Browser-language
+          // sniffing was removed on purpose — it must stay in lockstep with
+          // `readInitialLanguage` in src/context/LanguageContext.jsx, otherwise
+          // the first paint and the mounted app disagree on the language.
           var lang = localStorage.getItem("app-lang");
-          if (lang !== "es" && lang !== "en") {
-            lang = (navigator.language || "es").toLowerCase().indexOf("es") === 0 ? "es" : "en";
-          }
+          if (lang !== "es" && lang !== "en") lang = "en";
           document.documentElement.lang = lang;
         } catch (e) {
           /* storage blocked — ThemeProvider still resolves the theme on mount */

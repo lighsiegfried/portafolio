@@ -19,19 +19,33 @@ const STORAGE_KEY = "app-lang";
 /** @type {React.Context<LanguageContextValue | undefined>} */
 const LanguageContext = createContext(undefined);
 
+/**
+ * English is the default locale. Only a language the visitor explicitly chose
+ * (and which was therefore persisted under `app-lang`) switches the site to
+ * Spanish; a first-time visitor always lands in English regardless of their
+ * browser locale.
+ *
+ * The identical rule is duplicated in the no-flash bootstrap in `index.html`.
+ * The two must agree: if that script sniffed `navigator.language` while this
+ * one defaulted to English, a Spanish-locale browser would paint `<html
+ * lang="es">` and then render English copy.
+ *
+ * @returns {Language}
+ */
+const DEFAULT_LANGUAGE = "en";
+
 /** @returns {Language} */
 const readInitialLanguage = () => {
-  if (typeof window === "undefined") return "es";
+  if (typeof window === "undefined") return DEFAULT_LANGUAGE;
 
   try {
     const saved = window.localStorage.getItem(STORAGE_KEY);
     if (saved === "es" || saved === "en") return saved;
   } catch {
-    // Blocked storage: fall through to the browser locale.
+    // Blocked storage: fall through to the default.
   }
 
-  const locale = (navigator.language || "es").toLowerCase();
-  return locale.startsWith("es") ? "es" : "en";
+  return DEFAULT_LANGUAGE;
 };
 
 /**
