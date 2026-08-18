@@ -6,6 +6,7 @@ import { styles } from "../styles";
 import { SectionWrapper } from "../hoc";
 import { fadeIn, textVariant } from "../utils/motion";
 import { useLanguage } from "../context/LanguageContext";
+import { translations } from "../data/translations";
 
 /**
  * @param {{ index: number, title: string, description: string, tags: string[] }} props
@@ -40,6 +41,12 @@ const ValidatedExperience = () => {
   const { t } = useLanguage();
   const copy = t.techAreas;
 
+  // `translations` is a static import, so in practice both languages are always
+  // populated. This fallback exists so that a future edit which drops or renames
+  // `areas` under one language degrades to English copy instead of silently
+  // rendering an empty grid.
+  const areas = copy?.areas ?? translations.en.techAreas.areas;
+
   return (
     <>
       <motion.div variants={textVariant()}>
@@ -55,8 +62,18 @@ const ValidatedExperience = () => {
       </motion.p>
 
       <div className='mt-10 sm:mt-20 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 sm:gap-7'>
-        {copy.areas.map((area, index) => (
-          <AreaCard key={area.title} index={index} {...area} />
+        {/* Key on `area.id`, never on `area.title`. The title is translated, so a
+            title-based key changes identity when the visitor switches language
+            and React remounts the card. SectionWrapper drives these cards with
+            `whileInView='show'` + `viewport={{ once: true }}`: once that has
+            fired, framer-motion has stopped observing the section, so a freshly
+            mounted child inherits the `hidden` variant (opacity 0, y 100) and
+            never receives another in-view event to move it to `show`. The card
+            then stays invisible until a full page reload. `area.id` is identical
+            in both dictionaries, so the cards update their text in place and are
+            never remounted. */}
+        {areas.map((area, index) => (
+          <AreaCard key={area.id} index={index} {...area} />
         ))}
       </div>
     </>

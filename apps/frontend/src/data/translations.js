@@ -75,9 +75,18 @@
 
 /**
  * @typedef {Object} TechAreaCard
+ * @property {TechAreaId} id language-independent React key. MUST be identical
+ *   across `es` and `en` for the same card: `ValidatedExperience.jsx` keys the
+ *   grid on it, and a key that changes with the language remounts the card
+ *   inside a `viewport={{ once: true }}` section, which leaves it stuck on the
+ *   `hidden` variant (opacity 0) until a full page reload.
  * @property {string} title
  * @property {string} description
  * @property {string[]} tags
+ */
+
+/**
+ * @typedef {"cloud-devops" | "enterprise-systems" | "infrastructure-continuity"} TechAreaId
  */
 
 /**
@@ -394,18 +403,21 @@ export const translations = {
         "Estas áreas resumen el tipo de problemas técnicos en los que he trabajado: modernización de sistemas, infraestructura cloud, automatización, continuidad operativa y desarrollo de soluciones empresariales.",
       areas: [
         {
+          id: "cloud-devops",
           title: "Cloud & DevOps",
           description:
             "Despliegue y administración de soluciones en AWS, contenedores Docker, CI/CD con GitHub Actions, gestión IAM, CloudFront, ECS/ECR, EC2 y prácticas de mínimo privilegio.",
           tags: ["AWS", "Docker", "GitHub Actions", "IAM", "CloudFront", "ECS", "ECR", "EC2"],
         },
         {
+          id: "enterprise-systems",
           title: "Sistemas empresariales",
           description:
             "Diseño y desarrollo de módulos ERP/CRM orientados a compras, requisiciones, inventario, reportería, aprobaciones y operación administrativa.",
           tags: ["ERP", "CRM", "SQL", "APIs REST", "Requisiciones", "Inventario", "Reportes"],
         },
         {
+          id: "infrastructure-continuity",
           title: "Infraestructura & continuidad",
           description:
             "Administración de servidores Linux, respaldo de información, documentación técnica, bases de conocimiento, estrategias BCP/DRP y soporte a operación crítica.",
@@ -694,18 +706,21 @@ export const translations = {
         "Key technical domains: systems modernization, cloud infrastructure, business workflow automation, operational continuity, and enterprise software.",
       areas: [
         {
+          id: "cloud-devops",
           title: "Cloud & DevOps",
           description:
             "Deployment and administration on AWS, Docker containers, GitHub Actions CI/CD, IAM governance, CloudFront, ECS/ECR, EC2, and least-privilege security practices.",
           tags: ["AWS", "Docker", "GitHub Actions", "IAM", "CloudFront", "ECS", "ECR", "EC2"],
         },
         {
+          id: "enterprise-systems",
           title: "Enterprise Systems",
           description:
             "Design and engineering of custom ERP/CRM modules for purchasing, requisitions, inventory tracking, analytics reporting, and automated approval workflows.",
           tags: ["ERP", "CRM", "SQL", "REST APIs", "Requisitions", "Inventory", "Reports"],
         },
         {
+          id: "infrastructure-continuity",
           title: "Infrastructure & Continuity",
           description:
             "Linux server administration, 3-2-1 backup strategies, technical knowledge base development, BCP/DRP planning, and mission-critical support.",

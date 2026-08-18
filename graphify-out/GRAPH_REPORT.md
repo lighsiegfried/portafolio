@@ -1,16 +1,16 @@
 # Graph Report - portafolio  (2026-08-18)
 
 ## Corpus Check
-- 219 files · ~1,035,916 words
+- 219 files · ~1,036,156 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1594 nodes · 2657 edges · 286 communities (96 shown, 190 thin omitted)
+- 1594 nodes · 2659 edges · 287 communities (96 shown, 191 thin omitted)
 - Extraction: 95% EXTRACTED · 5% INFERRED · 0% AMBIGUOUS · INFERRED: 124 edges (avg confidence: 0.83)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `089780ee`
+- Built from commit: `a5b1fe95`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -289,6 +289,7 @@
 - [[_COMMUNITY_Community 283|Community 283]]
 - [[_COMMUNITY_Community 284|Community 284]]
 - [[_COMMUNITY_Community 285|Community 285]]
+- [[_COMMUNITY_Community 286|Community 286]]
 
 ## God Nodes (most connected - your core abstractions)
 1. `useErpTranslation()` - 86 edges
@@ -322,7 +323,7 @@
 - **Pre-Paint Language Resolution Flow** — apps_frontend_index_prepaint_bootstrap, apps_frontend_index_app_lang_storage_key, apps_frontend_index_english_default_locale, apps_frontend_index_document_element_theme_state, apps_frontend_src_context_languagecontext_readinitiallanguage [INFERRED 0.95]
 - **First-Paint / Mounted-App Consistency Invariant** — apps_frontend_index_theme_flash_prevention, apps_frontend_index_english_default_locale, apps_frontend_index_storage_blocked_degradation, apps_frontend_index_prepaint_bootstrap [EXTRACTED 1.00]
 
-## Communities (286 total, 190 thin omitted)
+## Communities (287 total, 191 thin omitted)
 
 ### Community 0 - "Backend Modernization & Observability"
 Cohesion: 0.33
@@ -361,16 +362,16 @@ Cohesion: 0.11
 Nodes (23): INTENT_CLASS, RequisitionDetailSheet(), RequisitionsTable(), RequisitionTimeline(), RequisitionsTableSkeleton(), emptyItem(), RequisitionFormDialog(), StatusBadge() (+15 more)
 
 ### Community 10 - "Theme Context & 3D Canvases"
-Cohesion: 0.14
-Nodes (10): BallCanvas(), Computers(), ComputersCanvas(), Earth(), EarthCanvas(), StarsCanvas(), ErrorBoundary, Hero() (+2 more)
+Cohesion: 0.18
+Nodes (5): Computers(), Earth(), ErrorBoundary, CanvasLoader(), fixNaNPositions()
 
 ### Community 11 - "Backend Errors & Authorization"
 Cohesion: 0.10
 Nodes (16): getPermittedRoles(), PERMISSIONS, COLLECTIONS, config, getCollections(), isValidCollection(), { getPermittedRoles }, middleware() (+8 more)
 
 ### Community 12 - "DynamoDB Repository Adapter"
-Cohesion: 0.11
-Nodes (28): getClient(), adjustProductStock(), bcrypt, findById(), findLeadById(), findOneBy(), findProductById(), findProductBySku() (+20 more)
+Cohesion: 0.09
+Nodes (20): addLeadNote(), bcrypt, create(), createInventoryMovement(), createLead(), createProduct(), createRequisitionItem(), findProductBySku() (+12 more)
 
 ### Community 13 - "Lambda Router & Entrypoint"
 Cohesion: 0.08
@@ -437,8 +438,8 @@ Cohesion: 0.12
 Nodes (11): auditService, create(), CREATE_SCHEMA, { ERROR_CODES }, { firstError }, { getRepository }, idempotency, ITEM_SCHEMA (+3 more)
 
 ### Community 30 - "Portfolio Component Barrel"
-Cohesion: 0.11
-Nodes (10): App(), Portfolio(), NodeIcon(), BackgroundDecor(), Navbar(), TechIcon(), ThemeContext, useTheme() (+2 more)
+Cohesion: 0.14
+Nodes (15): App(), Portfolio(), NodeIcon(), BallCanvas(), ComputersCanvas(), EarthCanvas(), StarsCanvas(), Hero() (+7 more)
 
 ### Community 31 - "Inventory Handler & Error Codes"
 Cohesion: 0.13
@@ -465,8 +466,8 @@ Cohesion: 0.12
 Nodes (15): Architecture, Before `terraform apply`, Comandos seguros (no modifican infraestructura), Frontend Infrastructure (existing, NOT managed by Terraform), Mini ERP / CRM Lite — Terraform Infrastructure, Module Structure, Outputs, Prerequisites (+7 more)
 
 ### Community 37 - "Portfolio Styles & Contact"
-Cohesion: 0.25
-Nodes (10): architectures, Contact(), format(), validateForm(), techCategories, StarWrapper(), variantMap, styles (+2 more)
+Cohesion: 0.26
+Nodes (9): architectures, Contact(), format(), validateForm(), StarWrapper(), variantMap, styles, slideIn() (+1 more)
 
 ### Community 38 - "Dropdown Menu & Badge UI"
 Cohesion: 0.20
@@ -657,8 +658,8 @@ Cohesion: 0.25
 Nodes (7): Convenciones del código, Estado actual (QA pass — 71/72 tests), Estructura del proyecto, Frontend — 3D Portafolio, ¿Para qué sirve?, ¿Qué es?, ¿Qué hace?
 
 ### Community 131 - "Assets Barrel Export"
-Cohesion: 0.33
-Nodes (6): addLeadNote(), create(), createInventoryMovement(), createLead(), createProduct(), createRequisitionItem()
+Cohesion: 0.30
+Nodes (14): getClient(), adjustProductStock(), findById(), findLeadById(), findOneBy(), findProductById(), findUserByUsername(), getLeadNotes() (+6 more)
 
 ## Ambiguous Edges - Review These
 - `Proposed Post-Build S3 Deploy (aws s3 sync)` → `Existing CloudFront + Private S3 Frontend (unmanaged)`  [AMBIGUOUS]
@@ -681,7 +682,7 @@ Nodes (6): addLeadNote(), create(), createInventoryMovement(), createLead(), cre
 ## Knowledge Gaps
 - **737 isolated node(s):** `name`, `version`, `description`, `main`, `dev` (+732 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **190 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **191 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
