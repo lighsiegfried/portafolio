@@ -22,7 +22,7 @@ const Hero = () => {
             {t.hero.greeting} <span className='text-accentv'>{t.hero.name}</span>
           </h1>
           <p className={`${styles.heroSubText} mt-2 max-w-3xl`}>{t.hero.title}</p>
-          <p className='mt-3 sm:mt-4 text-secondary text-[14px] max-w-3xl leading-[26px] sm:leading-[30px]'>
+          <p className={`${styles.heroBodyText} mt-3 sm:mt-4 max-w-3xl`}>
             {t.hero.subtitle}
           </p>
 

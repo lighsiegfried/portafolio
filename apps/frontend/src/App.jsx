@@ -27,8 +27,13 @@ const Portfolio = () => {
     <div className='relative z-0 bg-primary'>
       <Navbar />
       <BackgroundDecor />
-      {/* `herobg.png` is a near-black photograph, so light mode swaps it for an
-          aurora gradient instead of trying to tint the artwork. */}
+      {/* One backdrop per theme, swapped on the wrapper rather than inside
+          <Hero /> so the <section> keeps its own stacking context and the
+          ComputersCanvas layer is untouched. `herobg.png` is a near-black
+          photograph that cannot be tinted for light mode, so light gets its
+          own artwork (`fondo2.png`, see `.hero-backdrop-light` in index.css)
+          rather than a filtered version of the dark one. Only the active
+          theme's image is ever downloaded. */}
       <div
         className={`${
           isDark ? "bg-hero-pattern bg-cover bg-no-repeat bg-center" : "hero-backdrop-light"

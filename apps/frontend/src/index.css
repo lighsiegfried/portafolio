@@ -37,6 +37,10 @@
      BOTH white text on the fill and accent text on the fill's own /10 tint. */
   --c-accent-solid: 109 61 214;
   --c-hero-sub: 51 65 85; /* #334155 hero subtitle */
+  /* Hero paragraph. Split from `--c-secondary` (#475569) because that muted
+     slate only clears 4.5:1 against a flat surface — over the light hero
+     artwork it drops to 2.6:1. Dark keeps the original #aaa6c3. */
+  --c-hero-body: 30 41 59; /* #1e293b */
 
   --shadow-card: 0px 18px 45px -20px rgba(15, 23, 42, 0.28);
 
@@ -85,6 +89,7 @@
   --c-accent-text: 177 140 255; /* #b18cff — 6.29:1 on the accentv/10 tint */
   --c-accent-solid: 135 80 234; /* #8750ea — white label reaches 4.81:1 */
   --c-hero-sub: 223 217 255; /* #dfd9ff hero subtitle */
+  --c-hero-body: 170 166 195; /* #aaa6c3 — unchanged from `text-secondary` */
 
   --shadow-card: 0px 35px 120px -15px #211e35;
 
@@ -117,14 +122,62 @@
   scroll-behavior: smooth;
 }
 
-/* Hero backdrop. The dark theme keeps the original `herobg.png` artwork; the
-   light theme swaps in a soft aurora gradient, since the artwork is a
-   near-black photo that cannot be tinted into a usable light surface. */
+/* Hero backdrop. Each theme gets its own artwork, applied to the wrapper that
+   hosts <Hero /> in `App.jsx`:
+     dark  -> `herobg.png`  via Tailwind's `bg-hero-pattern` (unchanged)
+     light -> `fondo2.png`  via this class
+   `herobg.png` is a near-black photo that cannot be tinted into a usable light
+   surface, so light mode used to fall back to an aurora gradient; `fondo2.png`
+   is the pale abstract-network render that replaces it.
+
+   Two layers ride on top of the artwork, topmost first:
+
+   1. A bottom fade into `--c-primary`. The old gradient ended exactly on the
+      page color, so the hero met <About /> with no seam; a photograph does not,
+      and without this layer the crop cuts off at a hard horizontal edge.
+
+   2. A white scrim under the copy column. The artwork's violet nodes bottom out
+      around L=107, and the hero's 14px paragraph over a bare node measures
+      2.6:1 — under AA. Two details matter here:
+        - The stops are in PIXELS, not percentages. `cover` on a 1.86:1 image
+          crops to the dense middle of the network as the viewport narrows,
+          exactly where a percentage ramp thins out; at 390px and 834px wide a
+          percentage version measured 3.9:1 and 3.5:1.
+        - The alpha stays moderate (0.6 -> 0). An earlier pass raised it to
+          0.9 and cleared AA everywhere, but flattened the artwork into a
+          near-white wash, which defeats the point of the new background.
+      Legibility past that is carried by `--c-hero-body` rather than more white.
+
+   Delivery: the artwork ships as `fondo2.webp` (230 KB), transcoded from the
+   3.6 MB `fondo2.png` the design was delivered as. `fondo2.png` stays in
+   `src/assets/` as the tracked master but is deliberately NOT referenced, so
+   Vite never emits it — a 3.6 MB hero background is an LCP and S3-sync problem.
+
+   No `image-set()` / `@supports` fallback tier: this build targets Vite 4's
+   default `modules` matrix (es2020, chrome87, edge88, firefox78, safari14) and
+   every engine in it decodes WebP (chrome 32+, edge 18+, firefox 65+,
+   safari 14+), so a second encoding would be dead weight that nothing fetches.
+   An earlier revision did guard the WebP behind
+   `@supports (background-image: image-set("a.webp" type("image/webp")))`; that
+   was wrong — `type()` inside `image-set()` only shipped in chrome/firefox 113
+   and safari 17, so every pre-2023 browser failed the probe and fell through to
+   the 3.6 MB PNG, which is worse than having no fallback at all.
+
+   `background-color` still guarantees a themed ground if the image cannot
+   decode at all. */
 .hero-backdrop-light {
-  background-image:
-    radial-gradient(120% 90% at 85% 0%, rgba(145, 94, 255, 0.16), transparent 60%),
-    radial-gradient(90% 80% at 0% 100%, rgba(6, 182, 212, 0.14), transparent 60%),
-    linear-gradient(180deg, #ffffff 0%, rgb(var(--c-primary)) 100%);
+  --hero-light-overlays:
+    linear-gradient(to bottom, rgb(var(--c-primary) / 0) 72%, rgb(var(--c-primary)) 100%),
+    linear-gradient(
+      100deg,
+      rgb(255 255 255 / 0.6) 0px,
+      rgb(255 255 255 / 0.45) 600px,
+      rgb(255 255 255 / 0.2) 950px,
+      rgb(255 255 255 / 0) 1250px
+    );
+
+  background-color: rgb(var(--c-primary));
+  background-image: var(--hero-light-overlays), url("./assets/fondo2.webp");
   background-size: cover;
   background-repeat: no-repeat;
   background-position: center;

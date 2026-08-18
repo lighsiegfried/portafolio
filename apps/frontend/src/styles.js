@@ -14,6 +14,12 @@ const styles = {
     "font-black text-ink lg:text-[80px] sm:text-[60px] xs:text-[44px] text-[34px] lg:leading-[98px] mt-2",
   heroSubText:
     "text-[rgb(var(--c-hero-sub))] font-medium lg:text-[30px] sm:text-[26px] xs:text-[20px] text-[16px] lg:leading-[40px]",
+  // Hero paragraph. Uses `--c-hero-body` instead of `text-secondary`: the hero
+  // is the one place body copy sits on artwork rather than a flat surface, and
+  // #475569 measured 2.6:1 over the light background's violet nodes. The dark
+  // value is the same #aaa6c3 it always was.
+  heroBodyText:
+    "text-[rgb(var(--c-hero-body))] text-[14px] leading-[26px] sm:leading-[30px]",
 
   sectionHeadText:
     "text-ink font-black md:text-[60px] sm:text-[50px] xs:text-[36px] text-[28px]",
