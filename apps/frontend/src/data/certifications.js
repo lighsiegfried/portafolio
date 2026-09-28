@@ -1,3 +1,4 @@
+import saaImg from "../assets/saa.png";
 import practitionerImg from "../assets/practitioner.png";
 import serverlessImg from "../assets/serverless.png";
 import networkingImg from "../assets/networking.png";
@@ -56,6 +57,22 @@ export const CERTIFICATION_CATEGORIES = [
 
 /** @type {Certification[]} */
 export const CERTIFICATIONS_LIST = [
+  {
+    id: "aws-solutions-architect-associate",
+    title: {
+      es: "AWS Certified Solutions Architect – Associate",
+      en: "AWS Certified Solutions Architect – Associate",
+    },
+    issuer: "Amazon Web Services (AWS)",
+    badgeImage: saaImg,
+    credlyUrl: "https://www.credly.com/badges/e00d9e31-b188-41a7-88c6-8b3c1dab6a75",
+    categoryKey: "CLOUD",
+    status: "Earned",
+    description: {
+      es: "Diseño de arquitecturas cloud resilientes, seguras, de alto rendimiento y optimizadas en costos sobre AWS.",
+      en: "Design of resilient, secure, high-performing, and cost-optimized distributed architectures on AWS.",
+    },
+  },
   {
     id: "aws-cloud-practitioner",
     title: {
@@ -200,29 +217,55 @@ export const CERTIFICATIONS_LIST = [
 /** @type {UpcomingCertification[]} */
 export const UPCOMING_CERTIFICATIONS = [
   {
-    id: "aws-saa",
+    id: "terraform-associate",
     title: {
-      es: "AWS Certified Solutions Architect – Associate (SAA-C03)",
-      en: "AWS Certified Solutions Architect – Associate (SAA-C03)",
+      es: "HashiCorp Certified: Terraform Associate (004)",
+      en: "HashiCorp Certified: Terraform Associate (004)",
+    },
+    issuer: "HashiCorp",
+    focus: {
+      es: "Infraestructura como código con Terraform: providers, módulos, gestión de estado y flujos de trabajo reproducibles.",
+      en: "Infrastructure as Code with Terraform: providers, modules, state management, and repeatable workflows.",
+    },
+    target: "12/2026",
+  },
+  {
+    id: "aws-cloudops-associate",
+    title: {
+      es: "AWS Certified CloudOps Engineer – Associate",
+      en: "AWS Certified CloudOps Engineer – Associate",
     },
     issuer: "Amazon Web Services",
     focus: {
-      es: "Diseño de arquitecturas cloud resilientes, alta disponibilidad, tolerancia a fallos y optimización de costos en AWS.",
-      en: "Designing resilient, high-performing, secure, and cost-optimized distributed AWS architectures.",
+      es: "Operación, monitoreo, automatización y confiabilidad de cargas de trabajo en AWS.",
+      en: "Operating, monitoring, automating, and keeping AWS workloads reliable.",
     },
-    target: "2026",
+    target: "03/2027",
+  },
+  {
+    id: "aws-sap",
+    title: {
+      es: "AWS Certified Solutions Architect – Professional",
+      en: "AWS Certified Solutions Architect – Professional",
+    },
+    issuer: "Amazon Web Services",
+    focus: {
+      es: "Arquitecturas AWS complejas multi-cuenta, migración, optimización de costos y mejora continua a escala empresarial.",
+      en: "Complex multi-account AWS architectures, migration, cost optimization, and continuous improvement at enterprise scale.",
+    },
+    target: "10/2027",
   },
   {
     id: "iso-27001",
     title: {
-      es: "ISO/IEC 27001 Seguridad de la Información & Auditoría IT",
-      en: "ISO/IEC 27001 Information Security & IT Audit",
+      es: "ISO/IEC 27001 Foundation",
+      en: "ISO/IEC 27001 Foundation",
     },
     issuer: "ISO / IT Governance Institute",
     focus: {
       es: "Sistemas de Gestión de Seguridad de la Información (SGSI), análisis de riesgos, controles del Anexo A y auditoría de sistemas.",
       en: "Information Security Management Systems (ISMS), risk assessment frameworks, Annex A controls, and IT audit readiness.",
     },
-    target: "2026",
+    target: "12/2027",
   },
 ];
