@@ -90,7 +90,7 @@ const experiences = [
     company_name: "Kratt",
     icon: kratt,
     iconBg: "#FFFFFF",
-    date: { es: "Febrero 2026 - Actualmente", en: "February 2026 - Present" },
+    date: { es: "Febrero 2026 - Octubre 2026", en: "February 2026 - October 2026" },
     points: [
       {
         es: "Ingeniería full-stack y dirección técnica en plataformas CRM, Ticket System y ERP multiorganizacional.",
